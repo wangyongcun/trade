@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>K线图</title>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/echarts/4.3.0/echarts.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #1a56a8;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .chart-container {
+            height: 600px;
+            padding: 20px;
+        }
+        .description {
+            padding: 0 20px 20px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .kline-types {
+            display: flex;
+            padding: 15px 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .kline-type-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #f5f5f5;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px 4px 0 0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .kline-type-btn:hover {
+            background-color: #e0e0e0;
+        }
+        .kline-type-btn.active {
+            background-color: #1a56a8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ stock_name }} - K线图</h1>
+    </div>
+    
+    <div class="container">
+        <div class="kline-types">
+            <a href="/stock2/{{ request.view_args.code }}/day" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'day' %}active{% endif %}">日K</a>
+            <a href="/stock2/{{ request.view_args.code }}/week" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'week' %}active{% endif %}">周K</a>
+            <a href="/stock2/{{ request.view_args.code }}/month" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'month' %}active{% endif %}">月K</a>
+            <a href="/stock2/{{ request.view_args.code }}/year" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'year' %}active{% endif %}">年K</a>
+        </div>
+        <div id="main" class="chart-container"></div>
+        <div class="description">
+            <p>K线图是一种反映价格变动的图表，由开盘价、收盘价、最高价和最低价组成。图表中还包含了MA5、MA10、MA20和MA30等移动平均线指标，帮助投资者分析价格趋势。</p>
+        </div>
+    </div>
+
+    <script>
+        var upColor = '#ec0000';
+        var upBorderColor = '#8A0000';
+        var downColor = '#00da3c';
+        var downBorderColor = '#008F28';
+
+        // 使用Flask传递的数据
+        {{ chart|safe }}
+        
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+        
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+        
+        // 响应式调整图表大小
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    </script>
+</body>
+</html>

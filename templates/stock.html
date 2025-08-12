@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ stock_name }} - K线图分析</title>
+    <script src="https://cdn.bootcss.com/jquery/3.0.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://assets.pyecharts.org/assets/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+            color: #333;
+        }
+        .header {
+            background-color: #fff;
+            color: #333;
+            padding: 10px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #eee;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .nav a {
+            color: #666;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .nav a:hover {
+            color: #ff3a3a;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        .chart-title {
+            font-size: 16px;
+            color: #333;
+            margin: 0;
+            font-weight: normal;
+        }
+        .chart-info {
+            color: #999;
+            font-size: 12px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            margin-bottom: 15px;
+            border: 1px solid #f0f0f0;
+        }
+        .chart-description {
+            background-color: #fafafa;
+            padding: 10px;
+            border-radius: 2px;
+            margin-top: 15px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #666;
+            border: 1px solid #f0f0f0;
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            background-color: #f5f5f5;
+            color: #666;
+            padding: 6px 12px;
+            border-radius: 2px;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .back-link:hover {
+            background-color: #eee;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">上证指数K线图分析</div>
+            <div class="nav">
+                <a href="/">首页</a>
+                <a href="#">行情中心</a>
+                <a href="#">数据分析</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="chart-header">
+            <h1 class="chart-title">上证指数</h1>
+            <div class="chart-info">数据更新时间: 2023-06-10</div>
+        </div>
+        
+        <div class="chart-container">
+            {{ chart|safe }}
+        </div>
+        
+        <div class="chart-description">
+            <p>本K线图展示了上证指数的历史交易数据，包含开盘价、收盘价、最高价和最低价。同时叠加了MA5、MA10、MA20和MA30四条移动平均线，帮助分析价格趋势。标记点显示了重要价格位置，水平参考线表示关键支撑和阻力位。</p>
+        </div>
+        
+        <a href="/" class="back-link">返回首页</a>
+    </div>
+    
+    <div class="footer">
+        &copy; 2023 上证指数K线图分析系统
+    </div>
+</body>
+</html>

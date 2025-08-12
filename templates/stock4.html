@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ stock_name }} - K线图分析</title>
+    <style>
+        #main{
+            width: 600px;
+            height: 600px;
+            background-color: #ccc;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="main"></div>
+    <script src="https://assets.pyecharts.org/assets/echarts.min.js"></script>
+    <script>
+        // 1. 配置和数据
+        var upColor = '#ec0000';
+        var upBorderColor = '#8A0000';
+        var downColor = '#00da3c';
+        var downBorderColor = '#008F28';
+
+        // 从Flask传递的数据
+        {{ chart|safe }}
+        
+        // 2. 创建echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // 3. 作用
+        myChart.setOption(option);
+    </script>
+</body>
+</html>
