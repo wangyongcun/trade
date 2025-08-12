@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>K线图 - 增强版</title>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/echarts/4.3.0/echarts.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #1a56a8;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .container {
+            width: 95%;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .chart-container {
+            height: 800px;
+            padding: 20px;
+        }
+        .description {
+            padding: 0 20px 20px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .kline-types {
+            display: flex;
+            padding: 15px 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .kline-type-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #f5f5f5;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px 4px 0 0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .kline-type-btn:hover {
+            background-color: #e0e0e0;
+        }
+        .kline-type-btn.active {
+            background-color: #1a56a8;
+            color: white;
+        }
+        .indicator-panel {
+            display: flex;
+            gap: 20px;
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            font-size: 12px;
+            color: #666;
+        }
+        .indicator-group {
+            display: flex;
+            gap: 15px;
+        }
+        .indicator-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .indicator-color {
+            width: 12px;
+            height: 2px;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ stock_name }} - K线图增强版</h1>
+    </div>
+    
+    <div class="container">
+        <div class="kline-types">
+            <a href="/stock3/{{ request.view_args.code }}/day" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'day' %}active{% endif %}">日K</a>
+            <a href="/stock3/{{ request.view_args.code }}/week" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'week' %}active{% endif %}">周K</a>
+            <a href="/stock3/{{ request.view_args.code }}/month" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'month' %}active{% endif %}">月K</a>
+            <a href="/stock3/{{ request.view_args.code }}/year" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'year' %}active{% endif %}">年K</a>
+        </div>
+        
+        <div class="indicator-panel">
+            <div class="indicator-group">
+                <span>移动平均线:</span>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #c23531;"></div>
+                    <span>MA5</span>
+                </div>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #2f4554;"></div>
+                    <span>MA10</span>
+                </div>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #61a0a8;"></div>
+                    <span>MA20</span>
+                </div>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #d48265;"></div>
+                    <span>MA30</span>
+                </div>
+            </div>
+            <div class="indicator-group">
+                <span>技术指标:</span>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #91c7ae;"></div>
+                    <span>RSI</span>
+                </div>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #749f83;"></div>
+                    <span>MACD</span>
+                </div>
+                <div class="indicator-item">
+                    <div class="indicator-color" style="background-color: #ca8622;"></div>
+                    <span>KDJ</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="main" class="chart-container"></div>
+        <div class="description">
+            <p>K线图增强版包含了丰富的技术指标：移动平均线(MA5/10/20/30)、RSI相对强弱指标、MACD指标、布林带和KDJ指标。成交量以柱状图形式显示在底部，切换时间周期时保持时间轴范围不变。</p>
+        </div>
+    </div>
+
+    <script>
+        var upColor = '#ec0000';
+        var upBorderColor = '#8A0000';
+        var downColor = '#00da3c';
+        var downBorderColor = '#008F28';
+
+        // 保存当前数据缩放状态
+        var savedDataZoom = JSON.parse(localStorage.getItem('stockChart_dataZoom')) || { start: 70, end: 100 };
+
+        // 使用Flask传递的数据
+        {{ chart|safe }}
+        
+        // 修改option的dataZoom设置
+        if (typeof option !== 'undefined' && option.dataZoom) {
+            option.dataZoom.forEach(function(zoom) {
+                zoom.start = savedDataZoom.start;
+                zoom.end = savedDataZoom.end;
+            });
+        }
+        
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+        
+        // 监听dataZoom事件，保存缩放状态
+        myChart.on('datazoom', function(params) {
+            if (params.batch && params.batch[0]) {
+                savedDataZoom = {
+                    start: params.batch[0].start,
+                    end: params.batch[0].end
+                };
+            } else {
+                savedDataZoom = {
+                    start: params.start || savedDataZoom.start,
+                    end: params.end || savedDataZoom.end
+                };
+            }
+            localStorage.setItem('stockChart_dataZoom', JSON.stringify(savedDataZoom));
+        });
+        
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+        
+        // 响应式调整图表大小
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    </script>
+</body>
+</html>

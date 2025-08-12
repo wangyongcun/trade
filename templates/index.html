@@ -1,159 +1,193 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>上证指数K线图分析系统 - 首页</title>
+    <meta charset="utf-8">
+    <title>上证指数K线图分析系统</title>
     <style>
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f8f8f8;
-            color: #333;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
         .header {
-            background-color: #fff;
-            color: #333;
-            padding: 10px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #eee;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
+        .header h1 {
+            margin: 0;
+            font-size: 36px;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        .logo {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-        .nav a {
-            color: #666;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 14px;
-            transition: color 0.3s;
-        }
-        .nav a:hover {
-            color: #ff3a3a;
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
         }
         .container {
             max-width: 1200px;
-            margin: 20px auto;
-            background-color: white;
-            padding: 15px;
-            border-radius: 2px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin: 40px auto;
+            padding: 0 20px;
         }
-        .page-header {
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+        .intro {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
-        .page-title {
-            font-size: 16px;
+        .intro h2 {
             color: #333;
-            margin: 0 0 8px 0;
-            font-weight: normal;
+            margin-top: 0;
+            font-size: 28px;
+            text-align: center;
         }
-        .page-description {
-            color: #999;
-            font-size: 12px;
-            line-height: 1.5;
+        .intro p {
+            color: #666;
+            line-height: 1.8;
+            font-size: 16px;
+            text-align: center;
         }
-        .stock-list {
+        .stock-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
         }
         .stock-item {
-            background-color: #fafafa;
-            padding: 15px;
-            border-radius: 2px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
             text-align: center;
-            transition: all 0.2s ease;
-            border: 1px solid #f0f0f0;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
         .stock-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-            background-color: #fff;
-            border-color: #ddd;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
         .stock-item a {
+            color: #2c3e50;
             text-decoration: none;
-            color: #333;
-            font-weight: normal;
-            font-size: 14px;
+            font-size: 20px;
+            font-weight: 500;
             display: block;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+        .stock-item a:hover {
+            color: #3498db;
         }
         .stock-code {
-            color: #999;
-            font-size: 12px;
-            margin-top: 6px;
-            background-color: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 2px;
-            display: inline-block;
-            border: 1px solid #eee;
-        }
-        .stock-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
-            background-color: #ff3a3a;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .stock-item:hover::before {
-            opacity: 1;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
         }
         .footer {
             text-align: center;
-            padding: 15px;
-            color: #999;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        .feature h3 {
+            margin-top: 0;
+            color: #fff;
+        }
+        .feature p {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .chart-styles {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .style-btn {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 5px;
             font-size: 12px;
-            margin-top: 20px;
-            border-top: 1px solid #eee;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .style-btn.style1 {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .style-btn.style2 {
+            background-color: #1d3f6b;
+            color: white;
+        }
+        .style-btn.style3 {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .style-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
-            <div class="logo">上证指数K线图分析</div>
-            <div class="nav">
-                <a href="/" class="active">首页</a>
-                <a href="#">行情中心</a>
-                <a href="#">数据分析</a>
-            </div>
-        </div>
+        <h1>上证指数K线图分析系统</h1>
+        <p>专业的股票技术分析工具，支持多种图表样式和技术指标</p>
     </div>
     
     <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">股票列表</h1>
-            <p class="page-description">选择以下任意股票查看详细的K线图分析，包含移动平均线、重要价格点位标记和趋势分析。</p>
+        <div class="intro">
+            <h2>系统特色</h2>
+            <p>本系统提供多种K线图显示样式，包含丰富的技术指标分析，帮助投资者更好地分析股票走势和市场趋势。</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>样式一 - 经典图表</h3>
+                    <p>传统K线图表，简洁明了，包含基本的移动平均线指标</p>
+                </div>
+                <div class="feature">
+                    <h3>样式二 - 交互式图表</h3>
+                    <p>支持多时间周期切换，增强的交互体验和数据缩放功能</p>
+                </div>
+                <div class="feature">
+                    <h3>样式三 - 增强版图表</h3>
+                    <p>包含RSI、MACD、KDJ等技术指标，成交量柱状图，保持缩放状态</p>
+                </div>
+            </div>
         </div>
         
-        <div class="stock-list">
+        <div class="stock-grid">
             {% for stock in stocks %}
             <div class="stock-item">
                 <a href="/stock/{{ stock.code }}">{{ stock.name }}</a>
                 <div class="stock-code">{{ stock.code }}</div>
-                <div style="margin-top: 10px;">
-                    <a href="/stock/{{ stock.code }}" style="display: inline-block; padding: 3px 8px; background-color: #f0f0f0; border-radius: 3px; font-size: 12px; margin-right: 5px;">样式一</a>
-                    <a href="/stock2/{{ stock.code }}" style="display: inline-block; padding: 3px 8px; background-color: #1d3f6b; color: white; border-radius: 3px; font-size: 12px;">样式二</a>
+                <div class="chart-styles">
+                    <a href="/stock/{{ stock.code }}" class="style-btn style1">样式一</a>
+                    <a href="/stock2/{{ stock.code }}" class="style-btn style2">样式二</a>
+                    <a href="/stock3/{{ stock.code }}" class="style-btn style3">样式三</a>
                 </div>
             </div>
             {% endfor %}

@@ -5,6 +5,13 @@ from pyecharts import options as opts
 from pyecharts.charts import Kline, Line
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
+from technical_indicators import (
+    read_stock_data_enhanced, 
+    process_stock_data_with_indicators,
+    process_weekly_data_with_volume,
+    process_monthly_data_with_volume,
+    process_yearly_data_with_volume
+)
 
 app = Flask(__name__)
 
@@ -612,6 +619,422 @@ def stock2_chart(code, ktype='day'):
     """
     
     return render_template('stock2.html', chart=chart_js, stock_name=stock_name, ktype=ktype)
+
+@app.route('/stock3/<code>')
+@app.route('/stock3/<code>/<ktype>')
+def stock3_chart(code, ktype='day'):
+    # 查找对应的股票文件
+    stock_files = [f for f in os.listdir('stock-data') if f.startswith(code)]
+    if not stock_files:
+        return "股票代码不存在"
+    
+    file_path = os.path.join('stock-data', stock_files[0])
+    stock_name = stock_files[0].split('_')[1].replace('.xlsx', '')
+    
+    # 读取数据
+    stock_data = read_stock_data_enhanced(file_path)
+    
+    # 根据K线类型处理数据
+    if ktype == 'week':
+        processed_data = process_weekly_data_with_volume(stock_data)
+        ktype_name = '周K'
+    elif ktype == 'month':
+        processed_data = process_monthly_data_with_volume(stock_data)
+        ktype_name = '月K'
+    elif ktype == 'year':
+        processed_data = process_yearly_data_with_volume(stock_data)
+        ktype_name = '年K'
+    else:  # 默认日K
+        processed_data = stock_data
+        ktype_name = '日K'
+    
+    # 添加技术指标
+    processed_data = process_stock_data_with_indicators(processed_data)
+    
+    # 准备数据
+    dates = processed_data['trade_date'].tolist()
+    k_data = [[float(processed_data.loc[i, 'open']), 
+               float(processed_data.loc[i, 'close']), 
+               float(processed_data.loc[i, 'low']), 
+               float(processed_data.loc[i, 'high'])] 
+              for i in processed_data.index]
+    
+    # 成交量数据
+    volume_data = processed_data['vol'].tolist()
+    
+    # 技术指标数据
+    rsi_data = processed_data['RSI'].fillna(0).tolist()
+    macd_data = processed_data['MACD'].fillna(0).tolist()
+    macd_signal_data = processed_data['MACD_Signal'].fillna(0).tolist()
+    macd_histogram_data = processed_data['MACD_Histogram'].fillna(0).tolist()
+    
+    # KDJ数据
+    kdj_k_data = processed_data['KDJ_K'].fillna(0).tolist()
+    kdj_d_data = processed_data['KDJ_D'].fillna(0).tolist()
+    kdj_j_data = processed_data['KDJ_J'].fillna(0).tolist()
+    
+    # 布林带数据
+    bb_upper_data = processed_data['BB_Upper'].fillna(0).tolist()
+    bb_middle_data = processed_data['BB_Middle'].fillna(0).tolist()
+    bb_lower_data = processed_data['BB_Lower'].fillna(0).tolist()
+    
+    # 找出最高点和最低点，用于添加标记
+    max_price_idx = processed_data['high'].idxmax()
+    min_price_idx = processed_data['low'].idxmin()
+    max_price = processed_data.loc[max_price_idx, 'high']
+    min_price = processed_data.loc[min_price_idx, 'low']
+    max_date = processed_data.loc[max_price_idx, 'trade_date']
+    min_date = processed_data.loc[min_price_idx, 'trade_date']
+    
+    # 生成 ECharts 选项的 JavaScript 代码
+    chart_js = f"""
+    // K线数据
+    var data0 = {{
+        categoryData: {dates},
+        values: {k_data}
+    }};
+    
+    // 成交量数据
+    var volumeData = {volume_data};
+    
+    // 技术指标数据
+    var rsiData = {rsi_data};
+    var macdData = {macd_data};
+    var macdSignalData = {macd_signal_data};
+    var macdHistogramData = {macd_histogram_data};
+    var kdjKData = {kdj_k_data};
+    var kdjDData = {kdj_d_data};
+    var kdjJData = {kdj_j_data};
+    var bbUpperData = {bb_upper_data};
+    var bbMiddleData = {bb_middle_data};
+    var bbLowerData = {bb_lower_data};
+    
+    function calculateMA(dayCount) {{
+        var result = [];
+        for (var i = 0, len = data0.values.length; i < len; i++) {{
+            if (i < dayCount) {{
+                result.push('-');
+                continue;
+            }}
+            var sum = 0;
+            for (var j = 0; j < dayCount; j++) {{
+                sum += data0.values[i - j][1];
+            }}
+            result.push(sum / dayCount);
+        }}
+        return result;
+    }}
+    
+    option = {{
+        title: {{
+            text: '{stock_name} - {ktype_name}',
+            left: 0
+        }},
+        tooltip: {{
+            trigger: 'axis',
+            axisPointer: {{
+                type: 'cross'
+            }}
+        }},
+        legend: {{
+            data: ['日K', 'MA5', 'MA10', 'MA20', 'MA30', '成交量', 'RSI', 'MACD', 'MACD信号', 'KDJ-K', 'KDJ-D', '布林上轨', '布林中轨', '布林下轨']
+        }},
+        grid: [
+            {{
+                left: '5%',
+                right: '5%',
+                height: '50%'
+            }},
+            {{
+                left: '5%',
+                right: '5%',
+                top: '55%',
+                height: '15%'
+            }},
+            {{
+                left: '5%',
+                right: '5%',
+                top: '75%',
+                height: '20%'
+            }}
+        ],
+        xAxis: [
+            {{
+                type: 'category',
+                data: data0.categoryData,
+                scale: true,
+                boundaryGap: false,
+                axisLine: {{onZero: false}},
+                splitLine: {{show: false}},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax',
+                axisPointer: {{
+                    z: 100
+                }}
+            }},
+            {{
+                type: 'category',
+                gridIndex: 1,
+                data: data0.categoryData,
+                scale: true,
+                boundaryGap: false,
+                axisLine: {{onZero: false}},
+                axisTick: {{show: false}},
+                splitLine: {{show: false}},
+                axisLabel: {{show: false}},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax'
+            }},
+            {{
+                type: 'category',
+                gridIndex: 2,
+                data: data0.categoryData,
+                scale: true,
+                boundaryGap: false,
+                axisLine: {{onZero: false}},
+                axisTick: {{show: false}},
+                splitLine: {{show: false}},
+                axisLabel: {{show: false}},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax'
+            }}
+        ],
+        yAxis: [
+            {{
+                scale: true,
+                splitArea: {{
+                    show: true
+                }}
+            }},
+            {{
+                scale: true,
+                gridIndex: 1,
+                splitNumber: 2,
+                axisLabel: {{show: false}},
+                axisLine: {{show: false}},
+                axisTick: {{show: false}},
+                splitLine: {{show: false}}
+            }},
+            {{
+                scale: true,
+                gridIndex: 2,
+                splitNumber: 4,
+                axisLine: {{show: false}},
+                axisTick: {{show: false}},
+                splitLine: {{show: false}}
+            }}
+        ],
+        dataZoom: [
+            {{
+                type: 'inside',
+                xAxisIndex: [0, 1, 2],
+                start: 70,
+                end: 100
+            }},
+            {{
+                show: true,
+                xAxisIndex: [0, 1, 2],
+                type: 'slider',
+                top: '97%',
+                start: 70,
+                end: 100
+            }}
+        ],
+        series: [
+            {{
+                name: '日K',
+                type: 'candlestick',
+                data: data0.values,
+                itemStyle: {{
+                    normal: {{
+                        color: upColor,
+                        color0: downColor,
+                        borderColor: upBorderColor,
+                        borderColor0: downBorderColor
+                    }}
+                }},
+                markPoint: {{
+                    label: {{
+                        normal: {{
+                            formatter: function (param) {{
+                                return param != null ? Math.round(param.value) : '';
+                            }}
+                        }}
+                    }},
+                    data: [
+                        {{
+                            name: '最高值',
+                            coord: ['{max_date}', {max_price}],
+                            value: {max_price},
+                            itemStyle: {{
+                                normal: {{color: 'rgb(41,60,85)'}}
+                            }}
+                        }},
+                        {{
+                            name: '最低值',
+                            coord: ['{min_date}', {min_price}],
+                            value: {min_price},
+                            itemStyle: {{
+                                normal: {{color: 'rgb(41,60,85)'}}
+                            }}
+                        }}
+                    ]
+                }}
+            }},
+            {{
+                name: 'MA5',
+                type: 'line',
+                data: calculateMA(5),
+                smooth: true,
+                lineStyle: {{
+                    normal: {{opacity: 0.8, color: '#c23531'}}
+                }}
+            }},
+            {{
+                name: 'MA10',
+                type: 'line',
+                data: calculateMA(10),
+                smooth: true,
+                lineStyle: {{
+                    normal: {{opacity: 0.8, color: '#2f4554'}}
+                }}
+            }},
+            {{
+                name: 'MA20',
+                type: 'line',
+                data: calculateMA(20),
+                smooth: true,
+                lineStyle: {{
+                    normal: {{opacity: 0.8, color: '#61a0a8'}}
+                }}
+            }},
+            {{
+                name: 'MA30',
+                type: 'line',
+                data: calculateMA(30),
+                smooth: true,
+                lineStyle: {{
+                    normal: {{opacity: 0.8, color: '#d48265'}}
+                }}
+            }},
+            {{
+                name: '布林上轨',
+                type: 'line',
+                data: bbUpperData,
+                lineStyle: {{
+                    normal: {{opacity: 0.5, color: '#fac858', type: 'dashed'}}
+                }}
+            }},
+            {{
+                name: '布林中轨',
+                type: 'line',
+                data: bbMiddleData,
+                lineStyle: {{
+                    normal: {{opacity: 0.7, color: '#ee6666'}}
+                }}
+            }},
+            {{
+                name: '布林下轨',
+                type: 'line',
+                data: bbLowerData,
+                lineStyle: {{
+                    normal: {{opacity: 0.5, color: '#fac858', type: 'dashed'}}
+                }}
+            }},
+            {{
+                name: '成交量',
+                type: 'bar',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                data: volumeData.map(function (item, index) {{
+                    var colorList = data0.values[index][1] > data0.values[index][0] ? upColor : downColor;
+                    return {{
+                        value: item,
+                        itemStyle: {{
+                            color: colorList
+                        }}
+                    }};
+                }})
+            }},
+            {{
+                name: 'RSI',
+                type: 'line',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: rsiData,
+                lineStyle: {{
+                    normal: {{color: '#91c7ae'}}
+                }},
+                markLine: {{
+                    silent: true,
+                    data: [
+                        {{yAxis: 30}},
+                        {{yAxis: 70}}
+                    ]
+                }}
+            }},
+            {{
+                name: 'MACD',
+                type: 'line',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: macdData,
+                lineStyle: {{
+                    normal: {{color: '#749f83'}}
+                }}
+            }},
+            {{
+                name: 'MACD信号',
+                type: 'line',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: macdSignalData,
+                lineStyle: {{
+                    normal: {{color: '#ca8622'}}
+                }}
+            }},
+            {{
+                name: 'MACD柱状',
+                type: 'bar',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: macdHistogramData.map(function(item) {{
+                    return {{
+                        value: item,
+                        itemStyle: {{
+                            color: item >= 0 ? upColor : downColor
+                        }}
+                    }};
+                }})
+            }},
+            {{
+                name: 'KDJ-K',
+                type: 'line',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: kdjKData,
+                lineStyle: {{
+                    normal: {{color: '#fc8452', opacity: 0.6}}
+                }}
+            }},
+            {{
+                name: 'KDJ-D',
+                type: 'line',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: kdjDData,
+                lineStyle: {{
+                    normal: {{color: '#9a60b4', opacity: 0.6}}
+                }}
+            }}
+        ]
+    }};
+    """
+    
+    return render_template('stock3.html', chart=chart_js, stock_name=stock_name, ktype=ktype)
 
 if __name__ == '__main__':
     app.run(debug=True)
