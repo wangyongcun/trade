@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>K线图</title>
-    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdn.bootcss.com/echarts/4.3.0/echarts.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/echarts.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -55,6 +55,7 @@
             border-radius: 4px 4px 0 0;
             font-size: 14px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         .kline-type-btn:hover {
             background-color: #e0e0e0;
@@ -72,10 +73,10 @@
     
     <div class="container">
         <div class="kline-types">
-            <a href="/stock2/{{ request.view_args.code }}/day" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'day' %}active{% endif %}">日K</a>
-            <a href="/stock2/{{ request.view_args.code }}/week" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'week' %}active{% endif %}">周K</a>
-            <a href="/stock2/{{ request.view_args.code }}/month" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'month' %}active{% endif %}">月K</a>
-            <a href="/stock2/{{ request.view_args.code }}/year" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'year' %}active{% endif %}">年K</a>
+            <span class="kline-type-btn active" onclick="switchK('day')">日K</span>
+            <span class="kline-type-btn" onclick="switchK('week')">周K</span>
+            <span class="kline-type-btn" onclick="switchK('month')">月K</span>
+            <span class="kline-type-btn" onclick="switchK('year')">年K</span>
         </div>
         <div id="main" class="chart-container"></div>
         <div class="description">
@@ -88,15 +89,233 @@
         var upBorderColor = '#8A0000';
         var downColor = '#00da3c';
         var downBorderColor = '#008F28';
-
-        // 使用Flask传递的数据
-        {{ chart|safe }}
         
-        // 基于准备好的dom，初始化echarts实例
+        // 从后端获取所有K线数据
+        var allKlineData = {{ all_kline_data|tojson }};
+        var stockName = "{{ stock_name }}";
+        var currentKType = 'day';
+        
+        // 初始化echarts实例
         var myChart = echarts.init(document.getElementById('main'));
         
-        // 使用刚指定的配置项和数据显示图表。
-        myChart.setOption(option);
+        // 计算移动平均线
+        function calculateMA(data, dayCount) {
+            var result = [];
+            for (var i = 0, len = data.length; i < len; i++) {
+                if (i < dayCount) {
+                    result.push('-');
+                    continue;
+                }
+                var sum = 0;
+                for (var j = 0; j < dayCount; j++) {
+                    sum += data[i - j][1];
+                }
+                result.push(sum / dayCount);
+            }
+            return result;
+        }
+        
+        // 生成ECharts配置
+        function generateOption(ktype) {
+            var data = allKlineData[ktype];
+            var ktypeNames = {
+                'day': '日K',
+                'week': '周K', 
+                'month': '月K',
+                'year': '年K'
+            };
+            
+            return {
+                title: {
+                    text: stockName + ' - ' + ktypeNames[ktype],
+                    left: 0
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: [ktypeNames[ktype], 'MA5', 'MA10', 'MA20', 'MA30']
+                },
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '15%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.dates,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: {onZero: false},
+                    splitLine: {show: false},
+                    splitNumber: 20,
+                    min: 'dataMin',
+                    max: 'dataMax'
+                },
+                yAxis: {
+                    scale: true,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 50,
+                        end: 100
+                    },
+                    {
+                        show: true,
+                        type: 'slider',
+                        y: '90%',
+                        start: 50,
+                        end: 100
+                    }
+                ],
+                series: [
+                    {
+                        name: ktypeNames[ktype],
+                        type: 'candlestick',
+                        data: data.values,
+                        itemStyle: {
+                            normal: {
+                                color: upColor,
+                                color0: downColor,
+                                borderColor: upBorderColor,
+                                borderColor0: downBorderColor
+                            }
+                        },
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? Math.round(param.value) : '';
+                                    }
+                                }
+                            },
+                            data: [
+                                {
+                                    name: 'highest value',
+                                    type: 'max',
+                                    valueDim: 'highest'
+                                },
+                                {
+                                    name: 'lowest value',
+                                    type: 'min',
+                                    valueDim: 'lowest'
+                                },
+                                {
+                                    name: 'average value on close',
+                                    type: 'average',
+                                    valueDim: 'close'
+                                }
+                            ],
+                            tooltip: {
+                                formatter: function (param) {
+                                    return param.name + '<br>' + (param.data.coord || '');
+                                }
+                            }
+                        },
+                        markLine: {
+                            symbol: ['none', 'none'],
+                            data: [
+                                [
+                                    {
+                                        name: 'from lowest to highest',
+                                        type: 'min',
+                                        valueDim: 'lowest',
+                                        symbol: 'circle',
+                                        symbolSize: 10,
+                                        label: {
+                                            normal: {show: false},
+                                            emphasis: {show: false}
+                                        }
+                                    },
+                                    {
+                                        type: 'max',
+                                        valueDim: 'highest',
+                                        symbol: 'circle',
+                                        symbolSize: 10,
+                                        label: {
+                                            normal: {show: false},
+                                            emphasis: {show: false}
+                                        }
+                                    }
+                                ],
+                                {
+                                    name: 'min line on close',
+                                    type: 'min',
+                                    valueDim: 'close'
+                                },
+                                {
+                                    name: 'max line on close',
+                                    type: 'max',
+                                    valueDim: 'close'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        name: 'MA5',
+                        type: 'line',
+                        data: calculateMA(data.values, 5),
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA10',
+                        type: 'line',
+                        data: calculateMA(data.values, 10),
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA20',
+                        type: 'line',
+                        data: calculateMA(data.values, 20),
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA30',
+                        type: 'line',
+                        data: calculateMA(data.values, 30),
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    }
+                ]
+            };
+        }
+        
+        // K线切换函数
+        function switchK(ktype) {
+            currentKType = ktype;
+            
+            // 更新按钮样式
+            var buttons = document.querySelectorAll('.kline-type-btn');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新图表
+            var option = generateOption(ktype);
+            myChart.setOption(option, true);
+        }
+        
+        // 初始化图表
+        myChart.setOption(generateOption('day'));
         
         // 响应式调整图表大小
         window.addEventListener('resize', function() {

@@ -1,0 +1,1049 @@
+var tempDiv = null;
+var timer;
+var maper = new Maper();
+var friendDiv = null;
+// ----- popup_show ------------------------------------------------------------
+var userTipObj = 0
+var targetUserID = 0;
+var isDav = null;
+var shuoDomainpath = 'https://' + window.location.host.replace('www.tgb', 'shuo.tgb');
+var WWDomainpath = 'https://' + window.location.host.replace('www.tgb', 'shuo.tgb');
+var followDate;
+var followsType = "";
+var relationID;
+
+/*
+ * <div id="popup1"> <div id="popup2"> id=1/2 obj=popop allid=2(总个数)
+ * widthnum=450 向左偏移450px w=Div的宽度 h=Div的高度(w暂时不从前台获取)
+ */
+function blackeduser(username, wwwDomainPath, userID, auth) {
+    if(location.href.indexOf("shuo.tgb") != -1){
+        wwwDomainPath = shuoDomainpath;
+    }
+    var lastChar = wwwDomainPath.substring(wwwDomainPath.length - 1);
+    if (lastChar === "/"){
+        wwwDomainPath = wwwDomainPath.substring(0, wwwDomainPath.length - 1);
+    }
+    $.getJSON(wwwDomainPath + '/user/addBadFriend?userName=' + username, function (data) {
+        var str = data.dto;
+        if (str.type == "error") {
+            showAlert("出错了");
+        } else if (str.type == "NP") {
+            showAlert("您目前的积分已经不够");
+        } else if (str.type == "E") {
+            showAlert("已经是黑名单");
+        } else if (str.type == "Y") {
+            //拉黑GIO统计 -- start
+            var fansData = getFansLevel(userID, loginUserID);
+            var body = {};
+            body.user_id_var = loginUserID;
+            if(fansData.fansLevel != ""){
+                body.userStatus_var = "粉丝";
+                body.userLevel_var = fansData.fansRankName;
+            }else{
+                body.userStatus_var = "非粉丝";
+                body.userLevel_var = "-";
+            }
+            body.creator_id_var = userID;
+            body.creatorName_var = username;
+            if(auth > 54){
+                body.ifBigV_var = "是";
+            }else{
+                body.ifBigV_var = "否";
+            }
+            gioMessage("blockSuccess", body);
+            //拉黑GIO统计 -- end
+            showAlert("成功添加黑名单")
+        } else if (str.type == "EN") {
+            showAlert("不存在此用户");
+        } else if (str.type = "NA") {
+            showAlert("此操作不能完成！！");
+        }
+    })
+}
+function showCustomConfirm(userNum,userNumLv,pointNum) {
+    document.getElementById('customConfirm').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block'; // 显示遮罩层
+}
+var blackUserID1 = "";
+var badUserName = "";
+var auth1 = "";
+function confirmAction(result) {
+    document.getElementById('customConfirm').style.display = 'none'; // 隐藏确认框
+    document.getElementById('overlay').style.display = 'none'; // 隐藏遮罩层
+    if (result) {
+        blackeduser(badUserName, wwwDomainPath, blackUserID1, auth1);
+        // alert("您点击了确定！"); // 处理“确定”逻辑
+    } else {
+        // alert("您点击了取消！"); // 处理“取消”逻辑
+    }
+}
+//添加黑名单
+function addBlackFriend(userName, wwwDomainPath, blackUserID, auth) {
+    var pointNum = 0;
+    var userNumLv = 0;
+    var userID = 0;
+    var userNum;
+    userNum = userNum + 1;
+    var flag = 1;
+    $.ajax({
+        type: 'GET',
+        url: "new/dav/getIsDavByUserID",
+        async: false,
+        data: {userID: userID},
+        dataType: 'json',
+        success: function (json) {
+            if (json.dto.dav == 1) {
+                flag = 2;
+                userNum = json.dto.relationNum;
+            }
+        }
+    })
+    if (flag == 2) { //dav
+        var strMsg = userName+"是 ";
+        var dvBuy;
+        var feedsBuy;
+        var courseBuy;
+        var ngbBuy;
+        var isFans;
+        var resultType;
+        var trainCampBuy;
+        $.ajax({
+            type: 'GET',
+            url: "user/isExistBuyDvOrJF",
+            async: false,
+            data: {"userName": userName},
+            success: function (json) {
+                dvBuy = json.dto.dvBuy;
+                feedsBuy = json.dto.feedsBuy;
+                courseBuy = json.dto.courseBuy;
+                ngbBuy = json.dto.ngbBuy;
+                trainCampBuy = json.dto.trainCampBuy;
+                isFans = json.dto.isFans;
+                resultType = json.dto.type;
+            }
+        });
+        var buyStr = '【';
+        var parts = [];
+        if (dvBuy > 0){
+            parts.push("智能选股")
+        }
+        if (feedsBuy > 0){
+            parts.push("策略参考")
+        }
+        if (courseBuy > 0){
+            parts.push("课程")
+        }
+        if (ngbBuy > 0){
+            parts.push("牛股宝")
+        }
+        if (trainCampBuy >0){
+            parts.push("训练营")
+        }
+        if (parts.length > 0){
+            buyStr += parts.join("、")+"】产品的订阅用户";
+            if (isFans == 'Lv3'){
+                strMsg += buyStr+"与金粉，确认将其加入黑名单？";
+            }else{
+                strMsg += buyStr+"，确认将其加入黑名单？";
+            }
+        }else{
+            if (isFans == 'Lv3'){
+                strMsg += "您的金粉，确认将其加入黑名单？";
+            }else{
+                strMsg += "确认将其加入黑名单？";
+            }
+        }
+
+        if (resultType == "EN") {
+            showAlert("不存在此用户");
+        }
+        console.log(parts.length);
+        if (parts.length > 0 || isFans == 'Lv3') {
+            showConfirm(strMsg, function (r) {
+                if (r) {
+                    // console.log("trainCampBuy:"+trainCampBuy);
+                    if (trainCampBuy >0){
+                        blackUserID1 = blackUserID;
+                        badUserName = userName;
+                        auth1 = auth;
+                        showCustomConfirm(userNum,userNumLv,pointNum);
+                    }else {
+                        blackeduser(userName, wwwDomainPath, blackUserID, auth);
+                    }
+                }
+            }, null, "继续拉黑", "取消");
+        } else {
+            // console.log("elsetrainCampBuy:"+trainCampBuy);
+            showConfirm("是否将" + userName + "加入黑名单？", function (r) {
+                if (r) {
+                    blackeduser(userName, wwwDomainPath, blackUserID, auth);
+                }
+            }, null, "继续拉黑", "取消");
+        }
+    } else {
+        confirm("是否将"+userName+"加入黑名单？",function(r){
+            if (r) {
+                blackeduser(userName, wwwDomainPath, blackUserID, auth);
+            }
+        })
+    }
+}
+
+function popup_userTip_showDiv(id, obj, offsetLeft, offsetTop, w, h, className, name) {
+    userTipObj++
+    if (tempDiv != null) {
+        document.body.removeChild(tempDiv);
+        tempDiv = null;
+    }
+
+    tempDiv = document.createElement("div");
+    document.body.appendChild(tempDiv);
+    if (className == "undefined") {
+        className = " ";
+    }
+    //var innHTML = '<div><em class="S_line1_c" style="z-Index:1;color:red;position: absolute;">◆</em><span class="S_bg1_c" style="position: absolute;">◆</span></div>'
+    //	+ "<div style='width:100%;text-align:right'><a href='javascript:void(0)' onclick='popup_exit("
+    //			+ id + ",\"" + obj + "\");'>关闭</a></div>";
+    var res;
+    if (id == 0) {
+        var url = shuoDomainpath + "/shuo/getUserLabel?userID=" + id + "&name=" + name + "&callback=?";
+    } else {
+        var url = shuoDomainpath + "/shuo/getUserLabel?userID=" + id + "&callback=?";
+    }
+    if (maper.get(id) != null) {
+        res = maper.get(id);
+        targetUserID = res.userID;
+        isDav = res.isDav;
+        var innHTML = '';
+        innHTML += '<div id="newshuoCard">'
+        innHTML += '<div class="newshuoCard-top">'
+        innHTML += '<div class="newshuoCard-portrait left">'
+        innHTML += '<img src="https://image.tgb.cn/img/' + res.portrait + '_80wh.png" alt="" class="img1">'
+        if (res.vipauth > 54) {
+            innHTML += '<img src="https://css.tgb.cn/images/mNew/daV.png" alt="" class="img2">'
+        }
+        innHTML += '</div>'
+        innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-userName left">' + res.userName + '</a>'
+        if (res.vipauth > 0) {
+            innHTML += '<img src="https://css.tgb.cn/images/blog/blognew/VIP.png" alt="" class="newshuoCard-vip left">'
+        }
+        if (res.isfollow == 'false') {
+            innHTML += '<div class="newshuoCard-unfellow right" onclick="addCardFriend(\'' + res.userName + '\')">+ 关注</div>'
+        } else {
+            innHTML += '<div class="newshuoCard-fellow right">已关注</div>'
+        }
+        innHTML += '<div class="clear"></div>'
+        innHTML += '</div>'
+        innHTML += '<div class="newshuoCard-mid">'
+        innHTML += '<a href="' + shuoDomainpath + '/shuo/toBlogShuo?userID=' + res.userID + '&GZ" class="newshuoCard-info rightLineCss left">'
+        innHTML += '<b>' + res.followNum + '</b>'
+        innHTML += '<p>关注</p>'
+        innHTML += '</a>'
+        innHTML += '<a href="' + shuoDomainpath + '/shuo/toBlogShuo?userID=' + res.userID + '&FS" class="newshuoCard-info rightLineCss left">'
+        innHTML += '<b>' + res.fansNum + '</b>'
+        innHTML += '<p>粉丝</p>'
+        innHTML += '</a>'
+        innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-info rightLineCss left">'
+        innHTML += ' <b>' + res.bestBBSNums + '</b>'
+        innHTML += '<p>精华</p>'
+        innHTML += '</a>'
+        innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-info  left">'
+        innHTML += '<b>' + res.usefulNum + '</b>'
+        innHTML += '<p>赞</p>'
+        innHTML += '</a>'
+        innHTML += '<div class="clear"></div>'
+        innHTML += '</div>'
+        innHTML += '<div class="newshuoCard-bot">'
+        //innHTML += '<div class="left" style="cursor:pointer;" onclick="blackeduser(\''+res.userName+'\',\''+wwwDomainPath+'\')">'
+        innHTML += '<div class="left" style="cursor:pointer;" onclick="addBlackFriend(\'' + res.userName + '\',\'' + wwwDomainPath + '\',' + res.userID + ',' + res.vipauth + ')">'
+        innHTML += '<img class="left" src="https://css.tgb.cn/images/blog/blognew/blacked1.png" alt="" style="margin: 0px 3px 0 16px;width: 16px;" />'
+        innHTML += '<span class="left" style="color:#999;">拉黑</span><div class="clear"></div></div>'
+        innHTML += '<div class="newshuoCard-jointime right" style="margin-right:10px;">'
+        var date = new Date(Number(res.createDate));
+        innHTML += date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日加入';
+        innHTML += '</div>'
+        innHTML += '<img class="right" src="https://css.tgb.cn/images/newshuo/indextimes.png" alt="" style="margin:2px;" />'
+        innHTML += '<div class="clear"></div>'
+        innHTML += '</div>'
+        innHTML += '</div>'
+        // innHTML += '<div class="clear"></div>'
+        // innHTML += '<div id="customConfirm" style="width: 300px;height: 170px;display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);padding: 20px 20px 20px 20px;background-color: white;border: 1px solid #ccc;z-index: 1000; ">' +
+        //     '       <div style="color: black; font-size: 16px; font-weight: bold;text-align: center;">操作警告</div>\n' +
+        //     '       <span style="color: black;font-size: 14px;">该用户正在订阅您的训练营产品，拉黑将影响该用户享受训练营订阅权益。为保证服务质量和用户体验，</span>\n' +
+        //     '       <span style="color: red;font-size: 14px;">拉黑该用户将为该用户自动办理正在订阅的训练营订单进行退款处理，请确认</span><br>\n' +
+        //     '       <button style="border: none;background: red;color: #fff;width: 120px;border-radius: 5px;margin-top: 14px;margin-left: 10px;height: 40px;" onclick="confirmAction(true)">确定拉黑并退款!</button>\n' +
+        //     '       <button style="border: none;background: #4793f1;color: #fff;width: 120px;border-radius: 5px;margin-top: 14px;margin-left: 30px;height: 40px;" onclick="confirmAction(false)">取消操作</button>\n' +
+        //     '    </div>' +
+        //     '    <div id="overlay" style="display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background-color: rgba(0,0,0,0.5);z-index: 999;"></div> '
+        tempDiv.innerHTML = innHTML;
+    } else {
+        $.ajax({
+            url: url,
+            dataType: "jsonp",
+            cache: true,
+            success: function (json) {
+                res = json.dto;
+                var innHTML = '';
+                innHTML += '<div id="newshuoCard">'
+                innHTML += '<div class="newshuoCard-top">'
+                innHTML += '<div class="newshuoCard-portrait left">'
+                innHTML += '<img src="https://image.tgb.cn/img/' + res.portrait + '_80wh.png" alt="" class="img1">'
+                if (res.vipauth > 54) {
+                    innHTML += '<img src="https://css.tgb.cn/images/mNew/daV.png" alt="" class="img2">'
+                }
+                innHTML += '</div>'
+                innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-userName left">' + res.userName + '</a>'
+                if (res.vipauth > 0) {
+                    innHTML += '<img src="https://css.tgb.cn/images/blog/blognew/VIP.png" alt="" class="newshuoCard-vip left">'
+                }
+                if (res.isfollow == 'false') {
+                    innHTML += '<div class="newshuoCard-unfellow right" onclick="addCardFriend(\'' + res.userName + '\')">+ 关注</div>'
+                } else {
+                    innHTML += '<div class="newshuoCard-fellow right">已关注</div>'
+                }
+                innHTML += '<div class="clear"></div>'
+                innHTML += '</div>'
+                innHTML += '<div class="newshuoCard-mid">'
+                innHTML += '<a href="' + shuoDomainpath + '/shuo/toBlogShuo?userID=' + res.userID + '&GZ" class="newshuoCard-info rightLineCss left">'
+                innHTML += '<b>' + res.followNum + '</b>'
+                innHTML += '<p>关注</p>'
+                innHTML += '</a>'
+                innHTML += '<a href="' + shuoDomainpath + '/shuo/toBlogShuo?userID=' + res.userID + '&GZ" class="newshuoCard-info rightLineCss left">'
+                innHTML += '<b>' + res.fansNum + '</b>'
+                innHTML += '<p>粉丝</p>'
+                innHTML += '</a>'
+                innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-info rightLineCss left">'
+                innHTML += ' <b>' + res.bestBBSNums + '</b>'
+                innHTML += '<p>精华</p>'
+                innHTML += '</a>'
+                innHTML += '<a href="' + wwwDomainPath + '/blog/' + res.userID + '" class="newshuoCard-info  left">'
+                innHTML += '<b>' + res.usefulNum + '</b>'
+                innHTML += '<p>赞</p>'
+                innHTML += '</a>'
+                innHTML += '<div class="clear"></div>'
+                innHTML += '</div>'
+                innHTML += '<div class="newshuoCard-bot">'
+                //innHTML += '<div class="left" style="cursor:pointer;" onclick="blackeduser(\''+res.userName+'\',\''+wwwDomainPath+'\')">'
+                innHTML += '<div class="left" style="cursor:pointer;" onclick="addBlackFriend(\'' + res.userName + '\',\'' + wwwDomainPath + '\',' + res.userID + ',' + res.vipauth + ')">'
+                innHTML += '<img class="left" src="https://css.tgb.cn/images/blog/blognew/blacked1.png" alt="" style="margin: 0px 3px 0 16px;width: 16px;" />'
+                innHTML += '<span class="left" style="color:#999;">拉黑</span><div class="clear"></div></div>'
+                innHTML += '<div class="newshuoCard-jointime right" style="margin-right:10px;">'
+                var date = new Date(Number(res.createDate));
+                innHTML += date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日加入';
+                innHTML += '</div>'
+                innHTML += '<img class="right" src="https://css.tgb.cn/images/newshuo/indextimes.png" alt="" style="margin:2px;" />'
+                innHTML += '<div class="clear"></div>'
+                innHTML += '</div>'
+                innHTML += '</div>'
+                // innHTML += '<div class="clear"></div>'
+                // innHTML += '<div id="customConfirm" style="width: 300px;height: 170px;display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);padding: 20px 20px 20px 20px;background-color: white;border: 1px solid #ccc;z-index: 1000; ">' +
+                //     '       <div style="color: black; font-size: 16px; font-weight: bold;text-align: center;">操作警告</div>\n' +
+                //     '       <span style="color: black;font-size: 14px;">该用户正在订阅您的训练营产品，拉黑将影响该用户享受训练营订阅权益。为保证服务质量和用户体验，</span>\n' +
+                //     '       <span style="color: red;font-size: 14px;">拉黑该用户将为该用户自动办理正在订阅的训练营订单进行退款处理，请确认</span><br>\n' +
+                //     '       <button style="border: none;background: red;color: #fff;width: 120px;border-radius: 5px;margin-top: 14px;margin-left: 10px;height: 40px;" onclick="confirmAction(true)">确定拉黑并退款!</button>\n' +
+                //     '       <button style="border: none;background: #4793f1;color: #fff;width: 120px;border-radius: 5px;margin-top: 14px;margin-left: 30px;height: 40px;" onclick="confirmAction(false)">取消操作</button>\n' +
+                //     '    </div>' +
+                //     '    <div id="overlay" style="display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background-color: rgba(0,0,0,0.5);z-index: 999;"></div> '
+                tempDiv.innerHTML = innHTML;
+            }
+        });
+    }
+    tempDiv.id = obj + id;
+    if (id == 0) {
+        tempDiv.innerHTML = '<div style = "height:180px;width:100%;line-height: 180px;text-align:center; ">抱歉，没有找到该用户信息</div>';
+    }
+    with (tempDiv.style) {
+        position = "absolute";
+        //border-radius="3px";
+        zIndex = 1000;
+        left = offsetLeft + 'px';
+        top = offsetTop + 16 + 'px';
+        width = w + 'px';
+        height = h + 'px';
+        textAlign = "left";
+        //padding = "5px";
+        lineHeight = "1.6";
+        breakWord = "break-all";
+        overflow = "hidden";
+        visibility = "visible";
+        display = "none";
+    }
+
+    $(tempDiv).show();
+    $(tempDiv).mouseout(function (e) {
+        if (checkHover(e, this)) {
+            $(tempDiv).hide();
+        }
+    });
+    $(tempDiv).mouseover(function (e) {
+        if (checkHover(e, this)) {
+            $(tempDiv).show();
+        }
+    });
+    //			if (navigator.appName == "Microsoft Internet Explorer") {
+    //				tempDiv.attachEvent('onmouseout', poput_hidden);
+    //			}else {
+    //				tempDiv.addEventListener('mouseout', poput_hidden, false);
+    //			}
+
+
+    // alert(scrollPos);
+
+    // element = document.getElementById(obj+id);
+    // tempDiv.style.position = "absolute";
+    // tempDiv.style.visibility = "visible";
+    // tempDiv.style.display = "block";
+    // element.style.left = (scrollLeft+popup_mouseposX-widthnum)+'px';
+    // element.style.top = (scrollTop+popup_mouseposY-heightnum)+'px';
+
+
+}
+
+function userTips(obj, id, name, postdate, source, topicId) {
+    //showAlert(+"_"+);
+    //var args = {id:"1",img:"",text:"text",msg:"msg",widthnum:0,heightnum:0,w:380,h:180,className:"pop"}
+    //userTip_showDiv(args);
+    if (postdate != null && source != null) {
+        followDate = postdate;
+        followsType = source;
+        relationID = topicId;
+    }
+    timer = setTimeout("popup_userTip_showDiv(\'" + id + "\', 'tipDiv', " + getElementLeft(obj) + ", " + getElementTop(obj) + ", 348, 158, '',\'" + name + "\');", 1000);
+
+};
+
+function offTip() {
+    clearTimeout(timer);
+    $(tempDiv).hide();
+}
+
+var time11;
+
+function showSpmatchTips() {
+    var url = wwwDomainPath + "user/showSpmatchTips?targetUserID=" + targetUserID;
+    $.ajax({
+        url: url,
+        dataType: "jsonp",
+        cache: true,
+        success: function (json) {
+            res = json.dto;
+            var innHTML = '';
+            var str = res.certName;
+            var userCertName = new Array();
+            if (str.indexOf(",") > 0) {
+                userCertName = str.split(",");
+            }
+            innHTML += '<div style="padding:10px;width:100px;background-color:#f2f4f2;background-image:url(https://css.tgb.cn/res/images/spmatch/sptips.png);background-size:100%;width: 250px;top:27px;z-index:1001;text-align: left;position:absolute;border:2px solid #dcdcdc">';
+            if (userCertName != '') {
+                var user = userCertName[0].split("_");
+                var userName = user[0];
+                innHTML += '<p style="text-align:center;color: lightskyblue;">' + userName + '——实盘比赛获得的荣誉' + '<p/>';
+                for (var i = 0; i < userCertName.length; i++) {
+                    var user = userCertName[i].split("_");
+                    var userName = user[0];
+                    var simpleName = user[1];
+                    var title = user[2];
+                    var topicID = user[3];
+                    var newTopicID = user[4];
+                    innHTML += '<div style="text-align: center;">'
+                        + '<span style="color: cornflowerblue;">●&nbsp;</span>'
+                        + '<a class="smallPhoto" target="_blank;" style="color: #000000;" href=' + wwwDomainPath + 'a/' + newTopicID + '>' + simpleName + ':' + '</a>'
+                        + '<span style="color: red;">&nbsp;&nbsp;' + title + '</span>'
+                        + '</div>';
+                }
+            } else {
+                var user = str.split("_");
+                var userName = user[0];
+                var simpleName = user[1];
+                var title = user[2];
+                var topicID = user[3];
+                var newTopicID = user[4];
+                innHTML += '<p style="text-align:center;color: lightskyblue;">' + userName + '——实盘比赛获得的荣誉' + '<p/>'
+                    + '<div style="text-align: center;">'
+                    + '<span style="color: cornflowerblue;">●&nbsp;</span>'
+                    + '<a class="smallPhoto" target="_blank;" style="color: #000000;" href=' + wwwDomainPath + 'a/' + newTopicID + '>' + simpleName + ':' + '</a>'
+                    + '<span style="color: red;">&nbsp;&nbsp;' + title + '</span>'
+                    + '</div>';
+            }
+
+            innHTML += '</div>';
+            document.getElementById('firstSpSign').innerHTML = innHTML;
+
+            var newHtml = $(innHTML);
+            console.log("newHtml==" + newHtml);
+            newHtml.mouseout(function (e) {
+                clearTimeout(time11);
+                if (checkHover(e, this)) {
+                    newHtml.remove();
+                }
+            });
+        }
+    });
+}
+
+function isFirstSign(firstSign) {
+    if (firstSign == 'H') {
+        return '<div style="float: left"><img src="https://css.tgb.cn/images/spMatch_First_Sign/huangguan.gif" onmouseover="showSpmatchTips()" onmouseout="closeSpmatchTips(this)" target="_blank" style="margin-top:-3px;"></div>';
+    } else {
+        return '';
+    }
+
+}
+
+function closeSpmatchTips(obj) {
+    console.log(obj);
+    var parentnode = $($(obj).next().children("div"));
+    console.log(parentnode);
+    time11 = setTimeout(function () {
+        parentnode.remove();
+    }, 350)
+}
+
+// var vags={id:"1",img:"",text:"text",msg:"msg",widthnum:0,heightnum:0,w:380,h:180,className:"pop"}
+function userTip_showDiv(args) {
+    var id = args.id
+    obj = args.obj,
+        widthnum = args.widthnum,
+        heightnum = args.heightnum,
+        w = args.w, h = args.h,
+        className = args.className,
+        msg = args.msg,
+        img = args.img,
+        text = args.text;
+
+    userTipObj++;
+    if (tempDiv != null) {
+        document.body.removeChild(tempDiv);
+        tempDiv = null;
+    }
+    tempDiv = document.createElement("div");
+    tempDiv.id = "msg_showLayder" + id;
+    tempDiv.style.border = 1;
+    var scrollTop = heightnum;
+    var scrollLeft = widthnum;
+//	if (typeof window.pageYOffset != 'undefined') {
+//		scrollTop = window.pageYOffset;
+//		scrollLeft = window.pageXOffset;
+//	} else if (typeof document.compatMode != 'undefined'
+//			&& document.compatMode != 'BackCompat') {
+//		scrollTop = document.documentElement.scrollTop;
+//		scrollLeft = document.documentElement.scrollLeft;
+//	} else if (typeof document.body != 'undefined') {
+//		scrollTop = document.body.scrollTop;
+//		scrollLeft = document.body.scrollLeft;
+//	}
+    if (className == "undefined") {
+        className = " ";
+    }
+    var innHTML = '<div style="position: absolute;margin: -18px 0 0;width: 22px;cursor: default;"><em class="S_line1_c">◆</em><span class="S_bg1_c">◆</span></div>';
+    innHTML += "<div style='width:100%;background:url(https://css.tgb.cn/images/22_04.gif) repeat-x; border-bottom:1px solid #a8a8a8;height:25px;line-height:25px;margin:0px'><div style='width:6px;float:left'></div><div style='float:left'><img src='https://css.tgb.cn/images/22_03.gif'></div><div style='font-size:13px;float:left;margin-left:10px'>" + text + "</div><div style='float:right;padding-top:5px;margin-right:6px'><a href='javascript:void(0)' onclick='popup_exit(" + id + ",\"msg_showLayder\");document.getElementById(\"bgLayer\").style.display=\"none\";'><img style='cursor:pointer;' alt='关闭' src='https://css.tgb.cn/images/shut.gif' unselectable='on'/></a></div></div>";
+    innHTML += "<div id=" + id + "msg_showLayder" + " class='" + className
+        + "'>"
+        + "<div style='float:left;margin-top:15px;margin-left:10px;'><img src='" + img + "' width='94' height='121'></div>"
+        + "<div style='float:right;margin-top:10px;margin-right:7px;'>" + msg + "</div>"
+        + '</div>';
+    tempDiv.innerHTML = innHTML;
+    with (tempDiv.style) {
+        position = "absolute";
+        zIndex = "101";
+        left = (document.body.offsetWidth - w) / 2 + "px";
+        top = (document.body.offsetHeight - h) / 2 + "px";
+        width = w + 'px';
+        height = h + 'px';
+        textAlign = "left";
+        padding = "0px";
+        lineHeight = "1.6";
+        breakWord = "break-all";
+        overflow = "hidden";
+        visibility = "visible";
+        display = "block";
+    }
+    //var ie = navigator.appName == "Microsoft Internet Explorer";
+    if (navigator.appName == "Microsoft Internet Explorer") {
+        showAlert("1");
+        //tempDiv.attachEvent('onmouseout', poput_hidden);
+        showAlert("1");
+    } else {
+        showAlert("2");
+        //tempDiv.addEventListener('mouseout', poput_hidden, false);
+        showAlert("2");
+    }
+    document.body.appendChild(tempDiv);
+}
+
+function poput_hidden() {
+    tempDiv.style.visibility = 'hidden';
+    tempDiv.style.display = 'none';
+}
+
+function popup_exit(i, obj) {
+    element = document.getElementById(obj + i);
+    if (element.style.visibility && element.style.visibility == "visible"
+        || element.style.display == 'block'
+        && element.style.display != 'none') {
+        element.style.visibility = 'hidden';
+        element.style.display = 'none';
+    }
+}
+
+// ---all_popup_exit--------------------
+function all_popup_exit(allId, obj) {
+    for (var i = 1; i <= allId; i++) {
+        element = document.getElementById(obj + i);
+        if (element.style.visibility && element.style.visibility == "visible"
+            || element.style.display == 'block'
+            && element.style.display != 'none') {
+            element.style.visibility = 'hidden';
+            element.style.display = 'none';
+        }
+    }
+    userTipObj = 0
+}
+
+// ----- popup_mousepos --------------------------------------------------------
+//function popup_mousepos(e) {
+//	var ie = navigator.appName == "Microsoft Internet Explorer";
+//	popup_mouseposX = ie ? window.event.clientX : e.clientX;
+//	popup_mouseposY = ie ? window.event.clientY : e.clientY;
+//}
+//// ----- Attach Events ---------------------------------------------------------
+//
+//if (navigator.appName == "Microsoft Internet Explorer") {
+//	document.attachEvent('onmousedown', popup_mousepos);
+//} else {
+//	document.addEventListener('mousedown', popup_mousepos, false);
+//}
+
+function getElementLeft(element) {
+    var actualLeft = element.offsetLeft;
+    var current = element.offsetParent;
+    while (current !== null) {
+        actualLeft += current.offsetLeft;
+        current = current.offsetParent;
+    }
+    return actualLeft;
+}
+
+function getElementTop(element) {
+    var actualTop = element.offsetTop;
+    var current = element.offsetParent;
+    while (current !== null) {
+        actualTop += current.offsetTop;
+        current = current.offsetParent;
+    }
+    return actualTop;
+}
+
+function getGender(gender) {
+    if (gender == "M") {
+        return "男";
+    } else if (gender == "W") {
+        return "女";
+    } else {
+        return "保密";
+    }
+}
+
+function isVip(vipauth) {
+    if (vipauth > 0) {
+        if (isDav != null && isDav == "true") {
+            return '<div style="float: left">&nbsp;&nbsp;&nbsp;<img src="https://css.tgb.cn/res/images/dav/V.gif"></div>';
+        } else {
+            return '<div style="float: left">&nbsp;&nbsp;&nbsp;<img src="https://css.tgb.cn/images/vip_s.png"></div>';
+        }
+    } else {
+        return '';
+    }
+
+}
+
+function getAge(num) {
+    var str = "";
+    switch (parseInt(num)) {
+        case 0:
+            str = "保密";
+            break;
+        case 1:
+            str = "15以下";
+            break;
+        case 2:
+            str = "15-20";
+            break;
+        case 3:
+            str = "21-30";
+            break;
+        case 4:
+            str = "31-40";
+            break;
+        case 5:
+            str = "41-50";
+            break;
+        case 6:
+            str = "51-60";
+            break;
+        case 7:
+            str = "61-70";
+            break;
+        case 8:
+            str = "71-80";
+            break;
+        case 9:
+            str = "80以上";
+            break;
+    }
+    return str;
+}
+
+function contains(parentNode, childNode) {
+    if (parentNode.contains) {
+        return parentNode != childNode && parentNode.contains(childNode);
+    } else {
+        return !!(parentNode.compareDocumentPosition(childNode) & 16);
+    }
+}
+
+function checkHover(e, target) {
+    if (getEvent(e).type == "mouseover") {
+        return !contains(target, getEvent(e).relatedTarget || getEvent(e).fromElement) && !((getEvent(e).relatedTarget || getEvent(e).fromElement) === target);
+    } else {
+        return !contains(target, getEvent(e).relatedTarget || getEvent(e).toElement) && !((getEvent(e).relatedTarget || getEvent(e).toElement) === target);
+    }
+}
+
+function getEvent(e) {
+    return e || window.event;
+}
+
+function addBadFriend(userName) {
+    confirm("确定要拉黑\"" + userName + "\"吗？", function (r) {
+        if (r) {
+            var url = wwwDomainPath + "user/addBadFriend?userName=" + encodeURIComponent(userName) + "&callback=?";
+            $.getJSON(url, function (str) {
+                str = str.dto;
+                if (str.type == "error") {
+                    showAlert("出错了");
+                } else if (str.type == "NP") {
+                    showAlert("您目前的积分已经不够");
+                } else if (str.type == "E") {
+                    showAlert("已经是黑名单");
+                } else if (str.type == "Y") {
+                    showAlert("成功添加");
+                } else if (str.type == "EN") {
+                    showAlert("不存在此用户");
+                } else if (str.type = "NA") {
+                    showAlert("此操作不能完成！！");
+                }
+            });
+        }
+    });
+}
+
+function addFocus(focusID, getfocusName) {
+    focusName = encodeURIComponent(getfocusName);
+    var url = shuoDomainPath + "addFocus?focusID=" + focusID + '&focusName=' + encodeURIComponent(focusName) + "&callback=?";
+    $.getJSON(url, function (json) {
+        var p = json.dto.result;
+        if (p == 1) {
+            document.getElementById('isFo_' + focusID).innerHTML = '<a href="javascript:void(0);" onclick="cancelFocus(\'' + focusID + '\',\'' + getfocusName + '\')"><img src="https://css.tgb.cn/images/offfocus.gif"/></a>'
+        } else if (p == 0) {
+            showAlert("关注失败");
+        } else if (p == -1) {
+            showAlert("尚未登录");
+        } else if (p == -2) {
+            showAlert("对方将你设为黑名单");
+        } else if (p == -3) {
+            showAlert("已经关注了");
+        } else if (p == -4) {
+            showAlert("不能关注自己");
+        } else {
+            showAlert("异常操作");
+        }
+    });
+}
+
+//取消关注
+function cancelFocus(focusID, getfocusName, fn) {
+    confirm("确认对\"" + getfocusName + "\"取消关注吗？", function (r) {
+        // focusName = encodeURIComponent(getfocusName);
+        if (r) {
+            var url = shuoDomainPath + "Unfollow?focusID=" + focusID + "&callback=?";
+            $.getJSON(url, function (json) {
+                var p = json.dto.result;
+                if (p == "1") {
+                    showAlert("取消关注成功");
+                    if (fn != undefined) fn();
+                    else document.getElementById('isFo_' + focusID).innerHTML = '<a href="javascript:void(0);" onclick="addCardFriend(\'' + getfocusName + '\')"><img src="https://css.tgb.cn/images/focus.gif"/></a>';
+                } else if (p == "0") {
+                    showAlert("取消关注失败");
+                } else if (p == "-1") {
+                    showAlert("尚未登录");
+                } else if (p == "-3") {
+                    showAlert("尚未关注");
+                } else {
+                    showAlert("异常操作");
+                }
+            });
+        }
+    });
+
+}
+
+//添加好友
+function addCardFriend(firend_name, domain, friendID, fn) {
+    //原关注链接
+    var url = wwwDomainPath + "user/addGoodFriend?userName=" + encodeURIComponent(firend_name) + "";
+    if (followDate != null && followsType.length > 0) {
+        if (relationID != null && relationID != "undefined") {
+            url = window.location.href.indexOf('shuo') > -1 ? "/shuo/AddFollowsNew?userName=" + encodeURIComponent(firend_name) + "&bodyTime=" + followDate + "&source=" + followsType + "&topicID=" + relationID : "/user/AddFollowsNew?userName=" + encodeURIComponent(firend_name) + "&bodyTime=" + followDate + "&source=" + followsType + "&topicID=" + relationID + "";
+        } else {
+            url = window.location.href.indexOf('shuo') > -1 ? "/shuo/AddFollowsNew?userName=" + encodeURIComponent(firend_name) + "&bodyTime=" + followDate + "&source=" + followsType : "/user/AddFollowsNew?userName=" + encodeURIComponent(firend_name) + "&bodyTime=" + followDate + "&source=" + followsType + "";
+        }
+
+    }
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: {},
+        dataType: 'JSON',
+        xhrFields: {withCredentials: true},
+        success: function (str) {
+            if (str.dto.type != "error") {
+                if (str.dto.type == "3") {
+                    showAlert("该网友已经在您的关注列表中了!");
+                }
+                if (str.dto.type == "4") {
+                    showAlert("该网友在您的黑名单列表中了,无法关注TA!");
+                }
+                if (str.dto.type == "5") {
+                    showAlert("您在该网友的黑名单列表中了,无法关注TA!");
+                }
+                if (str.dto.type == "N") {
+                    showAlert("抱歉，该博主设置了不允许任何人关注");
+                }
+                if (str.dto.type == "F") {
+                    showAlert("报歉，对方因违反社区规则，此功能暂时不能用!");
+                }
+                if (str.dto.type == "R") {
+                    addFridendPop();
+                    popup_show(1, 'frienddiv');
+                    document.getElementById("sendtxtname").value = firend_name;
+                    if (window.location.href.indexOf('shuo') > -1) {
+                        $('#frienddiv1').css('position', 'fixed');
+                    }
+                }
+                if (str.dto.type == "Y") {
+                    showAlert("成功关注!", function(){
+                        if (fn){
+                            fn();
+                        }else{
+                            if(location.href.indexOf("weblive") != -1){//直播页面的关注
+                                $(".liveAttention").find(".live-fans").remove();
+                                $(".liveAttention").append('<span class="live-tool is-fans">已关注</span>');
+                            }else if(location.href.indexOf("/feeds/gold") != -1){
+                                var $div = '<span class="left allblog_top_follow" style="background: #f2f2f2;color: #ccc;">已关注</span>';
+                                $("#allblog_top_follow").html($div);
+                            }else if(location.href.indexOf("/spmatch/matchAll") != -1){
+                                var $div = '<div class="sin-match-author-follow" style="background: #d6d6d6;">已关注</div>';
+                                $("#authorFollow").html($div);
+                            }else{
+                                var $div = '<div class="left content-right-buttom" style="color: #999;background: #efefef;">已关注</div>';
+                                $(".addFollow").html($div);
+                                $("#saveDraft1").hide();
+                                $("#awardPointFollow").html("");
+                                //分发积分
+                                awardPoint("G","自动触发");
+                            }
+                        }
+                        //GIO 成功关注埋点 -- start
+                        gioFollowSuccess(firend_name, loginUserID, "关注");
+                        //GIO 成功关注埋点 -- end
+                    });
+                }
+                if (str.dto.type == "EN") {
+                    showAlert("不存在此用户!");
+                }
+                if (str.dto.type == "TM") {
+                    showAlert("关注超过2000个，无法再添加");
+                }
+                if (str.dto.type == "EF") {
+                    showAlert("您不能关注自己!");
+                }
+            } else {
+                showAlert("异常出错！");
+            }
+        }
+    })
+}
+
+function addFriendInfo(objName, id) {
+    var url = "/user/addFriendInfo?recvUserName=" + document.getElementById("sendtxtname").value + "&msgText=" + document.getElementById("sendtxtcontent").value;
+    XMLHttp.sendReq("get", url, "", function (obj) {
+        var str = obj.dto;
+        if (str == 1) {
+            showAlert("发送成功!");
+            document.getElementById("frienddiv1").style.display = "none";
+        } else if (str == 0) {
+            showAlert("失败，请重试!");
+        } else if (str == 2) {
+            showAlert("关注超过2000个，无法再添加");
+        }
+    });
+}
+
+
+function addFridendPop() {
+    if (friendDiv == null) {
+        friendDiv = document.createElement("div");
+        with (friendDiv.style) {
+            visibility = 'hidden';
+            display = 'none';
+            width = '400px';
+            height = '200px';
+            position = 'fixed';
+            left = '40%';
+            top = '40%';
+            background = "none repeat scroll 0 0 #FFFFFF";
+            border = "10px solid #b0cde0";
+            padding = "10px";
+        }
+        ;
+        friendDiv.id = 'frienddiv1';
+        var str = '<table width="100%"><tr><td colspan="2" width="100%"><span style=" color: #4793f1;font-size: 16px;display: inline-block;text-align: center;">用户要求身份验证</span><span style="float:right;"><a href="javascript:void(0);" onclick="popup_exit();">X</a></span></td></tr>';
+        str += '<tr style="height: 60px;"><td width="100px" align="right" >用户名:<br /></td>	<td align="left"><input type="text" id="sendtxtname" maxlength="12" value=\'\' disabled="disabled" style="width: 180px;padding: 3px;margin: 5px 0;"/>	<br /></td>	</tr>';
+        str += '<tr style="height: 20px;"><td width="100px" align="right">验证信息：<br /></td><td align="left"><input type="text" id="sendtxtcontent" maxlength="10" placeholder="请输入申请关注理由（选填）" style="width: 180px;padding: 3px;margin: 5px 0;"/><br /></td></tr>';
+        str += '<tr><td colspan="2" align="center">&nbsp;&nbsp;&nbsp;&nbsp; <input type="button" onclick="addFriendInfo();" value="发送验证信息" style="padding: 3px;margin-top: 20px;"/><br/></td>	</tr></table>';
+        friendDiv.innerHTML = str;
+        document.body.appendChild(friendDiv);
+    }
+    return friendDiv;
+}
+
+function popup_exit() {
+    document.getElementById("frienddiv1").style.display = "none";
+}
+
+function popupFriend_show(id, obj, friend_name, allId, widthnum, heightnum, ev) {
+    addFridendPop();
+    popup_show(1, 'frienddiv');
+//		if (taoguba!=0)all_popup_exit(allId,obj)
+//			taoguba++;
+//		var scrollTop;
+//		var scrollLeft;
+//		scrollTop = document.body.scrollTop;
+//		scrollLeft=document.body.scrollLeft;
+//		friendDiv.style.position = "absolute";
+//		friendDiv.style.visibility = "visible";
+//		friendDiv.style.display = "block";
+//		friendDiv.style.left = (scrollLeft+popup_mouseposX-friendDiv.style.width)+'px';
+//		friendDiv.style.top = (document.body.clientHeight-friendDiv.clientHeight)/2+$(document).scrollTop()+'px';
+
+}
+var taoguba=0;
+var popup_mouseposX;
+var popup_mouseposY;
+function popup_show(id, obj, allId) {
+//		alert("123");
+    if (taoguba != 0) all_popup_exit(allId, obj)
+    taoguba++
+    var scrollTop;
+    var scrollLeft;
+    var clientWidth = document.body.clientWidth;
+    var clientHeight = document.body.clientHeight;
+    if (typeof window.pageYOffset != 'undefined') {
+        scrollTop = window.pageYOffset;
+        scrollLeft = window.pageXOffset;
+        // showAlert("d");
+    } else if (typeof document.compatMode != 'undefined' &&
+        document.compatMode != 'BackCompat') {
+        scrollTop = document.documentElement.scrollTop;
+        scrollLeft = document.documentElement.scrollLeft;
+        // showAlert("a");
+    } else if (typeof document.body != 'undefined') {
+        scrollTop = document.body.scrollTop;
+        scrollLeft = document.body.scrollLeft;
+        //  showAlert("b");
+    }
+    //showAlert(scrollPos);
+
+    element = document.getElementById(obj + id);
+    if(element.style.position == "fixed"){ //看帖页打赏浮动
+        element.style.visibility = "visible";
+        element.style.display = "block";
+        element.style.left = "0px";
+        element.style.right = "0px";
+        element.style.top = "200px";
+        element.style.margin = "0 auto";
+    }else{
+        element.style.position = "absolute";
+        element.style.visibility = "visible";
+        element.style.display = "block";
+        var objidWidth = element.offsetWidth;
+        var objidHeight = element.offsetHeight;
+        // showAlert(scrollLeft+popup_mouseposX+objidWidth+"|"+clientWidth+"|"+objidWidth);
+        if ((scrollLeft + popup_mouseposX + objidWidth) > clientWidth) {
+            element.style.left = (scrollLeft + popup_mouseposX - objidWidth) + 'px';
+        } else {
+            element.style.left = (scrollLeft + popup_mouseposX) + 'px';
+        }
+
+        if ((scrollTop + popup_mouseposY + objidHeight) > clientHeight) {
+            element.style.top = (scrollTop + popup_mouseposY - objidHeight) + 'px';
+        } else {
+            element.style.top = (scrollTop + popup_mouseposY) + 'px';
+        }
+
+        if (obj == "qinghe") {				//打赏
+            element.style.left = (clientWidth - objidWidth) / 2 + 'px';
+            element.style.top = (scrollTop + 150) + 'px';
+        }
+    }
+}
+
+function Maper() {
+    var struct = function (key, value) {
+        this.key = key;
+        this.value = value;
+    }
+    var put = function (key, value) {
+        for (var i = 0; i < this.arr.length; i++) {
+            if (this.arr[i].key === key) {
+                this.arr[i].value = value;
+                return;
+            }
+        }
+        this.arr[this.arr.length] = new struct(key, value);
+    }
+    var get = function (key) {
+        for (var i = 0; i < this.arr.length; i++) {
+            if (this.arr[i].key === key) {
+                return this.arr[i].value;
+            }
+        }
+        return null;
+    }
+    var remove = function (key) {
+        var v;
+        for (var i = 0; i < this.arr.length; i++) {
+            v = this.arr.pop();
+            if (v.key === key) {
+                continue;
+            }
+            this.arr.unshift(v);
+        }
+    }
+    var size = function () {
+        return this.arr.length;
+    }
+    var isEmpty = function () {
+        return this.arr.length <= 0;
+    }
+    this.arr = new Array();
+    this.get = get;
+    this.put = put;
+    this.remove = remove;
+    this.size = size;
+    this.isEmpty = isEmpty;
+
+}

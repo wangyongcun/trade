@@ -1,0 +1,445 @@
+//微博评论、转发
+//参数说明：
+/**
+ * { type:用来说明该弹出框的类型(	R:评论;T：转发; A:at)
+ * 	 title:弹出框的标题文字
+ *   subMethod:指定提交数据的方法名
+ *   data:提交数据时需要用到的参数值
+ * }
+ * @param {Object} $
+ * @memberOf {TypeName} 
+ * @return {TypeName} 
+ */
+var isIE = /msie/i.test(navigator.userAgent);
+//弹出层的调用接口
+function TGBDialog(title,initContent,dialogEditor,editorId,wordNum,callback){
+	var str = shadeName()?shadeName():'';
+    var DialogBox="<div class='cxc_Mobile' id='tgb_Dialog'>"+
+    "<div class='cxc_dialog'>"+
+    "<div class='cxc_dialog_filt'>"+
+    "<div class='cxc_dialog_bd'>"+
+    "<div class='cxc_top'><p id='Cxc_Mobile' onmousedown='MoveDiv(tgb_Dialog,event);'>"+title+"</p><span onclick='CxcClose()'>[关闭]</span></div>"+
+    "<div id='"+editorId+"'></div>";
+//    if(wordNum!=0){
+//    	DialogBox+="<div class='wordTips'>还可以输入<span>"+wordNum+"</span>个字</div>";
+//    }
+    DialogBox+="<p class='cxc_ft'>"+str+"<a class='ok'>"+(editorId =='transEditorId'?'转发':'发布')+"</a><a class='cancel' onclick='CxcClose();'>取消</a></p>"+
+    "</div>"+
+    "</div>"+
+    "</div>"+
+    "</div><div id='Masklayer' class='Masklayer'></div>";
+    $("#tgb_Dialog").remove();
+    $("body").append(DialogBox);
+    dialogEditor.render(editorId);
+    dialogEditor.ready(function(){
+	  	var top = ($(window).height() - ($("#"+editorId).height()+100))/2;   
+      	var left = ($(window).width() - $("#"+editorId).width())/2;   
+      	var scrollTop = $(document).scrollTop();   
+      	var scrollLeft = $(document).scrollLeft();
+        $("#tgb_Dialog").css({"left":left+scrollLeft,"top":top+scrollTop});
+	    $("#Masklayer").height($(window).height()+$(document).scrollTop());
+	    $("#Masklayer").css("display","block");
+	    dialogEditor.setContent(initContent);
+	    if(editorId =='atUserEditorId'){
+	    	dialogEditor.focus(true);
+	    }else{
+	    	dialogEditor.focus();
+	    }
+	    $("#tgb_Dialog select").removeClass("shadowSelect");
+		$("#tgb_Dialog select").addClass("shadowDialogSelect");
+    	}
+    );
+//	if(wordNum!=0){
+//		$textarea = $(dialogEditor.iframe).contents();
+//		if (document.all) {
+//	        $textarea.get(0).attachEvent('onpropertychange',function(e) {
+//	        	alert("123");
+//				var writableNum = wordNum-dialogEditor.getContentLength(true);
+//				if(writableNum>0){
+//					$(".wordTips span").html(writableNum).css("color","#000");
+//				}else{
+//					$(".wordTips span").html(writableNum).css("color","red");
+//				}
+//	        });
+//	    }else{
+//	        $textarea.on('input',function(e){
+//	        	var writableNum = wordNum-dialogEditor.getContentLength(true);
+//				if(writableNum>0){
+//					$(".wordTips span").html(writableNum).css("color","#000");
+//				}else{
+//					$(".wordTips span").html(writableNum).css("color","red");
+//				}
+//	        });
+//	    }
+//	}
+    $('.cxc_ft a.ok').click(function(){
+    	callback();	 
+     });
+}
+function CxcClose(){
+	$("#tgb_Dialog").remove();
+	$("#editor-at-suggestion").hide();
+	$("#Masklayer").css("display","none");
+	
+}
+//增加事件动作，不冲突原来的事件
+//参数，对象，事件名称（带on），事件定义（如果要带参数，则要function(){eventFunc("")}这样传递参数）
+function addObjEvent(obj,eventName,eventFunc){
+	if (obj.attachEvent){ //IE
+		obj.attachEvent(eventName,eventFunc);
+	}else if (obj.addEventListener){ //FF Gecko / W3C
+		var eventName2 = eventName.toString().replace(/on(.*)/i,'$1'); //正则过滤第1个on
+		obj.addEventListener(eventName2,eventFunc, false); //fslse为倒序执行事件
+	}else{
+		obj[eventName] = eventFunc;
+	}
+}
+//移除事件动作
+//参数，对象，事件名称（带on），事件定义（如果要带参数，则要function(){eventFunc("")}这样传递参数）
+function delObjEvent(obj,eventName,eventFunc){
+	if (obj.detachEvent) { // IE
+		obj.detachEvent(eventName,eventFunc);
+	}else if (obj.removeEventListener){ //FF Gecko / W3C
+		var eventName2 = eventName.toString().replace(/on(.*)/i,'$1'); //正则过滤第1个on
+		obj.removeEventListener(eventName2,eventFunc, false); //fslse为倒序执行事件
+	}else{
+		obj[eventName] = null;
+	}
+}
+//可以任意拖动的层（支持Firefox,IE)
+//参数，移动的层对象和event对象，方法 onmousedown="MoveDiv(this,event)"
+function MoveDiv(obj,e){
+	e = e||window.event;
+	var ie6=isIE;
+	if (/msie 9/i.test(navigator.userAgent)) {ie6=false;} //把IE9设置为非IE浏览器
+	//只允许通过鼠标左键进行拖拽,IE68鼠标左键为1 FireFox ie9其他为0
+	if (ie6 && e.button == 1 || !ie6 && e.button == 0) {}else{return false;}
+	obj.style.position='absolute'; //设置浮动模式
+	obj.ondragstart =function(){return false;} //禁止对象的拖动事件，不然图片在火狐下会无法拖动
+
+	var x = e.screenX - obj.offsetLeft;
+	var y = e.screenY - obj.offsetTop;
+	addObjEvent(document,'onmousemove',moving); //鼠标移动时，增加移动事件
+	addObjEvent(document,'onmouseup',endMov); //鼠标放开时，增加停止事件
+	e.cancelBubble = true; //禁止事件冒泡,使触发在子对象上的事件不传递给父对象
+	
+	//IE去除选中背景文字
+	if (isIE) {
+		obj.setCapture(); //设置捕获范围 releaseCapture() 释放
+	} else {
+		window.captureEvents(Event.mousemove); //window.releaseEvents(Event.eventType) 释放
+	}
+	//if (!isIE){e.stopPropagation();} //W3C 禁止冒泡
+	//FireFox 去除容器内拖拽图片问题，火狐防止选中背景文字
+	if (e.preventDefault) {
+		e.preventDefault(); //取消事件的默认动作
+		e.stopPropagation(); //事件不再被分派到其他节点
+	}
+	e.returnValue = false; //指事件的返回值是false 。return false;是指函数的返回值为false
+	return false;
+	//移动
+	function moving(e){
+		obj.style.left = (e.screenX - x) + 'px';
+		obj.style.top = (e.screenY - y) + 'px';
+		return false; //图片移动时会出现拖动图片的动作，增加这个return可以不执行这个动作
+	}
+	//停止
+	function endMov(e){
+		delObjEvent(document,'onmousemove',moving); //删除鼠标移动事件
+		delObjEvent(document,'onmouseup',arguments.callee); //删除鼠标放开事件,arguments.callee为函数本身
+		if (isIE) {
+			obj.releaseCapture(); //释放捕获
+		} else {
+			window.releaseEvents(Event.mousemove); //释放
+		}
+	}
+}
+(function($){
+	 $(window).scroll(function (){
+         var offsetTop = $(window).height()+$(document).scrollTop()+"px"; 
+         $('#Masklayer').height(offsetTop);
+     }).resize(function(){
+    	 var offsetTop = $(window).height()+$(document).scrollTop()+"px"; 
+         $('#Masklayer').height(offsetTop);
+     });
+	 //解析初始值中的表情
+	 function parseEmotion(initContent){
+		 initContent = initContent.replace(/\[F](.*?)\[\/F]/ig,function($1,$2){
+																	return '<img style="vertical-align: text-bottom;" src="https://css.taoguba.com.cn/images/'+$2+'" data_ue_src="http://img.taoguba.com.cn/images/'+$2+'">';
+																});
+		 initContent = initContent.replace(/\[gubar\](.+?)\[\/gubar\]/ig,function($1){
+																  $1 = $1.replace("[gubar]","");
+																  $1 = $1.replace("[/gubar]","");
+																  return $1});
+		initContent = initContent.replace(/\[gguba\](.+?)\[\/gguba\]/ig,function($1){
+																  $1 = $1.replace("[gguba]","");
+																  $1 = $1.replace("[/gguba]","");
+																  return $1});
+		return initContent;
+	 }
+    $.extend({
+        openDialog:function(options){
+        	//alert("openDialog加载完毕");
+    		var options = options||{"type":"T","data":"{'key':'value'}"};
+    		switch(options.type){
+    			case "T":
+    				var transEditor =new UE.ui.Editor({								//转发
+						toolbars:[["emotion"]],
+						autoClearinitialContent:false,
+						initialFrameWidth:510,
+						minFrameHeight:140,
+						wordCount:true,
+						maximumWords:140
+					});
+    			    TGBDialog('转发至我的说说,顺便说两句','//@'+options.data.userName+(options.data.content==' '?"":":")+parseEmotion(options.data.content),transEditor,'transEditorId',140,function(){
+    			    	var txtvalue = transEditor.getPlainTxt();
+	    			   	//将文本的首尾空格去掉
+			            txtvalue = txtvalue.replace(/(^\s*)|(\s*$)/g, "");
+			            //将表情转化为Ubb
+			            txtvalue = txtvalue.replace(/<img[^>]*?data_ue_src="http:\/\/css\.taoguba\.com\.cn\/images\/qq\/(.*?)">/ig,function($1,$2){return '[F]qq/'+$2+'[\/F]'});
+			            if(cnLength(txtvalue)==0){
+		            		txtvalue='转发';
+		            	};
+		            	if($('.edui-editor-wordcount span').attr("data")==-1){
+							showAlert("转发只支持140个字,请精简内容");
+				    	   return;
+		            	};
+			            var feedID = options.data.feedID,
+							userName = options.data.userName,
+							userID = options.data.msgUserID,
+							refMsgUserID = options.data.refMsgUserID,
+							refMsgUserName = options.data.refMsgUserName,
+							refMsgID = options.data.refMsgID,
+			            	body = encodeURIComponent(txtvalue),
+							refMsgUserName = encodeURIComponent(refMsgUserName)
+							cont = options.data.content;
+			          var  pingJie = "";
+			          if(cont != null && cont != ""){
+			        	  pingJie = '//@'+options.data.userName+" "+cont;
+			          }  
+						var url = shuoDomainPath+"subTransfer";
+						var param = "feedID=" + feedID + "&body=" + body + "&userID=" + userID
+								+ "&refMsgUserID=" + refMsgUserID + "&refMsgUserName="
+								+ refMsgUserName + "&refMsgID=" + refMsgID;
+						if( pingJie !="" && txtvalue !="" && pingJie != txtvalue && txtvalue != "转发" ){
+							var newCont = "";
+							var strIndex = txtvalue.indexOf('//@'+options.data.userName);
+							if(strIndex == -1){
+								param +="&subComFlag=Y&newCont="+encodeURIComponent(txtvalue);
+							}else{
+								newCont = txtvalue.substr(0,strIndex)
+								param +="&subComFlag=Y&newCont="+encodeURIComponent(newCont);
+							}
+						}else{
+							param +="&subComFlag=N";
+						}
+						//影子笔名ID
+					    var getShadeID = $('.shadowDialogSelect').val();
+					    //影子笔名名称
+					    var getShadeName = $('.shadowDialogSelect').find("option:selected").text();
+						if(getShadeName != null && getShadeName != "" && getShadeID != null && getShadeID != ""){
+							param += "&shadeName="+encodeURIComponent(getShadeName)+"&shadeID="+getShadeID;
+						}
+						param +='&machineType= "pc"';
+						XMLHttp.sendReq("post", url, param, function(obj) {
+							var p = obj.dto;
+							var size = p.size;
+							if (size == 1) {
+								showAlert("转发成功");
+								CxcClose();
+								
+								//插入内容
+								if($("#divContent") != null){
+									var resultStr = Json_HTML(p.record,userID);;
+									$("#divContent").prepend(resultStr);
+								}
+								
+							}else if(size == "locked"){  //用户被封
+								showAlert(p.lockMsg);
+							}else {
+								showAlert("转发失败");
+							}
+						});
+    			});
+    			break;
+    		case "A":
+    			var atEditor = new UE.ui.Editor({								//@
+					toolbars:[["emotion","stock","insertimage"]],
+					autoClearinitialContent:false,
+					initialFrameWidth:510,
+					minFrameHeight:140
+				});
+    			var initContent = '';
+    			if(options.data.stockCode&&options.data.stockCode!=''&&options.data.stockName&&options.data.stockName!=''){
+    				initContent = '关于'+options.data.stockName+'('+options.data.stockCode+')：';
+    			}
+    			TGBDialog('有什么话想对'+options.data.userName+'说',initContent,atEditor,'atUserEditorId',0,function(){
+    				var txtvalue = atEditor.getPlainTxt();
+    			   	//将文本的首尾空格去掉
+		            txtvalue = txtvalue.replace(/(^\s*)|(\s*$)/g, "");
+		            //将图片转化为UBB(上线时需要将图片域名改为http:\/\/img\.taoguba\.com\.cn\/)
+        			txtvalue = txtvalue.replace(/<img[^>]*?data_ue_src="http:\/\/\b(?:www|shuo|img)\b\.taoguba\.\b(?:net|ca|com|cn|com\.cn)\b.*?\/img\/(.*?)".*?>/ig,function($1,$2){return '[img]/img/'+$2+'[\/img]'});
+		            //将表情转化为Ubb
+		            txtvalue = txtvalue.replace(/<img[^>]*?data_ue_src="http:\/\/css\.taoguba\.com\.cn\/images\/qq\/(.*?)">/ig,function($1,$2){return '[F]qq/'+$2+'[\/F]'});
+		           if(cnLength(txtvalue)==0){
+	            		showAlert("兄，请补充完内容后再提交。");
+	            		return;
+	            	};
+	            	if(cnLength(txtvalue)>20000){
+	            		showAlert("兄，您提交的内容过长了，请精简内容！@朋友仅支持10000个字");
+						return;
+	            	};
+	            	txtvalue = '@'+options.data.userName+' '+txtvalue;
+		         	var body = encodeURIComponent(txtvalue);
+					var url = shuoDomainPath+'addWeibo';
+					var param = 'body=' + body;
+					//影子笔名ID
+				    var getShadeID = $('.shadowDialogSelect').val();
+				    //影子笔名名称
+				    var getShadeName = $('.shadowDialogSelect').find("option:selected").text();
+					if(getShadeName != null && getShadeName != "" && getShadeID != null && getShadeID != ""){
+						param += "&shadeName="+encodeURIComponent(getShadeName)+"&shadeID="+getShadeID;
+					}
+					param +="&machineType= 'pc'";
+					if( window.location.host.indexOf("shuo")>-1){
+						XMLHttp.sendReq("post", url, param, function(obj) {
+							var p = obj.dto;
+							var size = p.size;
+							if(size == "success"){
+								showAlert("发布成功");
+								CxcClose();
+							}else if(size == "locked"){  //用户被封
+								showAlert(p.lockMsg);
+							}else if(size == "prevent"){  //用户被封
+								alert(p.lockMsg);
+							}else{
+								showAlert("发送失败!");
+							}
+						});
+					}else{
+						 var getiframe = window.frames['shuoProxy'];
+						url = shuoDomainPath+"addWeibo";
+						 if(getiframe == null){
+							var iframe = document.createElement("iframe");
+							iframe.src = shuoDomainPath+"domainProxy.html";
+							iframe.id = "shuoProxy"; 
+							iframe.name = "shuoProxy";
+							iframe.style.display = "none";
+							document.body.appendChild(iframe);
+							$("#shuoProxy").bind("load", function(){
+							  getiframe = window.frames['shuoProxy'];
+						      iframeXMLHttp(url,param,getiframe); 
+						     });					
+						 }else{
+							iframeXMLHttp(url,param,getiframe);
+						 }
+					}					
+    			});
+    			break;
+    		case "TC":
+    	            var iframObj = options.data.iframeObj;
+    				var transEditor =new UE.ui.Editor({								//转发
+						toolbars:[["emotion"]],
+						autoClearinitialContent:false,
+						initialFrameWidth:510,
+						minFrameHeight:140,
+						wordCount:true,
+						maximumWords:140
+					});
+    			    TGBDialog('转发至我的说说,顺便说两句','//@'+options.data.userName+(options.data.content==' '?"":":")+parseEmotion(options.data.content),transEditor,'transEditorId',140,function(){
+    			    	var txtvalue = transEditor.getPlainTxt();
+	    			   	//将文本的首尾空格去掉
+			            txtvalue = txtvalue.replace(/(^\s*)|(\s*$)/g, "");
+			            //将表情转化为Ubb
+			            txtvalue = txtvalue.replace(/<img[^>]*?data_ue_src="http:\/\/css\.taoguba\.com\.cn\/images\/qq\/(.*?)">/ig,function($1,$2){return '[F]qq/'+$2+'[\/F]'});
+			            if(cnLength(txtvalue)==0){
+		            		txtvalue='转发';
+		            	};
+		            	if($('.edui-editor-wordcount span').attr("data")==-1){
+							showAlert("转发只支持140个字,请精简内容");
+				    	   return;
+		            	};
+			            var feedID = options.data.feedID,
+							userName = options.data.userName,
+							userID = options.data.msgUserID,
+							refMsgUserID = options.data.refMsgUserID,
+							refMsgUserName = options.data.refMsgUserName,
+							refMsgID = options.data.refMsgID,
+			            	body = encodeURIComponent(txtvalue),
+							refMsgUserName = encodeURIComponent(refMsgUserName)
+							cont = options.data.content;
+			          var  pingJie = "";
+			          if(cont != null && cont != ""){
+			        	  pingJie = '//@'+options.data.userName+" "+cont;
+			          }  
+						var url = shuoDomainPath+"subTransfer";
+						var param = "feedID=" + feedID + "&body=" + body + "&userID=" + userID
+								+ "&refMsgUserID=" + refMsgUserID + "&refMsgUserName="
+								+ refMsgUserName + "&refMsgID=" + refMsgID;
+						if( pingJie !="" && txtvalue !="" && pingJie != txtvalue && txtvalue != "转发" ){
+							var newCont = "";
+							var strIndex = txtvalue.indexOf('//@'+options.data.userName);
+							if(strIndex == -1){
+								param +="&subComFlag=Y&newCont="+encodeURIComponent(txtvalue);
+							}else{
+								newCont = txtvalue.substr(0,strIndex)
+								param +="&subComFlag=Y&newCont="+encodeURIComponent(newCont);
+							}
+						}else{
+							param +="&subComFlag=N";
+						}
+						//影子笔名ID
+					    var getShadeID = $('.shadowDialogSelect').val();
+					    //影子笔名名称
+					    var getShadeName = $('.shadowDialogSelect').find("option:selected").text();
+						if(getShadeName != null && getShadeName != "" && getShadeID != null && getShadeID != ""){
+							param += "&shadeName="+encodeURIComponent(getShadeName)+"&shadeID="+getShadeID;
+						}
+						param +='&machineType= "pc"';
+						var getiframe = window.frames['shuoProxy'];
+						XMLHttp.sendReq("post", url, param, function(obj) {
+							var p = obj.dto;
+							var size = p.size;
+							if (size == 1) {
+								showAlert("转发成功");
+								CxcClose();
+							}else if(size == "locked"){  //用户被封
+								showAlert(p.lockMsg);
+							}else if(size == "prevent"){  //用户被封
+								alert(p.lockMsg);
+							}else {
+								showAlert("转发失败");
+							}
+						});
+    			});
+    			break;
+    		}
+    		
+        }
+    
+    });
+    
+   function iframeXMLHttp(url,param,iframe){
+		 XMLHttp.sendReq("post", url, param, function(obj) {
+					var p = obj.dto;
+					var size = p.size;
+					if(size == "success"){
+						showAlert("发布成功");
+						CxcClose();
+					}else if(size == "locked"){  //用户被封
+						showAlert(p.lockMsg);
+					}else{
+						showAlert("发送失败!");
+					}
+			});	
+	 };
+    function cnLength(Str) {
+		var escStr = escape(Str);
+		var numI = 0;
+		var escStrlen = escStr.length;
+		for (i = 0;  i < escStrlen;  i++) 
+		if(escStr.charAt(i) == '%') 
+		if(escStr.charAt(++i) == 'u')  numI ++;
+		return Str.length+numI;
+ 	};
+})(jQuery);

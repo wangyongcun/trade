@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- saved from url=(0025)https://shuo.tgb.cn/proxy -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title></title>
+</head>
+<body>
+<script>
+    var msgStr;
+    window.addEventListener('message', function(e) {
+        if (e.source != window.parent)
+            return;
+        var type = e.data.type;
+        if (type == 'message'){
+            var data = e.data.data;
+            var userID = e.data.userID;
+            var msgUpTime = e.data.msgUpTime;
+            localStorage.setItem('msgUpTime' + userID,msgUpTime);
+            localStorage.setItem('msgStr' + userID, data);
+            localStorage.setItem('tokenId' + userID, e.data.tokenId);
+        }
+        if (type == 'windowsAD'){
+            var ad = e.data.ad;
+            localStorage.setItem('windowsAD',ad);
+        }
+        if (type == 'windowsAD_REM'){
+            localStorage.removeItem('windowsAD');
+        }
+        if(type == 'publisherAD'){
+            var publisherAD = e.data.ad;
+            localStorage.setItem('publisherAD',publisherAD);
+        }
+        if(type == 'publisherAD_REM'){
+            console.log('消失了');
+            localStorage.removeItem('publisherAD');
+        }
+        if(type == 'publisherTimer'){
+            var publisherTimer = e.data.flag;
+            localStorage.setItem('publisherTimer',JSON.stringify(publisherTimer));
+        }
+        if(type == 'publisherTimer_REM'){
+            localStorage.removeItem('publisherTimer');
+        }
+    }, false);
+</script>
+
+
+</body></html>

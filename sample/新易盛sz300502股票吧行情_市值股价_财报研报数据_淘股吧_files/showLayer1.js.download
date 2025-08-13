@@ -1,0 +1,139 @@
+            var popup_mouseposX;
+			var popup_mouseposY;
+			var popup_oldfunction;
+			
+			// ----- popup_show ------------------------------------------------------------
+			var taoguba=0
+			/*<div id="popup1">
+			*<div id="popup2">
+			*id=1/2
+			*obj=popop
+			*allid=2(总个数)
+			*widthnum=450 向左偏移450px
+			*ev 如果是要显示跟着鼠标走的话要传入 event
+			*/
+			function popup_show(id,obj,allId,widthnum,heightnum,ev){
+				if (taoguba!=0)all_popup_exit(allId,obj)
+				taoguba++;
+				var scrollTop; 
+				var scrollLeft;
+				if (typeof window.pageYOffset != 'undefined') { 
+				   scrollTop = window.pageYOffset; 
+				   scrollLeft=window.pageXOffset;
+				   // showAlert("d");
+				} 
+				else if (typeof document.compatMode != 'undefined' && 
+				     document.compatMode != 'BackCompat') { 
+				   scrollTop = document.documentElement.scrollTop; 
+				   scrollLeft=document.documentElement.scrollLeft;
+				  // showAlert("a");
+				} 
+				else if (typeof document.body != 'undefined') { 
+				   scrollTop = document.body.scrollTop; 
+				   scrollLeft=document.body.scrollLeft;
+				 //  showAlert("b");
+				} 
+				
+				element = document.getElementById(obj+id);
+			    element.style.position = "absolute";
+			    element.style.visibility = "visible";
+			    element.style.display = "block";
+				//showAlert(scrollPos);
+				if(ev != null && ev != ""){
+					ev= ev || window.event;					
+					var mousePos = mouseCoords(ev); 
+					popup_mouseposX = mousePos.x;
+					popup_mouseposY = mousePos.y;
+					element.style.left = (popup_mouseposX-scrollLeft-widthnum)+'px';
+					element.style.top = (popup_mouseposY-scrollTop-heightnum)+'px';
+				}else{
+					element.style.left = (scrollLeft+popup_mouseposX-widthnum)+'px';
+					element.style.top = (scrollTop+popup_mouseposY-heightnum)+'px';
+				}
+			}
+			
+			function popup_showcenter(id,obj,allId){
+				if (taoguba!=0)all_popup_exit(allId,obj)
+				taoguba++;
+				var scrollTop; 
+				var scrollLeft;
+				if (typeof window.pageYOffset != 'undefined') { 
+				   scrollTop = window.pageYOffset; 
+				   scrollLeft=window.pageXOffset;
+				   // showAlert("d");
+				} 
+				else if (typeof document.compatMode != 'undefined' && 
+				     document.compatMode != 'BackCompat') { 
+				   scrollTop = document.documentElement.scrollTop; 
+				   scrollLeft=document.documentElement.scrollLeft;
+				  // showAlert("a");
+				} 
+				else if (typeof document.body != 'undefined') { 
+				   scrollTop = document.body.scrollTop; 
+				   scrollLeft=document.body.scrollLeft;
+				 //  showAlert("b");
+				} 
+				element = document.getElementById(obj+id);
+			    element.style.position = "absolute";
+			    element.style.display = "block";
+			    element.style.visibility = "visible";
+			    element.style.left=(document.body.clientWidth-element.clientWidth)/2+scrollLeft+'px';
+			    element.style.top=(document.body.clientHeight-element.clientHeight)/2+scrollTop+'px';
+			    document.body.style.overflow = "scroll";
+			}
+			
+			function mouseCoords(ev){ 
+				 var ie = navigator.appName == "Microsoft Internet Explorer";
+				if(ev.pageX || ev.pageY){ 
+					//showAlert(1);
+				return {
+					x:ev.pageX + document.body.scrollLeft - document.body.clientLeft,
+					y:ev.pageY + document.body.scrollTop - document.body.clientTop}; 
+				} 
+				//showAlert(2);
+				return {					
+				//x:ev.clientX + document.body.scrollLeft - document.body.clientLeft, 
+				//y:ev.clientY + document.body.scrollTop - document.body.clientTop 
+				x:ev.clientX, 
+				y:ev.clientY
+				}; 
+			}
+			
+			
+			
+			//---all_popup_exit--------------------
+			function all_popup_exit(allId,obj){
+			for (var i=1;i<=allId;i++){
+			    element = document.getElementById(obj+i);
+			    if (element.style.visibility && element.style.visibility == "visible"||element.style.display=='block'&& element.style.display != 'none'){
+			        element.style.visibility = 'hidden';
+			        element.style.display = 'none';
+			    }
+			}    
+			taoguba=0
+			}
+			// POPUP_id _exit;
+			function popup_close(i,obj){
+				element = document.getElementById(obj+i);
+			    if (element.style.visibility && element.style.visibility == "visible"||element.style.display=='block'&& element.style.display != 'none'){
+			        element.style.visibility = 'hidden';
+			        element.style.display = 'none';
+			    }
+			}
+			
+			// ----- popup_mousepos --------------------------------------------------------
+			function popup_mousepos(e){
+			    var ie = navigator.appName == "Microsoft Internet Explorer";
+			    popup_mouseposX = ie ? window.event.clientX : e.clientX;
+			    popup_mouseposY = ie ? window.event.clientY : e.clientY;
+			}
+			// ----- Attach Events ---------------------------------------------------------
+			
+			if (navigator.appName == "Microsoft Internet Explorer"){
+			    document.attachEvent('onmousedown', popup_mousepos);
+			}
+			else {
+			    document.addEventListener('mousedown', popup_mousepos, false);
+			
+			}
+			

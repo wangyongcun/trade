@@ -1,0 +1,78 @@
+var loadJS = function (params) {
+ var head = document.getElementsByTagName("head")[0];
+ var script = document.createElement('script');
+ 
+ script.onload = script.onreadystatechange = script.onerror = function () {
+  if (script && script.readyState && /^(?!(?:loaded|complete)$)/.test(script.readyState)) return;
+  
+  script.onload = script.onreadystatechange = script.onerror = null;
+  script.src = '';
+  script.parentNode.removeChild(script);
+  script = null;
+  if(params.listCode){
+	  params.callback(params.listCode);
+  }else{
+	  params.callback();
+  }
+ };
+ 
+ script.charset = params.charset || document.charset || document.characterSet || 'gb2312';
+ script.src = params.src;
+ 
+ try {
+  head.appendChild(script);
+ } catch (exp) {}
+};
+
+/**
+ * 加载新浪行情图片
+ * @param stockCode
+ * @param hqType 默认daily (daily|weekly|monthly|min)
+ */
+function getFullHqImgUrl(stockCode,hqType){
+	if(!hqType){
+		hqType = "daily";
+	}
+	if(stockCode){
+		if(stockCode.length > 2){
+			var subStr = stockCode.substring(0,2);
+			var codeStr = stockCode.substring(2,stockCode.length);
+			if(subStr == "sz" || subStr == "sh"){
+				return 'http://image.sinajs.cn/newchart/'+hqType+'/n/'+stockCode+'.gif';
+			}else if(subStr == "wh"){
+				return null;
+			}else if(subStr == "hk" || subStr == "hz"){
+				return "http://image.sinajs.cn/newchart/hk_stock/"+hqType+"/"+codeStr+".gif";
+			}else {
+				return "http://image.sinajs.cn/newchart/usstock/"+hqType+"/"+stockCode+".gif";
+			}
+		}else{
+			return "http://image.sinajs.cn/newchart/usstock/"+hqType+"/"+stockCode+".gif";
+		}
+	}else{
+		return null;
+	}
+}
+
+function fullStockCode(str){
+		if(str==null|| str==""){
+			return str;
+		}
+		if(str.length>3){
+			var fullcode = "";
+			if(str.substring(0,2)=='sh'){
+				fullcode = str;
+			}else if(str.substring(0,2)=='sz'){
+				fullcode = str;
+			}else if(str.substring(0,2)=='hz'){
+				fullcode = 'r_'+str.substring(2,str.length);
+			}else if(str.substring(0,2)=='hk'){
+				fullcode = str;
+			}else{
+				fullcode = 'gb_'+str.toLowerCase();;
+			}
+		}else{
+			fullcode = 'gb_'+str.toLowerCase();
+		}
+		return fullcode;
+	}

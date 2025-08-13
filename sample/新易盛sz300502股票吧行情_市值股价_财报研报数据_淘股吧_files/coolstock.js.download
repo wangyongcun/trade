@@ -1,0 +1,781 @@
+var shuoDomainpath = 'https://'+window.location.host.replace('www','shuo')
+function forumBuilder(jsonList){
+		var forumList = jsonList;
+		var stockName="";
+		if($('#dataMsg')){
+			stockName=$('#dataMsg').attr("data-stockname");
+		}
+		var str = [];
+		$.each( forumList, function( index, val ) {
+			if(val.rType=='R'&&null==val.tops){
+				//有脏数据，跳过此条数据的拼接
+				return true;
+			}
+			if(null==val.body){
+				//有脏数据，跳过此条数据的拼接
+				return true;
+			}
+		str.push('<div id="forumRow_'+val.rID+'" class="stockNews '+val.userID+'">');
+		if(val.rType=='N'||val.rType=='SR') {
+			str.push('<div class="left stock-image"  style="line-height: 40px;background-color: #4793F1;color: #fff;border-radius: 99px;text-align: center;">');
+		}else{
+			str.push('<div class="left stock-image">');
+		}
+		if(val.rType=='CLS'){
+			str.push('<img class="headImg" src="https://css.tgb.cn/images/kuaixun/jskx.png" onerror="this.src=\'https://image.tgb.cn/img/user_icon_60.png_60wh.png\'"/>')
+		}else if(val.rType=='N'){
+			str.push('<span >资讯</span>');
+		}else if(val.rType=='SR'){
+			str.push('<span >研报</span>');
+		}else {
+			str.push('<img class="headImg" onclick="javascript:window.open(\''+webPath+'/blog/'+val.userID+'\')"  src="https://image.tgb.cn/img/'+val.img+'_60wh.png" onerror="this.src=\'https://image.tgb.cn/img/user_icon_60.png_60wh.png\'"/>');
+		}
+		if(val.auth==55){
+			str.push('<img class="dv-img" alt="大V头像" src="https://css.tgb.cn/images/quotes/daV.png"/>');
+		}
+		str.push('</div>');
+		str.push('<div class="left stock-right">');
+		if(val.rType=='T'){
+			str.push('<div class="user-name left">');
+			str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+			if(val.auth>0){
+				str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+			}
+			str.push('</div>');
+			if (val.userTitle != null && val.userTitle.title != null){
+				str.push(buildUserTitle(val.userTitle))
+			}
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布主帖</div>');
+			str.push('<div class="clear"></div>');
+			if (val.type === 1) {
+				str.push('<div class="related-subject" style="width: 100%;margin: 5px 0px 0px 0;">');
+			} else {
+				str.push('<div class="related-subject" >');
+			}
+			str.push('<div class="left">');
+			if(val.flag=='N'){
+				str.push('<div class="related-flag-n">内参</div>');
+			}else if(val.flag=='F'){
+				str.push('<div class="related-flag-f">复盘</div>');
+			}
+			str.push('</div>');
+			str.push('<a href="'+webPath+'/a/' + val.newTopicID + '" target="_blank">'+formatFont(val.subject)+'</a>');
+			str.push('</div>');
+			str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+			str.push('<div><a class="related-body" href="'+webPath+'/a/' + val.newTopicID + '#T'+stockName+'" target="_blank" rel="nofollow">');
+			if (val.type == 1) {
+				str.push('<span>'+formatFont(val.body)+'</span>');
+			} else {
+				str.push('<span>【摘要】'+formatFont(val.body)+'</span>');
+			}
+			str.push('</a></div>');
+			if (val.type == 1) {
+				str.push('<div style="height: 24px; background-color: #F8F8F8; line-height: 24px; width: fit-content; margin-bottom: 12px; padding: 3px 16px; border-radius: 999px">');
+				str.push('<span>');
+				str.push('<a style="color: #333 !important;">' + val.stockName + '</a>');
+				str.push('<span style="color: #999 !important;"> &nbsp;&nbsp;|&nbsp;&nbsp;收益：</span>');
+				if (null == val.incomeRate) {
+					str.push('<span style="color: #999 !important;">--</span>');
+				} else if (val.incomeRate >= 0) {
+					if (val.closureStatus === 'Y' || val.closureStatus === 'N') {
+						str.push('<span style="color: red !important;">' + val.incomeRate.toFixed(2) + '</span>');
+					}
+					if (val.closureStatus === 'Y') {
+						str.push('<span style="color: #444444 !important;">%(已平仓)</span>');
+					} else if (val.closureStatus === 'N') {
+						str.push('<span style="color: #444444 !important;">%</span>');
+					} else if (val.closureStatus === 'R') {
+						str.push('<span style="color: #444444 !important;">(计划结算失败)</span>');
+					} else if (val.closureStatus === 'F') {
+						str.push('<span style="color: #444444 !important;">(计划启动失败)</span>');
+					}
+				} else if (val.incomeRate < 0) {
+					if (val.closureStatus === 'Y' || val.closureStatus === 'N') {
+						str.push('<span style="color: #88c961 !important;">' + val.incomeRate.toFixed(2) + '</span>');
+					}
+					if (val.closureStatus === 'Y') {
+						str.push('<span style="color: #444444 !important;">%(已平仓)</span>');
+					} else if (val.closureStatus === 'N') {
+						str.push('<span style="color: #444444 !important;">%</span>');
+					} else if (val.closureStatus === 'R') {
+						str.push('<span style="color: #444444 !important;">(计划结算失败)</span>');
+					} else if (val.closureStatus === 'F') {
+						str.push('<span style="color: #444444 !important;">(计划启动失败)</span>');
+					}
+				}
+				str.push('</span>');
+				str.push('</div>');
+			} else {
+				str.push('<div class="pinglun" onclick="javascript:AddUseful(\''+val.rID+'\',\''+val.rID+'\',\'T\',\'S\');">');
+				str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+				str.push('<div style="display: none" id="gioMsg_T_'+val.rID+'" subject="'+formatFont(val.subject)+'" userid="'+val.userID+'" username="'+val.username+'" type="0"></div>')
+				str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div class="pinglun">');
+				str.push('<div class="pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+				str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div id="T_'+val.rID+'" class="pinglun" onclick="javascript:showComment(\''+val.rID+'\',\''+val.rID+'\',\''+val.rType+'\',\'' + 0 + '\',\'' + val.newTopicID + '\');">');
+				str.push('<div class="right"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+				str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+				str.push('</div>');
+			}
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}else if(val.rType=='DV'){
+			str.push('<div class="user-name left">');
+			str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+			if(val.auth>0){
+				str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+			}
+			str.push('</div>');
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布智能选股</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div class="related-subject" >');
+			str.push('<div class="left">');
+			if(val.flag=='N'){
+				str.push('<div class="related-flag-n">内参</div>');
+			}else if(val.flag=='F'){
+				str.push('<div class="related-flag-f">复盘</div>');
+			}
+			str.push('</div>');
+			str.push('<a href="'+shuoPath+'/new/dav/getDvViewPointNew?seq='+val.rID+'" target="_blank" >'+formatFont(val.subject)+'</a>');
+			str.push('</div>');
+			str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+			str.push('<div><a class="related-body" href="'+webPath+'/new/dav/getDvViewPointNew?seq='+val.rID+'" target="_blank" rel="nofollow"><span>【摘要】'+formatFont(val.body)+'</span>');
+			str.push('</a></div>');
+			str.push('<div class="pinglun" onclick="javascript:AddUseful(\''+val.rID+'\',\''+val.rID+'\',\'T\',\'S\');">');
+			str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+			str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="pinglun">');
+			str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+			str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="pinglun pinglun-right" onclick="javascript:showComment(\''+val.rID+'\',\''+val.rID+'\',\''+val.rType+'\');">');
+			str.push('<div class="right"><img src="https://css.tgb.cn/images/mNew/pinglun.png}"/>');
+			str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}else if(val.rType=='R'){
+			str.push('<div class="user-name left">');
+			str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+			if(val.auth>0){
+				str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+			}
+			str.push('</div>');
+			if (val.userTitle != null && val.userTitle.title != null){
+				str.push(buildUserTitle(val.userTitle))
+			}
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  跟帖回复</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+			// str.push('<div><a class="related-body" onclick="window.open=(\''+webPath+'/Reply/'+${val.otherID}+'/'+${val.rID}+'#'+${val.rID}+'\')" target="_blank" rel="nofollow"><span>'+formatFont(val.body)+'</span>');
+			str.push('<div><a class="related-body" href="'+webPath+'/a/' + val.newTopicID + '/'+val.rID+'#'+val.rID +'" target="_blank" rel="nofollow" style="cursor: pointer"><span>'+formatFont(val.body)+'</span>')
+			str.push('</a></div>');
+			if(val.quoteID!=0 && null != val.quoteContent && val.quoteContent.length>0){
+				str.push('<div class="quote_content related-topic"><a href="'+webPath+'/blog/'+val.quoteUserID+'" target="_blank" style="#333 !important;font-weight: bold;" >'+val.quoteUserName+'</a>: '+val.quoteContent+'</div>');
+			}
+			str.push('<div class="Rlink" >');
+			str.push('来自 &nbsp;&nbsp;<a href="'+webPath+'/blog/'+val.tops.userID+'" target="_blank">'+val.tops.userName+'</a>');
+			str.push('<a href="'+webPath+'/a/' + val.newTopicID + '" target="_blank">《'+val.tops.subject+'》</a>');
+			str.push('</div>');
+			str.push('<div style="display: none" id="gioMsg_R_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0"></div>')
+			str.push('<div style="display: none" id="gioMsg_T_'+val.otherID+'_'+val.rID+'" subject="'+val.tops.subject+'" userid="'+val.tops.userID+'" username="'+val.tops.username+'" type="0"></div>')
+			str.push('<div class="pinglun" onclick="javascript:AddUseful(\''+val.otherID+'\',\''+val.rID+'\',\'R\',\'S\');">');
+			str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+			str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="pinglun">');
+			str.push('</div>');
+			str.push('<div class="pinglun"  id="T_'+val.rID+'" onclick="javascript:showComment(\''+val.rID+'\',\''+val.otherID+'\',\''+val.rType+'\',\'' + 0 + '\',\'' + val.newTopicID + '\');">');
+			str.push('<div class="right"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+			str.push('<span>评论</span></div>');
+			str.push('</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}else if(val.rType=='W'){
+			if(val.subject=='P'){
+				str.push('<div class="user-name left">');
+				str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+				if(val.auth>0){
+					str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+				}
+				str.push('</div>');
+				if (val.userTitle != null && val.userTitle.title != null){
+					str.push(buildUserTitle(val.userTitle))
+				}
+				str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布淘说说评论</div>');
+				str.push('<div class="clear"></div>');
+				str.push('<div class="subInfo left" id="innerId_W_'+val.otherID+'_'+val.rID+'">');
+				if (formatFont(val.body).indexOf("</a>" !=-1)){
+					str.push('<div>');
+					str.push('<a class="related-body" style="display: inline" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.otherID+'#S'+stockName+'" target="_blank" rel="nofollow"><span>'+formatFont(val.body)+'</span>(全文)</a></div>');
+				}else {
+					str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.otherID+'" target="_blank" rel="nofollow">');
+					str.push('<span>'+formatFont(val.body)+'</span>');
+					str.push('</a></div>');
+				}
+				str.push('<div class="pinglun" onclick="AddWeiboUseful('+val.rID+');">');
+				str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+				str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+				str.push('<div style="display: none" id="gioMsg_S_'+val.otherID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0"></div>')
+				str.push('</div>');
+				str.push('<div class="pinglun">');
+				str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+				str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+				str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'#S'+stockName+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+				str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+				str.push('</a>');
+				str.push('<div class="clear"></div>');
+				str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+				str.push('</div>');
+			}else if(val.subject!='P'){
+				str.push('<div class="user-name left">');
+				str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+				if(val.auth>0){
+					str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+				}
+				str.push('</div>');
+				if (val.userTitle != null && val.userTitle.title != null){
+					str.push(buildUserTitle(val.userTitle))
+				}
+				str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布淘说说</div>');
+				str.push('<div class="clear"></div>');
+				str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+				if (formatFont(val.body).indexOf("</a>" !=-1)){
+					str.push('<div>');
+					str.push('<a class="related-body" style="display: inline" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'#S'+stockName+'" target="_blank" rel="nofollow"><span>'+formatFont(val.body)+'</span></a></div>');
+				}else {
+					str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'#S'+stockName+'" target="_blank" rel="nofollow">');
+					str.push('<span>'+formatFont(val.body)+'</span>');
+					str.push('</a></div>');
+				}
+				str.push('<div class="pinglun" onclick="javascript:AddWeiboUseful('+val.rID+');">');
+				str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+				str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+				str.push('<div style="display: none" id="gioMsg_S_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0" stype="SHUO"></div>')
+				str.push('</div>');
+				str.push('<div class="pinglun">');
+				str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+				str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+				str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+				str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+				str.push('</a>');
+				str.push('<div class="clear"></div>');
+				str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+				str.push('</div>');
+			}
+		}else if(val.rType=='P'){
+			if(val.subject=='P'){
+				str.push('<div class="user-name left">');
+				str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+				if(val.auth>0){
+					str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+				}
+				str.push('</div>');
+				if (val.userTitle != null && val.userTitle.title != null){
+					str.push(buildUserTitle(val.userTitle))
+				}
+				str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布淘说说评论</div>');
+				str.push('<div class="clear"></div>');
+				str.push('<div class="subInfo left" id="innerId_W_'+val.otherID+'_'+val.rID+'">');
+				str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.otherID+'#P'+val.rID+'" target="_blank" rel="nofollow">');
+				str.push('<span>'+formatFont(val.body)+'</span>');
+				str.push('</a></div>');
+				str.push('<div class="pinglun" onclick="AddWeiboUseful('+val.rID+');">');
+				str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+				str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+				str.push('<div style="display: none" id="gioMsg_S_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0" stype="P"></div>')
+				str.push('</div>');
+				str.push('<div class="pinglun">');
+				str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+				str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+				str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+				str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+				str.push('</a>');
+				str.push('<div class="clear"></div>');
+				str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+				str.push('</div>');
+			}else if(val.subject!='P'){
+				str.push('<div class="user-name left">');
+				str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+				if(val.auth>0){
+					str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+				}
+				str.push('</div>');
+				if (val.userTitle != null && val.userTitle.title != null){
+					str.push(buildUserTitle(val.userTitle))
+				}
+				str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布淘说说</div>');
+				str.push('<div class="clear"></div>');
+				str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+				str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'#P'+val.otherID+'" target="_blank" rel="nofollow">');
+				str.push('<span>'+formatFont(val.body)+'</span>');
+				str.push('</a></div>');
+				str.push('<div class="pinglun" onclick="javascript:AddWeiboUseful('+val.rID+');">');
+				str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+				str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+				str.push('<div style="display: none" id="gioMsg_S_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0" stype="SHUO"></div>')
+				str.push('</div>');
+				str.push('<div class="pinglun">');
+				str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+				str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+				str.push('</div>');
+				str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+				str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+				str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+				str.push('</a>');
+				str.push('<div class="clear"></div>');
+				str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+				str.push('</div>');
+			}
+		}else if(val.rType=='CLS'){
+			str.push('<div class="user-name left">');
+			str.push('<span>'+'极速快讯'+'</span>');
+			str.push('</div>');
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+			str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank" rel="nofollow">');
+			str.push('<span>'+formatFont(val.body)+'</span>');
+			str.push('</a></div>');
+			str.push('<div class="pinglun" onclick="javascript:AddWeiboUseful(\''+val.rID+'\');">');
+			str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+			str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+			str.push('<div style="display: none" id="gioMsg_S_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0" stype="CLS"></div>')
+			str.push('</div>');
+			str.push('<div class="pinglun">');
+			str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+			str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+			str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+			str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+			str.push('</a>');
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}else if(val.rType=='N'||val.rType=='SR'){
+			str.push('<div class="user-name left">');
+			str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+			if(val.auth>0){
+				str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+			}
+			str.push('</div>');
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div class="related-subject" style="margin-bottom: 0px;">');
+			str.push('<div class="left">');
+
+			str.push('</div>');
+			str.push('<a href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank">'+formatFont(val.subject)+'</a>');
+			str.push('</div>');
+			str.push('<div class="related-stock">');
+
+			str.push('</div>');
+			str.push('<div class="related-stock">');
+
+			str.push('</div>');
+			str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+			str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank" rel="nofollow">');
+			str.push('<span>【摘要】'+formatFont(val.body)+'</span>');
+			str.push('</a></div>');
+			str.push('<div class="pinglun" onclick="javascript:AddUseful(\''+val.rID+'\',\''+val.rID+'\',\'T\',\'S\');">');
+			str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+			str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="pinglun">');
+
+			str.push('</div>');
+			str.push('<div id="T_'+val.rID+'" class="pinglun" onclick="javascript:showComment(\''+val.rID+'\',\''+val.rID+'\',\''+val.rType+'\');">');
+			str.push('<div class="right"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+			str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}else if(val.rType=='VD'){
+			str.push('<div class="user-name left">');
+			str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+			if(val.auth>0){
+				str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+			}
+			str.push('</div>');
+			if (val.userTitle != null && val.userTitle.title != null){
+				str.push(buildUserTitle(val.userTitle))
+			}
+			str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布视频</div>');
+			str.push('<div class="clear"></div>');
+			str.push('<div class="subInfo left" id="innerId_W_'+val.otherID+'_'+val.rID+'">');
+			if (formatFont(val.body).indexOf("</a>" !=-1)){
+				str.push('<div>');
+				str.push('<a class="related-body" style="display: inline" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank" rel="nofollow">')
+				str.push('<span style="display: inline-block;" class="video_body">'+formatFont(val.body)+'</span>')
+				str.push('<span class="defaultContainer-contents-img right">');
+				str.push('<div class="znxg-jiesuo">');
+				str.push('<div class="shuoshuo-shiping-img left">');
+				str.push('<img src="https://js.tgb.cn/weex/assets/html_ios/images/list_bofang.png">');
+				str.push('</div>');
+				str.push('<div class="shuoshuo-shiping-time left"> '+val.duration +'</div>');
+				str.push('<div class="clear"></div>');
+				str.push('</div>');
+				str.push('<div  style=\"background-image:url(https://image.tgb.cn' + val.imgurl[0] + '_220h.png);\" alt=\"\" class=\"imgbg\"></div>');
+				str.push('</span>');
+				str.push('</a></div>');
+			}else {
+				str.push('<div><a class="related-body" href="'+shuoPath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank" rel="nofollow">');
+				str.push('<span style="display: inline-block;" class="video_body">'+formatFont(val.body)+'</span>');
+				str.push('<span class="defaultContainer-contents-img right">');
+				str.push('<div class="znxg-jiesuo">');
+				str.push('<div class="shuoshuo-shiping-img left">');
+				str.push('<img src="https://js.tgb.cn/weex/assets/html_ios/images/list_bofang.png">');
+				str.push('</div>');
+				str.push('<div class="shuoshuo-shiping-time left"> '+val.duration +'</div>');
+				str.push('<div class="clear"></div>');
+				str.push('</div>');
+				str.push('<div  style=\"background-image:url(https://image.tgb.cn' + val.imgurl + '_220h.png);\" alt=\"\" class=\"imgbg\"></div>');
+				str.push('</span>');
+				str.push('</a></div>');
+			}
+			str.push('<div class="clear"></div>')
+			str.push('<div class="pinglun" onclick="shuoAddPraise(0,\'S\',\''+val.rID+'\',this,'+val.usefulNum+');">');
+			str.push('<div><img src="https://css.tgb.cn/images/mNew/zan.png"/>');
+			str.push('<span>赞(<span>'+val.usefulNum+'</span>)</span></div>');
+			str.push('<div style="display: none" id="gioMsg_S_'+val.rID+'" subject="'+formatFont(val.body)+'" userid="'+val.userID+'" username="'+val.username+'" type="0" stype="VIDEO"></div>')
+			str.push('</div>');
+			str.push('<div class="pinglun">');
+			str.push('<div class=" pinglun-center"><img src="https://css.tgb.cn/images/mNew/liulan.png"/>');
+			str.push('<span>浏览(<span>'+val.viewNum+'</span>)</span></div>');
+			str.push('</div>');
+			str.push('<div id="W_'+val.otherID+'_'+val.rID+'" class="pinglun"">');
+			str.push('<a class="right" href="'+shuoDomainpath+'/shuo/toViewShuo?shuoID='+val.rID+'" target="_blank"><img src="https://css.tgb.cn/images/mNew/pinglun.png"/>');
+			str.push('<span>评论(<span>'+val.replyNum+'</span>)</span></div>');
+			str.push('</a>');
+			str.push('<div class="clear"></div>');
+			str.push('<div id="showComent_T_'+val.rID+'" class="showComent"></div>');
+			str.push('</div>');
+		}
+		str.push('</div>');
+		str.push('<div class="clear"></div>');
+		str.push('</div>');
+	});
+	return str.join('');
+}
+
+function formatFont(content){
+	if(null!=content) {
+		content = content.replace(/ align="(.*?)"/g, "");
+		content = content.replace(/style="(.*?)"/g, "");
+		content = content.replace(/<span (.*?)>/gi, "");
+		content = content.replace(/<\/span>/gi, "");
+		content = content.replace(/<a (.*?)>/gi, "");
+		content = content.replace(/<\/a>/gi, "");
+		content = content.replace(/<font size="(.*?)">/gi, "");
+		content = content.replace(/<font size=(.*?)>/gi, "");
+		content = content.replace(/<FONT size="(.*?)">/gi, "");
+		content = content.replace(/<FONT size=(.*?)>/gi, "");
+		content = content.replace(/<strong>/gi, "");
+		content = content.replace(/<\/strong>/gi, "");
+		content = content.replace(/<b>/gi, "");
+		content = content.replace(/<\/b>/gi, "");
+		content = content.replace(/<u>/gi, "");
+		content = content.replace(/<\/u>/gi, "");
+		content = content.replace(/<i>/gi, "");
+		content = content.replace(/<\/i>/gi, "");
+	}
+	return content;
+}
+
+//研股页面
+function researchStockBuilder(jsonList) {
+	var forumList = jsonList;
+	var str = [];
+	$.each( forumList, function( index, val ) {
+		str.push('<div id="forumRow_'+val.rID+'" class="stockNews '+val.userID+'">');
+		str.push('<div class="left stock-image">');
+		str.push('<img class="headImg" onclick="javascript:window.open(\''+webPath+'/blog/'+val.userID+'\')"  src="https://image.tgb.cn/img/'+val.img+'_60wh.png" "/>');
+		if(val.auth==55){
+			str.push('<img class="dv-img" alt="大V头像" src="https://css.tgb.cn/images/quotes/daV.png"/>');
+		}
+		str.push('</div>');
+		str.push('<div class="left stock-right">');
+		str.push('<div class="user-name left">');
+		str.push('<a href="'+webPath+'/blog/'+val.userID+'" target="_blank">'+val.userName+'</a>');
+		if(val.auth>0){
+			str.push('<img class="vip-img" alt="VIP头像" src="https://css.tgb.cn/images/mNew/VIP.png"/>');
+		}
+		str.push('</div>');
+		if (val.userTitle != null && val.userTitle.title != null){
+			str.push(buildUserTitle(val.userTitle))
+		}
+		str.push('<div class="related-sources">'+getMyDate(val.actionDate)+'  发布主帖</div>');
+		str.push('<div class="clear"></div>');
+		str.push('<div class="related-subject" style="width: 100%; margin: 5px 0px 0px 0;">');
+		str.push('<div class="left"></div>');
+		str.push('<a href="'+webPath+'/a/' + val.newTopicID + '" target="_blank">'+formatFont(val.subject)+'</a>');
+		str.push('</div>');
+		str.push('<div class="subInfo left" id="innerId_T_'+val.rID+'">');
+		str.push('<div><a class="related-body" href="'+webPath+'/a/' + val.newTopicID + '" target="_blank" rel="nofollow">');
+		str.push('<span>'+formatFont(val.body)+'</span>');
+		str.push('</a></div>');
+		str.push('<div style="height: 24px; background-color: #F8F8F8; line-height: 24px; width: fit-content; margin-bottom: 12px; padding: 3px 16px; border-radius: 999px">');
+		str.push('<span>');
+		str.push('<a style="color: #333 !important;">' + val.stockName + '</a>');
+		str.push('<span style="color: #999 !important;"> &nbsp;&nbsp;|&nbsp;&nbsp;收益：</span>');
+		if (null == val.incomeRate) {
+			str.push('<span style="color: #999 !important;">--</span>');
+		} else if (val.incomeRate >= 0) {
+			if (val.closureStatus === 'Y' || val.closureStatus === 'N') {
+				str.push('<span style="color: red !important;">' + val.incomeRate.toFixed(2) + '</span>');
+			}
+			if (val.closureStatus === 'Y') {
+				str.push('<span style="color: #444444 !important;">%(已平仓)</span>');
+			} else if (val.closureStatus === 'N') {
+				str.push('<span style="color: #444444 !important;">%</span>');
+			} else if (val.closureStatus === 'R') {
+				str.push('<span style="color: #444444 !important;">(计划结算失败)</span>');
+			} else if (val.closureStatus === 'F') {
+				str.push('<span style="color: #444444 !important;">(计划启动失败)</span>');
+			}
+		} else if (val.incomeRate < 0) {
+			if (val.closureStatus === 'Y' || val.closureStatus === 'N') {
+				str.push('<span style="color: #88c961 !important;">' + val.incomeRate.toFixed(2) + '</span>');
+			}
+			if (val.closureStatus === 'Y') {
+				str.push('<span style="color: #444444 !important;">%(已平仓)</span>');
+			} else if (val.closureStatus === 'N') {
+				str.push('<span style="color: #444444 !important;">%</span>');
+			} else if (val.closureStatus === 'R') {
+				str.push('<span style="color: #444444 !important;">(计划结算失败)</span>');
+			} else if (val.closureStatus === 'F') {
+				str.push('<span style="color: #444444 !important;">(计划启动失败)</span>');
+			}
+		}
+		str.push('</span>');
+		str.push('</div>');
+		str.push('</div>');
+		str.push('</div>');
+		str.push('<div class="clear"></div>');
+		str.push('</div>');
+	});
+	return str.join('');
+}
+function buildUserTitle(title) {
+	var html = ' <div class="left" style="height: 16px;margin: 2px 0px 0 10px;font-size: 12px;color: #666;line-height: 16px;float: left;" >';
+	if (title.type == 'SP') {
+		if (title.priority == 1) {
+			html += ' <img src="https://css.tgb.cn/images/default/zhubanfang.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}
+		if (title.priority >= 11 && title.priority <= 23) {
+			html += ' <img src="https://css.tgb.cn/images/default/jin.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}
+		if (title.priority >= 31 && title.priority <= 33) {
+			html += ' <img src="https://css.tgb.cn/images/default/yin.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}
+		if (title.priority >= 41 && title.priority <= 43) {
+			html += ' <img src="https://css.tgb.cn/images/default/tong.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}if (title.priority == 50 ) {
+			html += ' <img src="https://css.tgb.cn/images/user2024/fyxs.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}if (title.priority == 61 ) {
+			html += ' <img src="https://css.tgb.cn/images/user2024/spjy.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}if (title.priority == 62 ) {
+			html += ' <img src="https://css.tgb.cn/images/user2024/spdr.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}if (title.priority == 70 ) {
+			html += ' <img src="https://css.tgb.cn/images/user2024/spxs.png" style="height: 16px;float: left;margin-right: 8px;">';
+		}
+	} else if (title.type == 'POPULAR') {
+		html += ' <img src="https://css.tgb.cn/images/default/mostpopular2021.png" style="height: 16px;float: left;margin-right: 8px;">';
+	} else if (title.type == 'OFFICIAL') {
+		html += ' <img src="https://css.tgb.cn/images/default/gf.png" style="height: 16px;float: left;margin-right: 8px;">';
+	} else if (title.type == 'ORGAN') {
+		html += ' <img src="https://css.tgb.cn/images/default/zz.png" style="height: 16px;float: left;margin-right: 8px;">';
+	} else if (title.type == 'HOF') {
+		html += ' <img src="https://css.tgb.cn/images/default/mrt.png" style="height: 16px;float: left;margin-right: 8px;">';
+	}
+	// html += '<span class="userTitle-zhu" title="'+title.title+'">' + title.title + '</span>';
+	// if (title.secTitle != null){
+	// 	html += '<span class="userTitle-fu" title="'+title.secTitle+'">' + title.secTitle + '</span>';
+	// }
+	html += '</div>';
+	if (title.src !=null && title.src !='' && title.src != undefined){
+		var src ;
+		if (title.type == 'HOF' && title.src != '0'){
+			src = "talk/talkSeq/"+title.src;
+		}else if (title.type == 'ORGAN'){
+			src = title.src;
+		}else if (title.type == 'OFFICIAL'){
+			src = title.src;
+		}
+		if (src !=null && src !='' && src != undefined){
+			html = '<a href="'+src+'" target="_blank" style="cursor: pointer;float: left;margin-top: 11px">'+html+'</a>';
+		}else {
+			html = '<a style="float: left;margin-top: 11px">'+html+'</a>';
+		}
+	}else {
+		html = '<a style="float: left;margin-top: 11px">'+html+'</a>';
+	}
+	return html;
+}
+
+function getMyDate(str){  
+    var oDate = new Date(str),  
+    oYear = oDate.getFullYear(),  
+    oMonth = oDate.getMonth()+1,  
+    oDay = oDate.getDate(),  
+    oHour = oDate.getHours(),  
+    oMin = oDate.getMinutes(),  
+    oSen = oDate.getSeconds(),  
+    oTime = oYear +'-'+ getzf(oMonth) +'-'+ getzf(oDay) +' '+ getzf(oHour) +':'+ getzf(oMin);//最后拼接时间  
+    return oTime;  
+}; 
+//补0操作
+function getzf(num){  
+  if(parseInt(num) < 10){  
+      num = '0'+num;  
+  }  
+  return num;  
+}
+
+/**
+ * 专门为查看行情图里面的数据而拼接的数据
+ * @param {Object} jsonList
+ */
+// function forumBuilderForHq(jsonList){
+// 	var forumList = jsonList;
+// 	var str = "";
+// 	for(j=0;j<forumList.length;j++){
+// 		str += '<div id = \"forumRow_'+forumList[j].rID+'\" class = "stockNews">';
+// 		str += '<div  class=\"left stockImage\"><img class="headImg" src="https://image.tgb.cn/img/'+forumList[j].img+'_60wh.png\"></div>';
+// 		str += '<div class=\"right\" style=\"text-align: left;width:90%\">';
+// 		if(forumList[j].rType == 'T'){
+// 				str += '<div id="forumTitle" class=\"left\"><a href="'+baseDomain+'blog/'+forumList[j].userID+'" target="_blank">'+forumList[j].userName+'</a>发布了<a href="'+baseDomain+'Article/'+forumList[j].rID+'/1" target="_blank">'+forumList[j].subject+'</a></div>';
+// 				str += '<div class=\"subInfo left\" id="innerId_T_'+forumList[j].rID+'">'+ubbAll(forumList[j].body)+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+baseDomain+'Article/'+forumList[j].rID+'/1" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+// 				str += '<span class="newsDate">'+forumList[j].actionDate.substring(0,16)+'  来自论坛</span>'+'<a id="T_'+forumList[j].rID+'" href="javascript:void(0);" class="right pinglun"  onclick="showStockComment(\'ST_'+forumList[j].rID+'\',\''+forumList[j].rID+'\',\''+forumList[j].subject+'\')">评论</a><span class="right pinglun" style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:addMyCol('+forumList[j].rID+',\'S\');">收藏</a><span class="right pinglun" style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:AddUseful('+forumList[j].rID+','+forumList[j].rID+',\'T\',\'S\');">赞</a>';
+// 				str += '<div class="clear"></div>';
+// 				str += '<div id="showComent_ST_'+forumList[j].rID+'" class="showComent"></div>';
+// 			}else if(forumList[j].rType == 'R'){
+// 				str += '<div id="forumTitle" class=\"left\"><a href="'+baseDomain+'/blog/'+forumList[j].userID+'" target="_blank">'+forumList[j].userName+'</a>跟帖了<a href="'+baseDomain+'Article/'+forumList[j].otherID+'/1" target="_blank">'+forumList[j].subject+'</a></div>';
+// 				str += '<div class=\"subInfo left\" id="innerId_R_'+forumList[j].rID+'">'+ubbAll(forumList[j].body)+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+baseDomain+'Reply/'+forumList[j].otherID+'/'+forumList[j].rID+'#'+forumList[j].rID+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+// 				str += '<span class="newsDate">'+forumList[j].actionDate.substring(0,16)+'  来自论坛 </span>'+'<a id="R_'+forumList[j].rID+'" href="javascript:void(0);" class="right pinglun"  onclick="showStockComment(\'SR_'+forumList[j].rID+'\',\''+forumList[j].otherID+'\',\''+forumList[j].subject+'\')">评论</a><span class="right pinglun"  style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:addReplyCol('+forumList[j].rID+',\'S\',\'R\');">收藏</a><span class="right pinglun" style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:AddUseful('+forumList[j].otherID+','+forumList[j].rID+',\'R\',\'S\');">赞</a>';
+// 				str += '<div class="clear"></div>';
+// 				str += '<div id="showComent_SR_'+forumList[j].rID+'" class="showComent"></div>';
+// 			}else if(forumList[j].rType == 'W'){
+//
+// 				str += '<div id="forumTitle" class=\"left\"><a href="'+baseDomain+'blog/'+forumList[j].userID+'" target="_blank">'+forumList[j].userName+'</a></div>';
+// 				if(forumList[j].subject == "P"){ //评论
+//
+// 					str += '<div class=\"subInfo left\" id="innerId_W_'+forumList[j].otherID+'_'+forumList[j].rID+'">'+shuoUbbAll(forumList[j].body)+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="/shuo/toViewShuo?shuoID='+forumList[j].otherID+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+// 					str += '<span class="newsDate" style="margin: 0 5px 0 0;>'+forumList[j].actionDate.substring(0,16)+'</span> '+
+// 					'&nbsp;&nbsp;<span class="newsDate" style="margin: 0 5px 0 5px;">来自淘说说评论</span>' +
+// 					/**
+// 					 '<a id="W_'+forumList[j].otherID+'_'+forumList[j].rID+'"' +
+// 					' href="javascript:void(0);" class="right pinglun"  ' +
+// 					'onclick="showStockComment(\'W_'+forumList[j].otherID+'_'+forumList[j].rID+'\',\''+forumList[j].otherID+'\',\''+forumList[j].subject+'\',{\'type\':\'R\',\'data\':{' +
+// 				    '\'feedID\':\''+forumList[j].otherID+'\',' +
+// 				    '\'userName\':\''+forumList[j].userName+'\',' +
+// 				    '\'msgUserID\':\''+forumList[j].userID+'\',' +
+// 				    '\'refMsgUserID\':\''+forumList[j].userID+'\',' +
+// 				    '\'refMsgUserName\':\''+forumList[j].userName+'\',' +
+// 				    '\'refMsgID\':\''+forumList[j].rID+'\'' +
+// 				    '}})">评论</a>'+
+// 				    '<span class="right pinglun"  style="margin-left:3px;margin-right:3px">|</span>'+
+// 					 */
+// 					'<a class="right pinglun" href="javascript:void(0);" onclick = "AddWeiboUseful('+forumList[j].rID+')">赞</a>';
+// 					str += '<div class="clear"></div>';
+// 					str += '<div id="showComent_W_'+forumList[j].otherID+'_'+forumList[j].rID+'" class="showComent"></div>';
+//
+// 				}else{
+// 					str += '<div class=\"subInfo left\" id="innerId_W_'+forumList[j].rID+'_'+forumList[j].rID+'">'+shuoUbbAll(forumList[j].body)+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="/shuo/toViewShuo?shuoID='+forumList[j].rID+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+// 					str += '<span class="newsDate" style="margin: 0 5px 0 0;">'+forumList[j].actionDate.substring(0,16)+'</span>'+
+// 					'<span class="newsDate" style="margin: 0 5px 0 5px;">来自淘说说</span>' +
+// 					/**
+// 					'<a id="W_'+forumList[j].rID+'_'+forumList[j].rID+'"' +
+// 					' href="javascript:void(0);" class="right pinglun"  ' +
+// 					'onclick="showStockComment(\'W_'+forumList[j].rID+'_'+forumList[j].rID+'\',\''+forumList[j].otherID+'\',\''+forumList[j].subject+'\',{\'type\':\'R\',\'data\':{' +
+// 				    '\'feedID\':\''+forumList[j].rID+'\',' +
+// 				    '\'userName\':\''+forumList[j].userName+'\',' +
+// 				    '\'msgUserID\':\''+forumList[j].userID+'\',' +
+// 				    '\'refMsgUserID\':\''+forumList[j].userID+'\',' +
+// 				    '\'refMsgUserName\':\''+forumList[j].userName+'\',' +
+// 				    '\'refMsgID\':\''+forumList[j].rID+'\'' +
+// 				    '}})">评论</a>'+
+// 				    '<span class="right pinglun"  style="margin-left:3px;margin-right:3px">|</span>'+
+// 					 */
+// 					'<a class="right pinglun" href="javascript:void(0);" onclick="AddCollect('+forumList[j].rID+',this)">收藏</a><span class="right pinglun" style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:void(0);" onclick = "AddWeiboUseful('+forumList[j].rID+')">赞</a>';
+// 					str += '<div class="clear"></div>';
+// 					str += '<div id="showComent_W_'+forumList[j].rID+'_'+forumList[j].rID+'" class="showComent"></div>';
+// 				}
+//
+// //
+// //				str += '<div id="forumTitle" class=\"left\"><a href="'+baseDomain+'blog/'+forumList[j].userID+'" target="_blank">'+forumList[j].userName+'</a></div>';
+// //				str += '<div class=\"subInfo left\" id="innerId_W_'+forumList[j].rID+'">'+ubbAll(forumList[j].body)+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="/weiboSingle?userID='+forumList[j].userID+'&feedID='+forumList[j].rID+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+// //				str += '<span class="newsDate">'+forumList[j].actionDate.substring(0,16)+'  来自淘说说</span> '+'<a id="W_'+forumList[j].rID+'"' +
+// //				' href="javascript:void(0);" class="right pinglun"  ' +
+// //				'onclick="showStockComment(\'W_'+forumList[j].rID+'\',\''+forumList[j].otherID+'\',\''+forumList[j].subject+'\',{\'type\':\'R\',\'data\':{' +
+// //			    '\'feedID\':\''+forumList[j].rID+'\',' +
+// //			    '\'userName\':\''+forumList[j].userName+'\',' +
+// //			    '\'msgUserID\':\''+forumList[j].userID+'\',' +
+// //			    '\'refMsgUserID\':\''+forumList[j].userID+'\',' +
+// //			    '\'refMsgUserName\':\''+forumList[j].userName+'\',' +
+// //			    '\'refMsgID\':\''+forumList[j].rID+'\'' +
+// //			    '}})">评论</a>'+
+// //				'<span class="right pinglun"  style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:void(0);" onclick="AddCollect('+forumList[j].rID+',this)">收藏</a><span class="right pinglun" style="margin-left:3px;margin-right:3px">|</span><a class="right pinglun" href="javascript:void(0);" onclick = "AddWeiboUseful('+forumList[j].rID+')">赞</a>';
+// //				str += '<div class="clear"></div>';
+// //				str += '<div id="showComent_W_'+forumList[j].rID+'" class="showComent"></div>';
+// 			}
+// 		str += '</div></div><div class="clear"></div></div>';
+// 	}
+// 	return str;
+// }
+function coolAddCollect(feedID,obj){
+		var url = "addCollect?feedID="+feedID+"&callback=?";
+		  $.getJSON(url, function(json){  
+			var flag = json.dto.result;
+			var item = obj;
+			if (flag == "0"){
+				showAlert("请先登录！");
+			}else if(flag == "1" ||flag == "2"){
+				var e = document.createElement("del_item");
+				e.type = "div";
+				$(e).prepend('<a href = "javascript:void(0);" class="right pinglun" onclick="coolDeleteCollect('+feedID+',this)">取消收藏</a>');
+				$(e).insertBefore(item);
+				$(item).remove();
+			}else if(flag == "3"){
+				showAlert("该说说不存在，可能已被删除。");
+			}
+	        
+	    }); 
+}
+function coolDeleteCollect(feedID,obj){
+		var url="deleteCollect?feedID=" + feedID+"&callback=?";
+		 $.getJSON(url, function(json){  
+			var flag = json.dto.result;
+			var item = obj;
+		
+			if (flag == "0"){
+				showAlert("请先登录！");
+			}else if(flag == "1"){
+				var e = document.createElement("add_item");
+				e.type = "div";
+				$(e).prepend('<a href = "javascript:void(0);" class="right pinglun" onclick="coolAddCollect('+feedID+',this)">收藏</a>');
+				$(e).insertBefore(item);
+				$(item).remove();
+			}else if(flag == "2"){
+				showAlert("已在删除成功，强刷新后再试！");
+			}
+	        
+	    },'json');
+}
+
+

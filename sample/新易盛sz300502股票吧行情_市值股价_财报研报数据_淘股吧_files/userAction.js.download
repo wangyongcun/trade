@@ -1,0 +1,2202 @@
+var _imgDomain ="https://www.tgb.cn";
+//var _imgDomain ="https://image.tgb.cn";
+var  soundPath ="https://voice.tgb.cn/";
+var wwwDomainPath = "";
+
+//时间戳转订单格式
+function timeCode(time){
+		 var date = new Date(time);
+		    var Y = date.getFullYear();
+	        var M = date.getMonth()+1 ;
+	        if(M<10){
+	        	M = '0' + M;
+	        }
+	        var D = date.getDate() ;
+	        if(D<10){
+	        	D = '0' + D;
+	        }
+	        return String(Y) + String(M) + String(D);
+	 }
+if(document.domain.indexOf("www") > -1){
+		wwwDomainPath = "https://"+document.domain+"/";
+	}
+function clearHtmlTag(str){
+		str = preg_replace(['<style.*?>[\\\s\\\S]*?<\/style>', '<script.*?>[\\\s\\\S]*?<\/script>', '<noscript.*?>[\\\s\\\S]*?<\/noscript>', '<select.*?>[\s\S]*?<\/select>', '<object.*?>[\s\S]*?<\/object>', '<!--[\\\s\\\S]*?-->', 'on[a-zA-Z]{3,16}\\\s?=\\\s?"[\\\s\\\S]*?"'], '', str);
+		str= (str.replace(/&((#(32|127|160|173))|shy|nbsp);/ig, ''));
+		str = str.replace(/<img([^>]*src[^>]*)>/ig, function($1, $2) {return '［图片文件］';});
+		str = str.replace(/<embed([^>]*src[^>]*)>([^<]*)<\/embed>/ig, '［flash文件］');
+		str = str.replace(/<[^>]+>/g,"");//去掉所有的html标记
+	 // str = str.replace(/<\/?.+?>/g,"");//去掉所有的html标记
+		str = preg_replace(['&nbsp;','\n','\r','\t','\\\[淘股吧\\\]','－请在控制条中选择播放－'],['','','','','','［音乐］'],str);
+	    return str;
+	} 
+	function preg_replace(search, replace, str) {
+		var len = search.length;
+		for(var i = 0; i < len; i++) {
+			re = new RegExp(search[i], "ig");
+			str = str.replace(re, typeof replace == 'string' ? replace : (replace[i] ? replace[i] : replace[0]));
+		}
+		return str;
+	}
+	//显示评论框
+	function showAddReply(type,id){
+		if($('.XLD_num2').length==0){ 
+			 loginPanel();
+			 return;
+		 }
+		if(type=='W'){
+			var blanket = window.open();
+			blanket.location.href = 'https://' + window.location.host.replace('www','shuo') + '/shuo/toViewShuo?shuoID=' + id.substring(2,id.length);
+			return;
+		}
+		var newID = "addActionReply_"+type+"_"+id;
+		var divDisplay = document.getElementById(newID).style.display;
+		if(divDisplay == "none"){
+			$("#"+newID).slideDown("slow");
+		}else{
+			$("#"+newID).slideUp("slow");
+		}
+	}
+	//显示评论
+	function showReply(type,id){
+		var newID = "showReply_"+type+"_"+id;
+		$("#"+newID).slideDown("slow");
+	}
+	function showGroupSet(){
+	//	$("#groupset").slideDown("slow");
+		document.getElementById("groupset").style.display='block';
+	}
+	function hideGroupSet(){
+	//	$("#groupset").slideUp("slow");
+		document.getElementById("groupset").style.display='none';
+	}
+	function hideGroupSet2(){
+		location.reload();
+	}
+	function showGroupKit(){
+	//	$("#setGroupFriend").slideDown("slow");
+		document.getElementById("setGroupFriend").style.display='block';
+	}
+	function hideGroupKit(){
+	//	$("#setGroupFriend").slideUp("slow");
+		document.getElementById("setGroupFriend").style.display='none';
+	}
+	function hideGroupKit2(GID,GName){
+		$("#setGroupFriend").slideUp("slow");
+		//特殊关注
+		if(GID=='98'){
+			 getMySpecialFriend();
+		}else{
+			getGroupAction(GID,GName);
+		}
+	}
+	function hideGroupKit3(GID,GName){
+		//$("#setGroupFriend").slideUp("slow");
+		getMoreGroupAction(1,GID,GName);
+	}
+	function showEdit(id){
+		document.getElementById("hiddenDiv_"+id).style.display='block';
+	}
+	function outEdit(id){
+		document.getElementById("hiddenDiv_"+id).style.display='none';
+	}
+	function showSetEdit(id){
+		document.getElementById("SetGroupDiv").style.display='block';
+	}
+	function outSetEdit(id){
+		document.getElementById("SetGroupDiv").style.display='none';
+	}
+	function showToolKit(){
+		$("#msgset").slideDown("slow");
+		getLastChoice();
+	}
+	function hideToolKit(){
+		$("#msgset").slideUp("slow");
+	}
+	//提交消息设置
+	function subSet(){
+		var shields_setmsgtext =document.getElementById("setmsgtext").value;
+		var shields_setfriends = document.getElementById("setfriends").value;
+		var shields_setfans = document.getElementById("setfans").value;
+		var shields_setblog = document.getElementById("setblog").value;
+		var shields_setquotetopic = document.getElementById("setquotetopic").value;
+		var shields_settaogubao = document.getElementById("settaogubao").value;
+		var shields_atuser = document.getElementById("setatuser").value;
+		var shields_setpayment = document.getElementById("setpayment").value;
+		var shields_setlighten = document.getElementById("setlighten").value;
+		var shields_setSpmatch = document.getElementById("setSpmatch").value;
+		var url = "user/setMsgAction?shields_setmsgtext="+shields_setmsgtext+"&shields_setfriends="+shields_setfriends+"&shields_setfans="+shields_setfans+
+		"&shields_setblog="+shields_setblog+"&shields_setquotetopic="+shields_setquotetopic+"&shields_settaogubao="+shields_settaogubao+
+		"&shields_atuser="+shields_atuser+"&shields_changeplan="+document.getElementById("setchangeplan").value+
+		"&shields_newplan="+document.getElementById("setnewplan").value+"&shields_payment="+shields_setpayment+"&shields_lighten="+shields_setlighten+"&shields_setSpmatch="+shields_setSpmatch;
+		 XMLHttp.sendReq("post",url,"",subSetCallback);
+	}
+	function  subSetCallback(obj){
+		var flag=obj.dto;
+		if(flag=="success"){
+			$("#setsuccess").fadeIn(2000);
+			setTimeout(function(){$("#setsuccess").fadeOut(3000);},1000);
+		}else{
+			$("#setfail").show(2000);
+			setTimeout(function(){$("#setfail").fadeOut(3000)},1000);
+		}
+	}
+	
+	function setValue(id){
+		if(document.getElementById(id).value=="Y"){
+			document.getElementById(id).value="N";
+		}else{
+			document.getElementById(id).value="Y";
+		}
+	}
+	//点击分组显示动态
+	var temp_ID = 0;
+	/**
+	 * opt : 3 从头部超级链接进入 
+	 * 
+	 * @param obj
+	 * @param opt
+	 */
+	function getMySpecialFriend(opt){
+		var  groupID = 98;
+		var  groupName ="特别关注"
+		document.getElementById("friendac_div").innerHTML='<div class="waitImg"><img src="https://css.tgb.cn/images/Load1.gif"></div>';
+		hideGroupSet();
+		$("#getActionA").css({ "color":"#636363", "background-color":"#e9e9e9"});
+		$("#getMyActionA").css({ "color":"#636363", "background-color":"#e9e9e9"});
+		$("#getSpec_A").css({ "color":"white", "background-color":"#4793F1"});
+		 
+		hideGroupKit();
+		document.getElementById("showFriend").innerHTML ='<a herf="javascript:void(0)" onclick="specialAtte('+groupID+',\''+groupName+'\');" style="cursor:pointer;float:left;color: #4793F1;">\
+		<img style="width:14px;height:14px" src="https://css.tgb.cn/images/showOver.png" />\
+		<strong>添加/删除 :<span style="color:red">'+groupName+'</span>  网友</strong></a>';
+		var strHiddenDiv='<div class="hiddenDiv" onmouseover="showEdit('+groupID+')" onmouseout="outEdit('+groupID+')" id="hiddenDiv_'+groupID+'">';
+		strHiddenDiv +='<ul><li>';
+		strHiddenDiv +=' ';
+		strHiddenDiv +='</li>';
+		//strHiddenDiv +='<li><a href="javascript:void(0)"  onclick="chgGroup('+groupID+',\''+groupName+'\')">分组网友</a></li>';
+		strHiddenDiv +='<li>';
+		var innerStr ='</li></ul></div>';
+		innerStr +='<div  style="position:relative;" ';
+		innerStr +='><span class="left">▼</span>';
+		innerStr += strHiddenDiv;
+		innerStr +='</div>';
+		if(opt=='3'){
+			//  调用的是 moreFriendAction.jsp 里的 getMoreAction
+			getMoreAction(0,3,3);
+		}else{
+			getGroupAction(groupID,groupName,3);
+		}
+	}
+	
+	 
+	//点击分组显示动态
+	var tempID = 0;
+	function onClickGroup(obj,groupID,groupName){
+		document.getElementById("friendac_div").innerHTML='<div class="waitImg"><img src="https://css.tgb.cn/images/Load1.gif"></div>';
+		hideGroupSet();
+		document.getElementById("getMyActionA").style.color="#636363";
+		document.getElementById("getMyActionA").style.backgroundColor="#e9e9e9";
+		document.getElementById("getActionA").style.color="#636363";
+		document.getElementById("getActionA").style.backgroundColor="#e9e9e9";
+		$("#getSpec_A").css({ "color":"#636363", "background-color":"#e9e9e9"});
+
+		hideGroupKit();
+		document.getElementById("showFriend").innerHTML ='<a herf="javascript:void(0)" onclick="chgGroup('+groupID+',\''+groupName+'\');" style="cursor:pointer;float:left;color: #4793F1;"><img style="width:14px;height:14px" src="https://css.tgb.cn/images/showOver.png" /><strong>添加/删除 :<span style="color:red">'+groupName+'</span> 分组的网友</strong></a>';
+
+		var strHiddenDiv='<div class="hiddenDiv" onmouseover="showEdit('+groupID+')" onmouseout="outEdit('+groupID+')" id="hiddenDiv_'+groupID+'">';
+		strHiddenDiv +='<ul><li>';
+		strHiddenDiv +='<a href="javascript:void(0)" onclick="getPopup('+groupID+',\''+groupName+'\')">修改名称</a>';
+		strHiddenDiv +='</li>';
+		//strHiddenDiv +='<li><a href="javascript:void(0)"  onclick="chgGroup('+groupID+',\''+groupName+'\')">分组网友</a></li>';
+		strHiddenDiv +='<li><a href="javascript:void(0)" onclick="delGroupName('+groupID+')">删除分组</a>';
+		var innerStr ='</li></ul></div>';
+		innerStr +='<div  style="position:relative;" ';
+		innerStr +='><span class="left">▼</span>';
+		innerStr += strHiddenDiv;
+		innerStr +='</div>';
+
+		getGroupAction(groupID,groupName);
+		if(tempID != 0){
+			document.getElementById("moreLogo_"+tempID).innerHTML="";
+			document.getElementById("moreLogo_"+groupID).innerHTML=innerStr;
+			document.getElementById("groupNameDiv_"+tempID).style.color="#636363";
+			document.getElementById("groupNameDiv_"+tempID).style.backgroundColor="#e9e9e9";
+			document.getElementById("groupNameDiv_"+tempID).parentNode.style.backgroundColor="#e9e9e9";
+
+			document.getElementById("groupNameDiv_"+groupID).style.color="white";
+			document.getElementById("groupNameDiv_"+groupID).style.backgroundColor="#4793F1";
+			document.getElementById("groupNameDiv_"+groupID).parentNode.style.backgroundColor="#4793F1";
+			tempID = groupID;
+		}else{
+			document.getElementById("moreLogo_"+groupID).innerHTML=innerStr;
+			document.getElementById("groupNameDiv_"+groupID).style.color="white";
+			document.getElementById("groupNameDiv_"+groupID).style.backgroundColor="#4793F1";
+			document.getElementById("groupNameDiv_"+groupID).parentNode.style.backgroundColor="#4793F1";
+			tempID = groupID;
+		}
+	}
+	//删除分组
+	function delGroupName(groupID){
+		 confirm('删除该分组将解除与其对应的用户分组关系',function(r){
+			if(r){
+				var url="/super/spefocus/delActionGroup?groupID="+groupID;
+				XMLHttp.sendReq("get",url,"",function(obj){
+					var str=obj.dto;
+					if(str=="0"){
+						showAlert("删除分组错误，请联系股天乐");
+					}else if(str == "1"){
+						location.reload();
+					}else if(str == "100"){
+						showAlert("登录超时，请重新登录");
+					}else{
+						showAlert("出错了，请联系股天乐");
+					}
+				});
+			}
+		 });
+	}
+	
+	//添加新分组
+	function addGroup(){
+		var getName = document.getElementById("newGroup").value.trim();
+			getName = clearHtmlTag(getName);
+		var groupName = getName;
+		if(getName == ""||getName==null){
+			showAlert("请提填写分组名称");
+			return;
+		}else if(groupName.length >6){
+			showAlert("请精简分组名称长度，组名最多6个汉字或字符。");	
+			return;
+		}else if(!checkString(getName)){
+			showAlert("分组名称只能为中英文、数字");
+			return;
+		}else{
+			var url = "/super/spefocus/addUserGroup?groupName="+encodeURIComponent(getName);
+			XMLHttp.sendReq("get",url,"",function(obj){
+				var str=obj.dto;
+				var addMsg = document.getElementById("addMsg");
+					
+				if(str=="toLong"){
+					addMsg.innerHTML="输入的分组名称太长了，只能为6个汉字或字符！";
+				}else if(str == "vipMax"){
+					addMsg.innerHTML="超过最大分组数 ";
+				}else if(str == "normalMax"){
+					addMsg.innerHTML="超过最大分组数量了，点击 >> <a href='/vip/buyVIP' style='color:blue'>VIP</a> 升级";
+				}else if(str=="error"){
+					addMsg.innerHTML="添加组名出错了，请联系股天乐";
+				}else{
+					var getNewID =str;
+					addMsg.innerHTML="添加成功";
+					offdiv()
+				
+					var getGroupUL = document.getElementById("musicListDiv");
+					var innerStr = "";
+						innerStr +='<div id="tr_'+getNewID+'">';
+						innerStr +='<ul class="musiclist cov">';
+						innerStr +='<li class="l1" ><input type="text" value="'+getName+'" id="gn_'+getNewID+'" maxlength="12"/></li>';
+						innerStr +='<li class="l2"></li>';
+						innerStr +='<li class="l3">';
+						innerStr +='<a href="javascript:void(0);" onclick="doSwapNode(0,this);">上移</a> ';
+						innerStr +='<a href="javascript:void(0);" onclick="doSwapNode(1,this);">下移</a>';
+						innerStr +='</li>';
+						innerStr +='<li class="l4">';
+						innerStr +='<a style="float:left;display:block;background-color:#4793F1;width:60px;height:20px;text-align:center;line-height: 20px;color: white;" href="javascript:upGroupName('+getNewID+');">修改</a> ';
+						innerStr +='<a style="margin-left:5px;;float:left;display:block;background-color:#F0F0F0;width:60px;height:20px;text-align:center;line-height: 20px;" href="javascript:delGroupName('+getNewID+');">删除</a>';
+						innerStr +='</li>';
+						innerStr +='</ul>';
+						innerStr +='</div>';
+						getGroupUL.innerHTML += innerStr;
+
+						location.reload();
+				}
+
+			}); 
+		}
+	}
+	  var  activeNode   =   -1;   
+	  var  allObj=new   Array();   
+	  var  topObj;   
+	  var  objLength;
+	  //移动位置	
+	  function   doSwapNode(direction,obj){
+			activeNode   =   findNode(obj.parentNode.parentNode.parentNode);
+			var musicID1="";
+			if(direction){//下移
+				if(activeNode+1==objLength)return; 
+				musicID1 = allObj[activeNode+1].id.substring(3);
+			}else{
+				if(activeNode-1<0)return;   
+				musicID1 = allObj[activeNode-1].id.substring(3);
+			}
+			url ="/super/spefocus/exchangeGroupNum?groupID="+obj.parentNode.parentNode.parentNode.id.substring(3)+"&groupID1="+musicID1;
+
+			XMLHttp.sendReq("get",url,"",function(obj){
+				var re = obj.dto;
+				if(re == 1){
+				if(activeNode==-1)return;
+					mDIV   =   allObj[activeNode].cloneNode(true);  
+				if(!direction) {   
+					if(activeNode-1<0)return;   
+					topObj.insertBefore(mDIV,allObj[activeNode-1]);   
+					topObj.removeChild(allObj[activeNode]);   
+				}else{   
+					if(activeNode+1==objLength)return;   
+					if(activeNode+2==objLength) {   
+						if(document.all){   
+							topObj.insertBefore(mDIV);   
+							topObj.removeChild(allObj[activeNode]);   
+						}else {   
+							topObj.insertBefore(mDIV,allObj[objLength+2]);   
+							topObj.removeChild(allObj[activeNode]);   
+						}   
+					} else{   
+						topObj.insertBefore(mDIV,allObj[activeNode+2]);   
+						topObj.removeChild(allObj[activeNode]);   
+					}   
+				}   
+				}else{
+					showAlert("异常出错");
+				}
+			});
+	 }   
+	  function   findNode(obj){   
+			topObj   =   document.getElementById("musicListDiv");
+			var   allObj1   =  topObj.getElementsByTagName("div");   
+			//objLength=allObj.length;  
+			for(var   i=0;   i<allObj1.length;   i++){
+				if(isNaN(parseInt(allObj1[i].id))){
+					allObj[i]=allObj1[i]; 
+				} 
+			}
+			objLength   =   allObj.length;   
+			for(var   i=0;i<objLength;i++){
+			  if(allObj[i]   ==   obj){  
+				return   i;   
+				break;          
+			   } 
+			} 
+	  }  
+	function upGroupName(groupID){
+		var getName =  document.getElementById("gn_"+groupID).value.trim();
+			getName = clearHtmlTag(getName);
+		var groupName = getName;
+		if(getName == ""||getName==null){
+			showAlert("请提填写分组名称");
+			return;
+		}else if(groupName.length >6){
+			showAlert("请精简分组名称长度,名称只能为6个汉字或字符");	
+			return;
+		}else if(!checkString(getName)){
+			showAlert("分组名称只能为中英文、数字");
+			return;
+		}else{
+			var url="/super/spefocus/upGroupName?groupID="+groupID+"&groupName="+encodeURIComponent(getName);
+			XMLHttp.sendReq("get",url,"",getUpName); 
+		}
+		}
+	function getUpName(obj){
+		var str=obj.dto;
+		if(str==1){
+			showAlert("修改成功");
+		}else{
+			showAlert("修改组名出错了，请联系股天乐")
+		}
+	}
+	
+
+   //添加分组弹出框
+    function getPopDiv(){
+		myAlert = document.getElementById("popDiv");
+		var mClose = document.getElementById("close");
+		myAlert.style.display = "block";
+		myAlert.style.position = "absolute";
+		myAlert.style.left=(document.body.clientWidth-myAlert.clientWidth)/2+document.body.scrollLeft+'px';
+		myAlert.style.top=(document.body.clientHeight-myAlert.clientHeight)/2+document.body.scrollTop+'px';
+		mybg = document.createElement("div");
+		mybg.setAttribute("id","mybg");
+		mybg.style.background = "#C9C9C2";
+		mybg.style.width = "100%";
+		mybg.style.height = "170%";
+		mybg.style.position = "absolute";
+		mybg.style.top = "0";
+		mybg.style.left = "0";
+		mybg.style.zIndex = "801";
+		mybg.style.opacity = "0.3";
+		mybg.style.filter = "Alpha(opacity=30)";
+		document.body.appendChild(mybg);
+		document.body.style.overflow = "scroll";
+		
+	}
+  // 批量添加特别关注
+	function addSpecialFriend (object,getID,getName){
+		var m = document.getElementsByName(object);
+        var l = m.length;
+        var listUserID="";
+        var iCk = false; 
+        for ( var i=0; i< l; i++){	
+        	iCk = m[i].checked;
+  	       	if(iCk == true ){
+	       		listUserID += m[i].value;
+	       		listUserID += " ";
+	       	 } 
+        } 
+        if(listUserID==""){
+        	showAlert("请选择网友!");
+        	return;
+        }
+        var url="/super/spefocus/addSpecialFriend?listUserID="+listUserID;
+        XMLHttp.sendReq("get",url,"",function(obj){
+        	var str=obj.dto;
+    		if(str>0){
+    			var listID = listUserID.split(" ");
+    			for(var i=0; i< listID.length-1; i++){
+    				var getUserName =  document.getElementById("unName_"+listID[i]).innerHTML;
+					//删除节点
+    				var gid = "unGF_"+listID[i];
+    	     		var childNode = document.getElementById(gid);
+    		     	childNode.parentNode.removeChild(childNode);
+
+    		     	//添加节点
+    		     	var enGroupUser = document.getElementById("enGroupUser");
+    		     	enGroupUser.innerHTML += '<div id="enGF_'+listID[i]+'" class="sub"><span class="left"><input type="checkbox" value="'+listID[i]+'" name="enGroupFriend" /><span id="enName_'+listID[i]+'">'+getUserName+'</span></span></div>';
+    		     	
+    	         }
+    			//showAlert("分组网友添加成功");
+    		   // window.location.href = "getActionInfo";
+    		} else{
+    			showAlert("失败,请重试,如还不行请联系股天乐")
+    		}
+            }); 
+	}
+  //批量添加网友进分组
+	function addToGroup(object,getID,getName,type){ 
+		var m = document.getElementsByName(object);
+        var l = m.length;
+        var listUserID="";
+        var iCk = false; 
+       
+        for ( var i=0; i< l; i++){	
+        	iCk = m[i].checked;
+  	       	if(iCk == true ){
+	       		listUserID += m[i].value;
+	       		listUserID += " ";
+	       	 } 
+        } 
+        if(listUserID==""){
+        	showAlert("请选择网友!");
+        	return;
+        }
+        var url="/super/spefocus/addToGroup?listUserID="+listUserID+"&groupID="+getID;
+        XMLHttp.sendReq("get",url,"",function(obj){
+        	var str=obj.dto;
+    		if(str==1){
+    			var listID = listUserID.split(" ");
+    			for(var i=0; i< listID.length-1; i++){
+    				var getUserName =  document.getElementById("unName_"+listID[i]).innerHTML;
+					//删除节点
+    				var gid = "unGF_"+listID[i];
+    	     		var childNode = document.getElementById(gid);
+    		     	childNode.parentNode.removeChild(childNode);
+
+    		     	//添加节点
+    		     	var enGroupUser = document.getElementById("enGroupUser");
+    		     	enGroupUser.innerHTML += '<div id="enGF_'+listID[i]+'" class="sub"><span class="left"><input type="checkbox" value="'+listID[i]+'" name="enGroupFriend" /><span id="enName_'+listID[i]+'">'+getUserName+'</span></span></div>';
+    		     	
+    	         }
+    			//showAlert("分组网友添加成功");
+    		   // window.location.href = "getActionInfo";
+    		}else if((str==3)){
+    			showAlert("超过该分组最大人数了，人数上限为60人");	
+            }else if((str==4)){
+            	showAlert("超过该分组最大人数了，上限为30人，请升级为VIP，增加更多分组用户");
+            }else{
+    			showAlert("失败,请重试,如还不行请联系股天乐")
+    		}
+            }); 
+	}
+
+	//批量删除 特别关注
+	function delSpecialFriend(object,getID,getName){
+		var m = document.getElementsByName(object);
+        var l = m.length;
+        var listUserID="";
+        var iCk = false; 
+       
+        for ( var i=0; i< l; i++){	
+        	iCk = m[i].checked;
+  	       	if(iCk == true ){
+	       		listUserID += m[i].value;
+	       		listUserID += " ";
+	       	 } 
+        }
+        if(listUserID==""){
+        	showAlert("请选择网友!");
+        	return;
+        } 
+        var url="/super/spefocus/delSpecialFriend?listUserID="+listUserID;
+        XMLHttp.sendReq("get",url,"",function(obj){
+        	var str=obj.dto;
+    		if(str>0){
+    			var listID = listUserID.split(" ");
+    			for(var i=0; i< listID.length-1; i++){
+    				var getUserName =  document.getElementById("enName_"+listID[i]).innerHTML;
+        			//删除节点
+    				var gid = "enGF_"+listID[i];
+    	     		var childNode = document.getElementById(gid);
+    		     	childNode.parentNode.removeChild(childNode);
+    		     	//添加节点
+    		     	var unGroupUser = document.getElementById("unGroupUser");
+    		     	unGroupUser.innerHTML += '<div id="unGF_'+listID[i]+'" class="sub"><span class="left"><input type="checkbox" value="'+listID[i]+'" name="unGroupFriend" /><span id="unName_'+listID[i]+'">'+getUserName+'</span></span></div>';
+            	}
+    			//showAlert("分组网友删除成功");
+		     	//window.location.href = "getActionInfo";
+    		}else{
+    			showAlert("失败,请重试,如还不行请联系股天乐")
+    		}
+            }); 
+	}
+	
+	
+	//批量删除分组网友
+	function delToGroup(object,getID,getName){
+		var m = document.getElementsByName(object);
+        var l = m.length;
+        var listUserID="";
+        var iCk = false; 
+       
+        for ( var i=0; i< l; i++){	
+        	iCk = m[i].checked;
+  	       	if(iCk == true ){
+	       		listUserID += m[i].value;
+	       		listUserID += " ";
+	       	 } 
+        }
+        if(listUserID==""){
+        	showAlert("请选择网友!");
+        	return;
+        }
+       // var getID = document.getElementById("userGroup").value;
+        var url="/super/spefocus/delToGroup?listUserID="+listUserID+"&groupID="+getID;
+        XMLHttp.sendReq("get",url,"",function(obj){
+        	var str=obj.dto;
+    		if(str==1){
+    			var listID = listUserID.split(" ");
+    			for(var i=0; i< listID.length-1; i++){
+    				var getUserName =  document.getElementById("enName_"+listID[i]).innerHTML;
+        			//删除节点
+    				var gid = "enGF_"+listID[i];
+    	     		var childNode = document.getElementById(gid);
+    		     	childNode.parentNode.removeChild(childNode);
+    		     	//添加节点
+    		     	var unGroupUser = document.getElementById("unGroupUser");
+    		     	unGroupUser.innerHTML += '<div id="unGF_'+listID[i]+'" class="sub"><span class="left"><input type="checkbox" value="'+listID[i]+'" name="unGroupFriend" /><span id="unName_'+listID[i]+'">'+getUserName+'</span></span></div>';
+            	}
+    			//showAlert("分组网友删除成功");
+		     	//window.location.href = "getActionInfo";
+    		}else{
+    			showAlert("失败,请重试,如还不行请联系股天乐")
+    		}
+            }); 
+	}
+	//特别关注网友管理
+	function specialAtte(getID,getName){
+		showGroupKit(); 
+		var titleStr = '<span style="color:white;float:left;display:block;margin-left:8px">'+getName+'</span>';
+			titleStr +='<a href="javascript:void(0)" onclick="hideGroupKit2('+getID+',\''+getName+'\')" style="float:right;font-weight:bolder;color:white;margin-right:8px">X</a>';
+		document.getElementById("showGroupName").innerHTML=titleStr;
+		var url="getSpecialFriend";
+		XMLHttp.sendReq("get",url,"",function(obj){
+			var p = obj.dto;
+			var recordJSON = p.record;
+			var friendJSON = p.recordFriend;
+			var str = '';
+			var strUN ='';
+			var strBTN = '';
+			var strUNBTN ='';
+			var successFlag = p.size;
+			var fSuccessFlag = p.fsize;
+			if(successFlag=='error'){
+				str += '<span style="display:block;width:335px;">出现错误，无法获取分组网友，请过一会重试。谢谢!</span>';
+			}else if(successFlag == 0){
+				str += '<span style="display:block;width:335px;">该分组暂无网友,您可以多加几个网友。</span>';
+				if(fSuccessFlag ==0){
+					strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+				}else{
+					//未加入网友
+					if (friendJSON == null || friendJSON.length < 1){
+						strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+					}else{
+						for(var i = 0 ;i<friendJSON.length; i++){
+							strUN += '<div class="sub"  id ="unGF_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += '<span class="left">';
+							strUN += '<input type="checkbox" name="unGroupFriend" value="';
+							strUN += friendJSON[i].userID;
+							strUN += '" />';
+							strUN += '<span id="unName_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += friendJSON[i].userName;;
+							strUN += '</span>';
+							
+							strUN += '</span>';
+							strUN += '</div>';
+						}
+					}
+				}
+			}else{
+				for(var i = 0 ;i<recordJSON.length; i++){
+					str += '<div class="sub"  id ="enGF_';
+					str += recordJSON[i].userID;
+					str += '">';
+					str += '<span class="left">';
+					str += '<input type="checkbox" name="enGroupFriend" value="';
+					str += recordJSON[i].userID;
+					str += '" />';
+
+					str += '<span id="enName_';
+					str += recordJSON[i].userID;
+					str += '">';
+					str += recordJSON[i].userName;;
+					str += '</span>';
+					
+					str += '</span>';
+					str += '</div>';
+				}
+				 if(fSuccessFlag == 0){
+					 strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+				 }else{
+					//未加入网友
+					if (friendJSON == null || friendJSON.length < 1){
+						strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+					}else{
+						for(var i = 0 ;i<friendJSON.length; i++){
+							strUN += '<div class="sub"  id ="unGF_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += '<span class="left">';
+							strUN += '<input type="checkbox" name="unGroupFriend" value="';
+							strUN += friendJSON[i].userID;
+							strUN += '" />'; 
+							strUN += '<span id="unName_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += friendJSON[i].userName;;
+							strUN += '</span>';
+							
+							strUN += '</span>';
+							strUN += '</div>';
+						}
+					}
+				}
+			}
+			strBTN += '<div style="background-color:#4793F1;width:60px;height:20px;text-align:center;line-height: 20px;float: left;margin-left: 110px!important;margin-left: 55px;margin-top:3px">';
+			strBTN += '<span style="cursor:pointer;color:white;" onclick="delSpecialFriend(\'enGroupFriend\','+getID+',\''+getName+'\')"/>删除</span>';
+			strBTN += '</div>';
+			strUNBTN += '<div style="background-color:#4793F1;width:60px;height:20px;text-align:center;line-height: 20px;float: left;margin-left: 110px!important;margin-left: 55px;margin-top:3px">';
+			strUNBTN += '<span style="cursor:pointer;color:white;" onclick="addSpecialFriend(\'unGroupFriend\','+getID+',\''+getName+'\')"/>添加</span>';
+			strUNBTN += '</div>';
+			document.getElementById("enGroupUser").innerHTML=str;
+			document.getElementById("enGroupUserBTN").innerHTML=strBTN;
+			document.getElementById("unGroupUser").innerHTML=strUN;
+			document.getElementById("unGroupUserBTN").innerHTML=strUNBTN;
+		}); 
+	}
+	//分组网友管理
+	function chgGroup(getID,getName){
+		showGroupKit();
+		var titleStr = '<span style="color:white;float:left;display:block;margin-left:8px">'+getName+'</span>';
+			titleStr +='<a href="javascript:void(0)" onclick="hideGroupKit2('+getID+',\''+getName+'\')" style="float:right;font-weight:bolder;color:white;margin-right:8px">X</a>';
+		document.getElementById("showGroupName").innerHTML=titleStr;
+		var url="getGroupFriend?groupID="+getID;
+		XMLHttp.sendReq("get",url,"",function(obj){
+			var p = obj.dto;
+			var recordJSON = p.record;
+			var friendJSON = p.recordFriend;
+			var str = '';
+			var strUN ='';
+			var strBTN = '';
+			var strUNBTN ='';
+			var successFlag = p.size;
+			var fSuccessFlag = p.fsize;
+			if(successFlag=='error'){
+				str += '<span style="display:block;width:335px;">出现错误，无法获取分组网友，请过一会重试。谢谢!</span>';
+			}else if(successFlag == 0){
+				str += '<span style="display:block;width:335px;">该分组暂无网友,您可以多加几个网友。</span>';
+				if(fSuccessFlag ==0){
+					strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+				}else{
+					//未加入网友
+					if (friendJSON == null || friendJSON.length < 1){
+						strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+					}else{
+						for(var i = 0 ;i<friendJSON.length; i++){
+							strUN += '<div class="sub"  id ="unGF_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += '<span class="left">';
+							strUN += '<input type="checkbox" name="unGroupFriend" value="';
+							strUN += friendJSON[i].userID;
+							strUN += '" />';
+							
+							strUN += '<span id="unName_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += friendJSON[i].userName;;
+							strUN += '</span>';
+							
+							strUN += '</span>';
+							strUN += '</div>';
+						}
+					}
+				}
+			}else{
+				for(var i = 0 ;i<recordJSON.length; i++){
+					str += '<div class="sub"  id ="enGF_';
+					str += recordJSON[i].userID;
+					str += '">';
+					str += '<span class="left">';
+					str += '<input type="checkbox" name="enGroupFriend" value="';
+					str += recordJSON[i].userID;
+					str += '" />';
+
+					str += '<span id="enName_';
+					str += recordJSON[i].userID;
+					str += '">';
+					str += recordJSON[i].userName;;
+					str += '</span>';
+					
+					str += '</span>';
+					str += '</div>';
+				}
+				 if(fSuccessFlag == 0){
+					 strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+				 }else{
+					//未加入网友
+					if (friendJSON == null || friendJSON.length < 1){
+						strUN += '<span style="display:block;width:335px;">没有更多网友了,您可以多加几个网友。</span>';
+					}else{
+						for(var i = 0 ;i<friendJSON.length; i++){
+							strUN += '<div class="sub"  id ="unGF_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += '<span class="left">';
+							strUN += '<input type="checkbox" name="unGroupFriend" value="';
+							strUN += friendJSON[i].userID;
+							strUN += '" />';
+
+							strUN += '<span id="unName_';
+							strUN += friendJSON[i].userID;
+							strUN += '">';
+							strUN += friendJSON[i].userName;;
+							strUN += '</span>';
+							
+							strUN += '</span>';
+							strUN += '</div>';
+						}
+					}
+				}
+			}
+			strBTN += '<div style="background-color:#4793F1;width:60px;height:20px;text-align:center;line-height: 20px;float: left;margin-left: 110px!important;margin-left: 55px;margin-top:3px">';
+			strBTN += '<span style="cursor:pointer;color:white;" onclick="delToGroup(\'enGroupFriend\','+getID+',\''+getName+'\')"/>删除</span>';
+			strBTN += '</div>';
+			strUNBTN += '<div style="background-color:#4793F1;width:60px;height:20px;text-align:center;line-height: 20px;float: left;margin-left: 110px!important;margin-left: 55px;margin-top:3px">';
+			strUNBTN += '<span style="cursor:pointer;color:white;" onclick="addToGroup(\'unGroupFriend\','+getID+',\''+getName+'\')"/>添加</span>';
+			strUNBTN += '</div>';
+			document.getElementById("enGroupUser").innerHTML=str;
+			document.getElementById("enGroupUserBTN").innerHTML=strBTN;
+			document.getElementById("unGroupUser").innerHTML=strUN;
+			document.getElementById("unGroupUserBTN").innerHTML=strUNBTN;
+		}); 
+	}
+	
+	//修改分组名弹出框
+    function getPopup(gid,gname){
+		myAlert = document.getElementById("popup1");
+		var mClose = document.getElementById("close");
+		myAlert.style.display = "block";
+		myAlert.style.position = "absolute";
+		myAlert.style.left=(document.body.clientWidth-myAlert.clientWidth)/2+document.body.scrollLeft+'px';
+		myAlert.style.top=(document.body.clientHeight-myAlert.clientHeight)/2+document.body.scrollTop+'px';
+		mybg = document.createElement("div");
+		mybg.setAttribute("id","mybg");
+		mybg.style.background = "#C9C9C2";
+		mybg.style.width = "100%";
+		mybg.style.height = "170%";
+		mybg.style.position = "absolute";
+		mybg.style.top = "0";
+		mybg.style.left = "0";
+		mybg.style.zIndex = "801";
+		mybg.style.opacity = "0.3";
+		mybg.style.filter = "Alpha(opacity=30)";
+		document.body.appendChild(mybg);
+		document.body.style.overflow = "scroll";
+		document.getElementById("newGroupName").value = document.getElementById("groupNameDiv_"+gid).innerHTML.trim();
+		document.getElementById("li_1_1").innerHTML ='';
+		var newLiStr = '<span >修改名称</span>'; 
+			newLiStr += '<span style="display:none" id="oldGroupId">'+gid+'</span>';
+		document.getElementById("li_1_1").innerHTML =newLiStr;
+		
+	}
+	function offdiv(){
+		myAlert.style.display = "none";
+		mybg.style.display = "none";
+	}
+	function subEditName(){
+		var groupName = document.getElementById("newGroupName").value.trim();	
+		    groupName = clearHtmlTag(groupName);
+		var groupID = document.getElementById("oldGroupId").innerHTML;	
+		if(groupName == ""||groupName==null){
+			showAlert("请提填写分组名称");
+			return;
+		}else if(groupName.length >6){
+			showAlert("请精简分组名称长度，组名最多6个汉字或字符。");	
+			return;
+		}else if(!checkString(groupName)){
+			showAlert("分组名称只能为中英文、数字");
+			return;
+		}else{
+			var url="/super/spefocus/upGroupName?groupID="+groupID+"&groupName="+encodeURIComponent(groupName);
+			XMLHttp.sendReq("get",url,"",function(obj){
+				var str = obj.dto;
+				var coolGroup = document.getElementById("groupNameDiv_"+groupID);				
+				coolGroup.innerHTML = groupName;
+		        });
+				offdiv();
+			}
+	}
+	//验证组名
+	function checkGroupName() {
+    		if(document.getElementById("newGroupName").value == ""){
+				document.getElementById("checkMsg").innerHTML='<font color="red">组名不能为空!</font>';
+				//f.userID.focus();
+				return false;
+			}
+				
+			if (cnLength(document.getElementById("newGroupName").value) > 12)			
+			{
+				document.getElementById("checkMsg").innerHTML = '<font color="red">组名太长,只能为12字符或6个汉字</font>';
+				//Form1.TextBoxUserName.focus();			
+				return false;						
+			}
+			if(!checkString(document.getElementById("newGroupName").value)){
+				document.getElementById("checkMsg").innerHTML='<font color="red">组名只能为中英文、数字</font>';
+				return false;
+			}
+			return true;
+	}
+	
+	
+	//加载推荐网友的方法
+	function moreFriend(pageNo){
+		document.getElementById("rightUser").innerHTML="<div class='head_fri'>人气用户推荐</div><br/>正在加载...";
+		XMLHttp.sendReq("get","getUsefulFriend","",function(obj){
+			var xmlObj = obj.dto;
+			var key = xmlObj.root.key;
+			var docXml = xmlObj.root;
+			var newHead ='';
+			newHead='<div class="kx_n05"><img src="https://css.tgb.cn/images/ttto.gif" width="760" height="68" /></div>';
+//			var newHead ='<div style="color:#636363;margin-left:16px;float:left;font-weight: bold;height: 18px;line-height: 18px;margin-bottom:3px ">';
+//				newHead += '<span id="icon002" class="usercenter_icon3 icon02" style="margin-left:1px" ></span>&nbsp;超级动态';
+//				newHead += '</div>';
+//				newHead += '<div class="clear"></div>';
+//				newHead += '<div class="left" style="margin-right:2px;margin-bottom:5px;margin-left:16px">';
+//				newHead += '<a href="javascript:void(0);" id="getActionA"  class="actionHead" style="width:60px;display:block;margin-right:2px" hidefocus="true">';
+//				newHead += '网友动态</a>';
+//				newHead += '<a href="javascript:void(0);" id="getActionA"  class="actionHead" style="width:60px;display:block;margin-right:2px" hidefocus="true">';
+//				newHead += '我的动态</a>';
+//				newHead += '<a href="javascript:void(0);" id="getActionA"  class="actionHead" style="width:60px;display:block;" hidefocus="true">';
+//				newHead += '分组管理</a></div><div class="clear"></div>';
+			if(key ==1){
+				document.getElementById("usefulfhead").style.display="block";
+				document.getElementById("friendac_div").style.display="block";
+				document.getElementById("usefulFriend").style.display="block";
+				var keywordList = docXml.listFriend;
+				if (keywordList == null || keywordList.length < 1){
+					return;
+				}
+				document.getElementById("rightUser").innerHTML= newHead + getFriendStr(keywordList);
+				var keywordList = docXml.bestList;
+				if (keywordList == null || keywordList.length < 1){
+					return;
+				}
+				document.getElementById("rightUser").innerHTML= newHead + getUserStr(keywordList);
+			}else if(key == 2){
+				var keywordList = docXml.listFriend;
+				if (keywordList == null || keywordList.length < 1){
+					return;
+				}
+				document.getElementById("rightUser").innerHTML= newHead + getFriendStr(keywordList);
+			}else if(key == 3){
+				document.getElementById("usefulfhead").style.display="block";
+				document.getElementById("friendac_div").style.display="block";
+				document.getElementById("usefulFriend").style.display="block";
+				keywordList = docXml.bestList;
+				if (keywordList == null || keywordList.length < 1){
+					return;
+				}
+				document.getElementById("rightUser").innerHTML = newHead + getUserStr(keywordList);
+			}
+		});
+		}
+	function getFriendStr(keywordList){
+		var str = "<div style='margin-left:16px!important;margin-left: 40px;color: #636363;font-weight: bold;text-align: left;font-size:13px'><h2 style='margin-top: 20px;'>您关注的网友：</h2></div>";
+		document.getElementById("usefulFriend").style.display="none";
+			//str = '<div style="margin-left:16px">';
+		for(i = 0;i<keywordList.length;i++){
+			str += '<div style="float:left;width:200px;height:75px;margin-left:16px"><DIV class="userImg">';
+			str += '<a target="_blank" href="blog/';
+			str += keywordList[i].userID;
+			str += '">';
+			str += '<img style="width: 50px;height: 50px" src="https://image.tgb.cn/img/';
+			if(keywordList[i].url == null || keywordList[i].url== "null"){
+				str += 'user_icon_60.png';
+			}else{
+				str += keywordList[i].url;
+			}
+			str += '_60wh.png" />';
+			str += '</a></DIV><DIV class="action" style="margin-top:9px;"><UL class=function><li><a  target="_blank" href="blog/';
+			str += keywordList[i].userID;
+			str += '">';
+			str +=	keywordList[i].userName;
+			str +=	'</a></li>';
+
+			str += '<li><p style="line-height:25px; font-size:12px; color:#a0a0a0;">赞:<span style="color:#f39800; margin-right:10px;">';
+			str += keywordList[i].usefulnum;
+			str += '</span>&nbsp;&nbsp;精华:<strong style="color:#4793F1; font-weight:normal;">';
+			str += keywordList[i].bestbbsnums;
+			str += '</strong></span></li>';
+			
+			str += '</UL></div>';
+			str += '<div class="clear"></div></div>';
+		}
+		//str +='</div>';
+		str += '<div class="clear"></div><div style="float:left;width:94%;border-top:1px solid #C6C6C6;padding-top:5px"><div style="height:50px; padding:10px; background:#e5e5e5; font-size:14px; line-height:25px; color:#777;text-align: left;">开通超级动态后，可以及时知道您关注的网友发表了什么精彩观点、收藏、点赞、被赞了什么好贴等、还可以对他们进行分组查看…</div></div>';
+		return str;
+	}
+	function getUserStr(keywordList){
+		var str = "<div style='margin-left:16px;color: #636363;font-weight: bold;text-align: left;font-size:13px'>人气用户推荐</div>";
+		if(keywordList.length == 0){
+			document.getElementById("rightUser").innerHTML="<div class='head_fri' style='margin-left:16px;'>人气用户推荐</div><br/>暂无推荐网友";
+			return;
+		}
+			//str = '<div style="margin-left:16px">';
+		document.getElementById("usefulFriend").style.display="none";
+		for(i = 0;i<keywordList.length;i++){
+			str += '<div style="float:left;width:200px;height:75px;margin-left:16px"><DIV class="userImg">';
+			str += '<a target="_blank" href="blog/';
+			str += keywordList[i].userID;
+			str += '">';
+			str += '<img style="width: 50px;height: 50px" src="https://image.tgb.cn/img/';
+			if(keywordList[i].url == null || keywordList[i].url== "null"){
+				str += 'user_icon_60.png';
+			}else{
+				str += keywordList[i].url;
+			}
+			str += '_60wh.png" />';
+			str += '</a></DIV><DIV class="action" style="margin-top:9px;"><UL class=function><li><a  target="_blank" href="blog/';
+			str += keywordList[i].userID;
+			str += '">';
+			str +=	keywordList[i].userName;
+			str +=	'</a></li>';
+
+			str += '<li><span class="Afont" >被赞:';
+			str += keywordList[i].usefulnum;
+			str += '</span>&nbsp;&nbsp;<span class="Afont" >精华:';
+			str += keywordList[i].bestbbsnums;
+			str += '</span></li>';
+			//把不兼容LI中的span去掉,然后把span的样式放到A上面就可以了
+			str += '<li ><div style="float:left;margin-right:3px!important;margin-right:1px;margin-top:3px!important;margin-top:1px;"><input type="checkbox" name="addfriendList" value="';
+			str += keywordList[i].userID;
+			str += '" checked="checked" /></div>';
+			str += '<div style="float:left;background-image: url(https://css.tgb.cn/images/addBTN.gif);color:white;display:block;width:37px;height:20px;line-height: 20px;font-size:12px">&nbsp;+关注</div></li>';
+			str += '</UL></div>';
+			str += '<div class="clear"></div></div>';
+		}
+		//str +='</div>';
+		str += '<div class="clear"></div><div style="color:#636363;float:left;width:100%;border-top:1px solid #C6C6C6;padding-top:5px"><div style="margin-left:16px;width:90%;text-align: left;font-size:14px;">开通超级动态后，可以及时知道您关注的网友发表了什么精彩观点、收藏、点赞、被赞什么好贴等、还可以对他们进行分组查看…</div></div>';
+		return str;
+	}
+	
+	
+	// 获得分组网友动态的数据
+	function getGroupAction(groupID,groupName,_type,actionId){
+		if(!actionId){
+			actionId = 0;
+	   	}
+		var getGroupName = encodeURIComponent(groupName);
+		var url ="/super/spefocus/getGroupAction?perPageNum=15&actionID="+actionId+"&groupID="+groupID;
+		//20140731  add  huangdong  类型 3 为特别关注网友数据 :发表主帖，发表跟帖、发表说说
+		if(_type=='3'){
+			 url ="/super/spefocus/getSpeFriensAction?perPageNum=20&actionID="+actionId;
+		}
+//		getMoreGroupAction
+		var aHrefUrl = "user/getMoreListAction?groupID="+groupID+"&groupName="+getGroupName;
+		XMLHttp.sendReq("get",url,"",function(data){
+				var p =data.dto;
+				var recordJSON = p.record;
+				var str = '';
+				var successFlag = p.size;
+				var speFriendsNum = p.sfNum 
+				if(successFlag=='error'){
+					str += '出现错误，无法获取网友动态，请过一会重试。谢谢!';
+				}else if(successFlag == 0){
+					$("#sfNum").html(0);
+					str += '您的网友近两天没有动态,您可以多加几个网友。';
+				}else{
+					var pageNum = 0;
+					if (recordJSON == null || recordJSON.length < 1){
+						str += '您的网友近两天没有动态,您可以多加几个网友。';
+					}
+					str +='<table id="actionTB" class="friendAction" width="700" border="0" cellspacing="0" cellpadding="0" align="left" style="line-height: 25px;">';
+					str += StringAction_JSON_ACTION(recordJSON,pageNum,'<s:property value="#session.userID"/>');
+					str +='<tr><td><br></td><td  align="right"><a class="more" hidefocus="true" style="outline:none;width:100%;text-align:right;font-size:16px;color:#4793F1;font-weight:bold;margin-top:5px;"\
+						href="'+aHrefUrl+'" >>>更多...</a></td>';
+					str +='</table>';
+				}
+				if(_type=='3'){
+					$("#sfNum").html(speFriendsNum);
+				}
+				document.getElementById("friendac_div").innerHTML=str;
+		});
+	 }
+
+	  //显示屏蔽网友的按钮
+	  function showEditBtn(id){
+		  document.getElementById("showBtnEdit_"+id).style.display='block';
+	  }
+	  function outEditBtn(id){
+		  document.getElementById("showBtnEdit_"+id).style.display='none';
+	  }
+	  //屏蔽该网友动态
+	  function closeUAction(obj,userID){
+	      confirm("确定要屏蔽吗?",function(r){
+	        if(r){
+	        var url="user/addUserShield?pbUserID="+userID;
+	        XMLHttp.sendReq("get",url,"",function(obj){
+        		var str=obj.dto;
+				if(str==1){
+					var getTable = document.getElementById("actionTB"); 
+					var delobj = getElementsByClassName("userTr_"+userID);
+					for(var m=delobj.length; m >0; m-- ){
+						var ri = delobj[m-1].rowIndex;
+						getTable.deleteRow(ri);
+					}
+				}else{
+					showAlert("失败,请重试,如还不行请联系股天乐")
+				}
+		    });
+	        }
+	     });
+	  }
+		function getElementsByClassName(className,context){
+	        context = context || document;
+	        if(context.getElementsByClassName){
+	            return context.getElementsByClassName(className);
+	        }
+	        var nodes = context.getElementsByTagName('*');
+	        var rets = [];
+	        for(var i = 0; i < nodes.length; i++){
+	            if(hasClass(className,nodes[i])){
+	                rets.push(nodes[i]);
+	            }
+	        }
+	        return rets;
+	    }
+	    function hasClass(className,node){
+	        var classNames = node.className.split(/\s+/);
+	        for(var i = 0; i < classNames.length; i++){
+	            if(classNames[i] == className){
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
+	  
+	  function outHideBtn(pid){
+		  if(document.getElementById("showBtn_"+pid) != null){
+			  document.getElementById("showBtn_"+pid).style.display="none";
+		  }
+	  }
+	  function showHideBtn(pid){
+		 // var getBtn = document.getElementById("showBtn_"+pid);
+		 // getBtn.style.display="block";
+		  if(document.getElementById("showBtn_"+pid) != null){
+			  document.getElementById("showBtn_"+pid).style.display="block";
+		  }
+	  }
+	  
+
+	 //订阅
+	 function addOrder(order_Name){
+		 	var url="user/addSubscriptionUser?userName="+order_Name;
+			XMLHttp.sendReq("get",url,"",getReturnOrder);
+		 }
+		 function getReturnOrder(obj){
+		 	var str=obj.dto;
+		 	if(str=="error"){
+		 		showAlert("异常出错!");
+		 	}else if(str=="EN"){
+		 		showAlert("不存在此用户!");
+		 	}else if(str=="E"){
+		 		showAlert("此网友已被你订阅了！");
+		 	} else if(str == "N") {
+				showAlert("抱歉，该博主设置了不允许任何人关注");
+			} else if(str=="Y"){
+		 		showAlert("订阅成功！");
+		 	}
+		 }
+	 //收藏主帖
+	 function addMyCol(favID,flag){
+		if(flag == 'F'){
+			showAlert("您还没有登陆，请登录后再收藏");
+			return;
+		}
+		if(flag == 'T'){
+			showAlert("您还没有手机验证，请验证后再收藏");
+			return;
+		}
+		if("undefined" == typeof baseDomain){
+			var url="topic/addFavorite?rid="+favID;
+			 XMLHttp.sendReq("get",url,"",getReturnAddfav);
+		}else{
+			var url=baseDomain+"topic/addFavorite?rid="+favID;
+			XMLHttp.sendReq("get",url,"",getReturnAddfav);
+		}
+        
+        
+	}
+    	
+	function getReturnAddfav(obj){
+		  var insertFlag = obj.dto.root;
+		  var existValue = insertFlag.value;
+		  if(existValue == 0){
+			  showAlert("您已经收藏过了!");
+          }else if(existValue == "error"){
+        	  showAlert("发生错误，请@股天乐!");
+          }else{
+        	  showAlert("收藏成功，请您到你的个人中心中查看收藏!");
+		  }
+	}
+	//收藏跟帖
+	function addReplyCol(favID,flag,favType){
+		if($('.XLD_num2').length==0){ 
+			 loginPanel();
+			 return;
+		 }
+		if(flag == 'F'){
+			showAlert("您还没有登陆，请登录后再收藏");
+			return;
+		}
+		if(flag == 'T'){
+			showAlert("您还没有手机验证，请验证后再收藏");
+			return;
+		}
+		if("undefined" == typeof baseDomain){
+			var url="topic/addFavoriteNew?rid="+favID+"&favType="+favType;
+       		XMLHttp.sendReq("get",url,"",getReturnAddfav);
+		}else{
+			var url=baseDomain+"addFavoriteNew?rid="+favID+"&favType="+favType;
+      		 XMLHttp.sendReq("get",url,"",getReturnAddfav); 
+		}
+        
+        
+    }
+	function getReturnAddfav(obj){
+	  	var insertFlag = obj.dto.root;
+		 	var existValue = insertFlag.key;
+		 	if(existValue == 'exist'){
+		        showAlert("您已经收藏过了!");
+		    }else if(existValue == 'error'){
+		        showAlert("发生错误，请您联系股天乐!");}
+		    else{
+	           showAlert("收藏成功，请您到你的个人中心中查看收藏!");
+		 	}
+	 }
+	
+	//关闭网友动态服务
+	function close(){
+			window.confirm("关闭该项服务将无法取得您关注的网友活动情况\n是否确定？",function(r){
+				if(r){
+					XMLHttp.sendReq("get","clostSubUserAction","",reUserAction);	
+				}
+			});
+		
+	}
+	function reUserAction(obj){
+		var str = obj.dto;
+		if(str==1){
+			showAlert("设置成功",function(){
+				window.location.reload();	
+			});			
+		}else if(str ==0){
+			showAlert("出现错误，请重试");
+		}else if(str.indexOf("积分不够")>0){
+ 			window.location.href="nopoints.jsp"
+ 		}
+	}
+	function clearText(obj){
+		if(obj.value=="请输入话题,如“房地产”"){
+			obj.value="";
+		}
+	}
+	//UBB过滤，查看图片
+	function loadImg(obj,url){
+		var imgWidth = obj.childNodes[0].style.width;
+		if(imgWidth == "120px"){
+			obj.innerHTML="<a style=\"display:block;\" hidefocus=\"true\" href='"+url+"' target=\"_blank\" >查看原图</a><img onclick=\"showSmallImg(this)\"  style=\"width:440px\" src=\""+url+"\" >"; 
+		}else{
+			obj.innerHTML="<img onclick=\"showSmallImg(this)\"  style=\"width:120px\" src=\""+url+"\" >"; 
+		}
+	}
+	function player(url,obj){
+		var d = obj.parentNode;
+		creatbgmusic(url,1,true,false,true,true,'',obj.parentNode);
+	}
+	//从引用内容中提取引用用户的NAME和postdate
+	function guolvName(str){
+		var re = /(([1-9]{1}[0-9]{3})-{1}(0?[1-9]{1}|1?[0-2]{1})-{1}(0?[1-9]|[12][0-9]|3[01])\s?(0?[0-9]{1}|1?[0-9]{1}|2?[0-4]{1})\:([0-5]{1}[0-9]{1}|60))$/ig;
+		if(re.test(str)){
+			var userArray = new Array();
+			userArray.push(str.substring(0,str.indexOf(RegExp.$1)-1));
+			userArray.push(RegExp.$1);
+			return userArray;
+		}else{
+			return str;
+		}
+	}
+	var flashOpenFlag = 1;
+	function getFlash(obj,url){
+		var flashContent ="";
+		var upBTN = "";
+		if(flashOpenFlag ==1 ){//打开
+			flashContent ='<div style="text-align:left">';
+			flashContent +=' <OBJECT codeBase=https://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0';
+			flashContent +='classid=clsid:D27CDB6E-AE6D-11cf-96B8-444553540000 width=440 height=356>';
+			flashContent +='<PARAM NAME=movie VALUE='+url+'>';
+			flashContent +='<PARAM NAME=quality VALUE=high>';
+			flashContent +='<embed src='+url+' quality=high pluginspage="https://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width=440 height=356 />';
+			//flashContent +=url;
+			//flashContent +='</embed>';
+			flashContent +='</OBJECT></div>';
+			upBTN = '<span style="display:block;text-align:left;"><a style="display:block;" hidefocus="true" href="javascript:void(0);"  >收起</a></span>';	
+			obj.innerHTML=upBTN+flashContent;
+			flashOpenFlag = 2; //关闭
+		}else{
+			obj.innerHTML ='<img src="https://css.tgb.cn/images/watchVideo.gif" style="width:120px;cursor: pointer;"/>';
+			flashOpenFlag = 1;
+		}
+	}
+
+	//UBB过滤
+	function ubbAll(strContent){
+			//quote function($1){}
+		strContent = strContent.replace(/(\[quote\])(.*?)(\[\/quote\])/ig,
+				function($1,$2,$3){
+					var startIndex = $3.indexOf("原帖由");
+					if(startIndex > -1){
+						var endIndex = $3.indexOf("发表");
+						var newStr = $3.substring(startIndex+3,endIndex);
+						var userArray = guolvName(newStr);
+						if(typeof(userArray)=='string'){
+							return $3;
+						}else{
+							var userName = userArray[0];
+							var postDate = userArray[1];
+							var conentStr = $3.substring(endIndex+2);
+						}
+						return '<div style="float:left;display:block;border:1px solid #E6E6E6;background-color:#E4E9F4;width:95%;word-wrap:break-word;font-size:12px;padding:3px;">'+'<span style="color:#4793F1">'+userName+'</span>&nbsp;&nbsp;<span style="color:#B1B1B1;font-size:12px">'+postDate+'</span><br/>'+conentStr+'</div><div class="clear"></div>';
+					}else{
+						return $3;
+					}
+				});
+				
+		 	//img转换站内图片      //<span style=\"color: blue;cursor: pointer;display:none;text-align:left; \"></span>
+		strContent = strContent.replace(/\[img\]\s*([^\[\<\r\n]+?)\s*\[\/img\]/ig,
+				'<div onclick=\'loadImg(this,\"$1\")\'  ><img src=\"$1\" style=\"width:120px;cursor: pointer;\"/></div> ');
+		 	//@用户名 
+		strContent = strContent.replace(/\[atuser=([0-9]*)\](.+?)\[\/atuser\]/ig,'<a style=\"color:#4793F1;text-decoration:underline;\" href=\"blog/$1\" target=\"_blank\">@$2</a>');
+		 	//个股吧（600000代码）
+		strContent = strContent.replace(/\[gguba\](.+?)\[\/gguba\]/ig,'<a style=\"color:#4793F1;text-decoration:underline;\" href=\"search/search?searchContent=$1&type=2\" target=\"_blank\">$1</a>');
+			//个股吧（股票名称）
+		strContent = strContent.replace(/\[gubar\](.+?)\[\/gubar\]/ig,"$1");
+			//标签吧
+		strContent = strContent.replace(/\[tag\](.+?)\[\/tag\]/ig,"$1");
+		 	//mp3
+		strContent = strContent.replace(/\[mp3\](.*?)(.MP3|.mp3|.WMA|.wma|.WMV|.wmv|.AVI|.avi|.MPG|.mpg|.MPEG|.mpeg|.SWF|.swf|.WAV|.wav)\[\/mp3]/ig,
+		 			'<div align="left"><div class="musicdiv"><input type="button" onclick="player('+"\'$1$2\'"+',this);" value="点击播放音乐"/></div></div>');
+		 	//flash
+		strContent = strContent.replace(/\[flash\](.*?)\[\/flash\]/ig,
+		 			"<div style='text-align:left;cursor: pointer;' onclick=\'getFlash(this,\"$1\")\'><img src=\"https://css.tgb.cn/images/watchVideo.gif\" style=\"width:120px;cursor: pointer;\"/></div>");
+	
+		//COLOR[color=red]
+		strContent = strContent.replace(/\[color=(.[^\[]*)\](.*?)\[\/color\]/ig,"$2"); 	
+		//ALIGN
+		strContent = strContent.replace(/\[align=(.[^\[]*)\](.*?)\[\/align\]/ig,"$2");
+		//字体格式
+		strContent = strContent.replace(/\[i\](.*?)\[\/i\]/ig,"$1"); 	
+		strContent = strContent.replace(/\[u\](.*?)\[\/u\]/ig,"$1"); 
+		strContent = strContent.replace(/\[b\](.*?)\[\/b\]/ig,"$1"); 
+		strContent = strContent.replace(/\[size=([0-9])\](.*?)\[\/size\]/ig,"$2"); 
+		strContent = strContent.replace(/\[list\](.+?)\[\/list\]/ig,"$1"); 
+		strContent = strContent.replace(/\[list=(A|1)\](.+?)\[\/list\]/ig,"$2"); 
+		strContent = strContent.replace(/\[center\](.*?)\[\/center\]/ig,"$1"); 
+		strContent = strContent.replace(/\[font=(.*?)\](.*?)\[\/font\]/ig,"$2"); 
+		
+		strContent = strContent.replace(/\[video\](.+?)\[\/video\]/ig,'[视频]');	
+		strContent = strContent.replace(/\[url\](.+?)\[\/url\]/ig,'$1'); 
+		strContent = strContent.replace(/\[link\](.+?)\[\/link\]/ig,'[分享链接]'); 
+		
+		strContent=UbbIMGUUB(strContent);
+		
+		return strContent;
+	}
+	
+	/**
+	 "<div style='text-align:left' onclick=\'getFlash(this,\"$1\")\'><OBJECT codeBase=http:" +
+	"//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab" +
+	"#version=6,0,29,0 classid=clsid:" +
+	"D27CDB6E-AE6D-11cf-96B8-444553540000 width=500 height=400><PARAM " +
+	"NAME=movie VALUE=$1><PARAM NAME=quality VALUE=high><embed src=$1 " +
+	"quality=high pluginspage='https://www.macromedia.com/go/" +
+	"getflashplayer' type='application/x-shockwave-flash' " +
+	"width=500 height=400 /></OBJECT></div>");
+	 */
+	
+	//点赞and推荐
+	function AddUseful(topicID,rid,topic,flag){
+		if($('.XLD_num2').length==0){ 
+			 loginPanel();
+			 return;
+		 }
+	    var pageNum = 1;		    
+		if(flag == 'F'){
+			showAlert("您还没有登陆，请登录后再进行点赞");
+			return;
+		}
+		if(flag == 'T'){
+			showAlert("您还没有手机验证，请验证后再点赞");
+			return;
+		}
+		if(topic == 'R'){
+		    pageNum = 1;
+		}
+		if("undefined" == typeof baseDomain){
+			var url="/topic/addUseful?rid=" + rid + "&flag=" + topic + "&topicID=" + topicID + "&pageNum=" + pageNum;
+       		XMLHttp.sendReq("get",url,"",function (obj) {     	
+				var insertFlag = obj.dto.root;
+				var str = insertFlag.value;
+				if (str != "error"){
+					if(str == "999999"){
+						showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+					}else if(str == "999998"){
+						showAlert("您不能投自己的票，让其他用户帮您投吧！");
+					}else if(str != "0"){
+						var topic = insertFlag.flag;
+						gioLikeSuccess(rid,topic,"L",topicID)
+						if(topic == "T"){
+							showAlert("点赞成功，该帖赞+1")
+						}else{
+							showAlert("点赞成功，该跟帖赞+1");
+						}
+					}else{
+						showAlert("您已经投过票了，一个ID对同个回帖或者主帖只允许投一票");
+						return;
+					}
+				}else{
+					showAlert("发生错误，请您联系股天乐");
+					return;
+			}
+			});
+		}else{
+			var url=baseDomain+"/topic/addUseful?rid=" + rid + "&flag=" + topic + "&topicID=" + topicID + "&pageNum=" + pageNum;
+			XMLHttp.sendReq("get",url,"",function (obj) {     	
+				var insertFlag = obj.dto.root;
+				var str = insertFlag.value;
+				if (str != "error"){
+					if(str == "999999"){
+						showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+					}else if(str == "999998"){
+						showAlert("您不能投自己的票，让其他用户帮您投吧！");
+					}else if(str != "0"){
+						var topic = insertFlag.flag;
+						if(topic == "T"){
+							showAlert("点赞成功，该帖赞+1")
+						}else{
+							showAlert("点赞成功，该跟帖赞+1");
+						}
+					}else{
+						showAlert("您已经投过票了，一个ID对同个回帖或者主帖只允许投一票");
+						return;
+					}
+				}else{
+					showAlert("发生错误，请您联系股天乐");
+					return;
+				}
+			});
+		}
+       
+    }
+	
+	  //动态数据载入排版
+	  function StringAction_JSON_ACTION(recordJSON,pageNum,selfID){
+		var argumentNum = arguments.length;
+		str ="";
+		var userImg = ""; 
+		for(var i = 0 ;i<recordJSON.length; i++){
+			if(i==0){
+			//  if(recordJSON[i].actionName=='DV'){
+			//		str += '<tr class="userTr_'+recordJSON[i].userID+'" style="padding-top:10px;word-break:break-all;" onmouseover="showHideBtn('+i+')" onmouseout="outHideBtn('+i+')" ><td class="font4 table_top1" align="center" width="70px" valign="top"><img style="margin-top:5px;width:50px;height:50px;" src="https://css.tgb.cn/images/davNew/1540447356793.png';
+			//	}else{
+					str += '<tr class="userTr_'+recordJSON[i].userID+'" style="padding-top:10px;word-break:break-all;" onmouseover="showHideBtn('+i+')" onmouseout="outHideBtn('+i+')" ><td class="font4 table_top1" align="center" width="70px" valign="top"><img style="margin-top:5px;width:50px;height:50px;" src="https://image.tgb.cn/img/';
+			//	}
+			}else{
+			//	if(recordJSON[i].actionName=='DV'){
+				//	str += '<tr class="userTr_'+recordJSON[i].userID+'" style="padding-top:10px;word-break:break-all;" onmouseover="showHideBtn('+i+')" onmouseout="outHideBtn('+i+')" ><td class="font4 table_top" align="center" width="70px" valign="top"><img style="margin-top:5px;width:50px;height:50px;" src="https://css.tgb.cn/images/davNew/1540447356793.png';
+			//	}else{
+					str += '<tr class="userTr_'+recordJSON[i].userID+'" style="padding-top:10px;word-break:break-all;" onmouseover="showHideBtn('+i+')" onmouseout="outHideBtn('+i+')" ><td class="font4 table_top" align="center" width="70px" valign="top"><img style="margin-top:5px;width:50px;height:50px;" src="https://image.tgb.cn/img/';
+			//	}
+			}
+			
+		//	if(recordJSON[i].actionName!='DV'){
+				if(recordJSON[i].portrait == null||recordJSON[i].portrait == "null"){
+					str += 'user_icon_60.png_60wh.png';
+					userImg = 'user_icon_60.png_80wh.png';
+				}else{
+				 	str += recordJSON[i].portrait +'_60wh.png';
+					userImg = recordJSON[i].portrait; + '_80wh.png'
+				}
+		//	}
+			if(i==0){
+				str += '"/></td><td class="table_top1" style="width:580px" valign="top">';
+			}else{
+				str += '"/></td><td class="table_top" style="width:580px" valign="top">';
+			}
+			
+			if(recordJSON[i].actionName == "T"){
+				str += '<a href="blog/'+recordJSON[i].userID;
+				str += '" target="_blank">'+recordJSON[i].userName+'</a>&nbsp;发布了<a href="Article/'+recordJSON[i].objectID+'/1" target="_blank">';
+				str += recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName == "R"){
+				str += '<a href="blog/'+recordJSON[i].userID;
+				str += '" target="_blank">'+recordJSON[i].userName+'</a>&nbsp;跟帖了<a href="Reply/'+recordJSON[i].objectID+'/'+recordJSON[i].otherID+'#'+recordJSON[i].otherID+'" target="_blank">';
+				str += recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName=="JH"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;发起<a href="viewNewBo?dpID='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>交易计划';
+			}else if(recordJSON[i].actionName=="FM"){
+				str += ' &nbsp;<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;发起<a rel="nofollow" href="viewMatch?matchID='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>比赛';
+			}else if(recordJSON[i].actionName=="CM"){
+				str += '&nbsp;<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;参加<a rel="nofollow" href="viewMatch?matchID='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>比赛';
+			}
+			else if(recordJSON[i].actionName == "F"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;加<a href="blog/'+recordJSON[i].objectID+'" target="_blank">';
+				str += recordJSON[i].objectName+'</a>为网友';
+			}else if(recordJSON[i].actionName == "JC"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;参与了<a href="initGuess" target="_blank">指数竟猜</a>'+recordJSON[i].objectName;
+			}else if(recordJSON[i].actionName == "QM"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;更新了签名'+recordJSON[i].objectName;
+			}else if(recordJSON[i].actionName == "BG"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;上传了报告：<a href="viewReport?reportID='+recordJSON[i].objectID+'&catalogID='+recordJSON[i].otherID+'" target="_blank">'+recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName == "TT"){
+				str += ' &nbsp;<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;赞了主帖<a href="Article/'+recordJSON[i].objectID+'/1" target="_blank">';
+				str += recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName == "TR"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;赞了主帖<a href="Article/'+recordJSON[i].objectID+'/1" target="_blank">';
+				str += recordJSON[i].objectName+'</a>下的跟帖';
+			}else if(recordJSON[i].actionName == "SC"){
+				str += '&nbsp;<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;收藏了主帖<a href="Article/'+recordJSON[i].objectID+'/1" target="_blank">';
+				str += recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName == "VT"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;投票：<a href="Article/'+recordJSON[i].objectID+'/1" target="_blank">';
+				str += recordJSON[i].objectName+'</a>';
+			}else if(recordJSON[i].actionName == "DY"){
+				str += ' &nbsp;<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str += '&nbsp;订阅了<a href="blog/'+recordJSON[i].objectID+'" target="_blank">';
+				str += recordJSON[i].objectName+'</a>的帖子';
+			}else if(recordJSON[i].actionName == "AV"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;上传了：<a href="viewVideo?keyVideoID='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>的视频';
+			}else if(recordJSON[i].actionName == "VV"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;看了:<a href="viewVideo?keyVideoID='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>的视频';
+			}else if(recordJSON[i].actionName == "LH"){
+				str += '网友<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='出现在<a href="initMainLH?stockCode='+recordJSON[i].objectID+'" target="_blank">'+recordJSON[i].objectName+'</a>龙虎榜中';
+			}else if(recordJSON[i].actionName == "JU"){
+				str += '网友<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;上周获得'+recordJSON[i].objectName+'加油券抽奖一张';
+			}else if(recordJSON[i].actionName == "JY"){
+				str += '网友<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+				str +='&nbsp;上周获得'+recordJSON[i].objectName+'交易抽奖1000游戏豆';
+			}else if(recordJSON[i].actionName == "W"){
+				str += '<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>';
+			}else if(recordJSON[i].actionName == "DV"){
+				var date = new Date(recordJSON[i].actionDate);
+				var timeCode2 =  timeCode(date.getTime());
+				str +='<a href="blog/'+recordJSON[i].userID+'" target="_blank">'+recordJSON[i].userName+'</a>'
+				str += '&nbsp;&nbsp;更新了<a data-davseq='+recordJSON[i].objectID+' data-href="new/dav/getDvViewPointNew?seq='+recordJSON[i].objectID+' href="javascript:void(0)" onclick="tgbmdother(\'cjdt\',this,\'dv\')">&nbsp;&nbsp;智能选股&nbsp;';
+				str += timeCode2+'期</a>';
+				str +='<div style="color:#545454;"><span style="color:#4793F1;">赠：</span>  '
+				str +='最新策略<a data-davseq='+recordJSON[i].objectID+' data-href="new/dav/getDvViewPointNew?seq='+recordJSON[i].objectID+' " href="javascript:void(0)" onclick="tgbmdother(\'cjdt\',this,\'dv\')" style="color:#545454;">《'+recordJSON[i].objectName+'》</a></div>'
+			}
+			
+			if(recordJSON[i].body != null){
+				if(recordJSON[i].actionName == "T" || recordJSON[i].actionName == "TT" || recordJSON[i].actionName == "SC"){
+					str +='<br/><span class="body">'+ubbAll(recordJSON[i].body)+'</span><a href="Article/'+recordJSON[i].objectID+'/1" target="_blank" rel="nofollow">（全文）<a/>';
+				}else if(recordJSON[i].actionName == "R" ||recordJSON[i].actionName == "TR"){
+					if(recordJSON[i].zfQuestion !=null){
+						str += '<br/><span class="bluelan">'+recordJSON[i].zfQuestion.userName+'</span>直呼 <span class="bluelan">'+recordJSON[i].zfQuestion.answerUserName+'</span> 问题 ：'
+						str +='<span class="body">'+ubbAll(recordJSON[i].body)+'</span><a href="Reply/'+recordJSON[i].objectID+'/'+recordJSON[i].otherID+'#'+recordJSON[i].otherID+'" target="_blank" rel="nofollow">（全文）<a/>';
+						str += showStr(recordJSON[i].zfQuestion,recordJSON[i].questionState);
+					}else{
+						str +='<br/><span class="body">'+ubbAll(recordJSON[i].body)+'</span><a href="Reply/'+recordJSON[i].objectID+'/'+recordJSON[i].otherID+'#'+recordJSON[i].otherID+'" target="_blank" rel="nofollow">（全文）<a/>';
+						if(recordJSON[i].quoteID!=0  && null != recordJSON[i].quoteContent && recordJSON[i].quoteContent.length>0){
+							str+='<div class="quote_content"><span style="color:#333;" >'+recordJSON[i].quoteUserName+'</span>: '+recordJSON[i].quoteContent+'</div>';
+						}
+					}
+				}else if(recordJSON[i].actionName == "W"){
+					if(recordJSON[i].objectName == "P"){ //评论
+						str +='<br/><a href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].objectID+'" target="_blank" rel="nofollow"><span class="body">'+shuoUbbAll(recordJSON[i].body)+'</span><a/>';
+					}else{
+						if(recordJSON[i].zfQuestion !=null){
+							str += '<br/><span class="bluelan">'+recordJSON[i].zfQuestion.userName+'</span>直呼 <span class="bluelan">'+recordJSON[i].zfQuestion.answerUserName+'</span> 问题 ：'
+							str +='<a href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].objectID+'" target="_blank" rel="nofollow"><span class="body">'+shuoUbbAll(recordJSON[i].body)+'</span><a/>';
+							str += showStr(recordJSON[i].zfQuestion,recordJSON[i].questionState);
+						}else{
+							str +='<a href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].objectID+'" target="_blank" rel="nofollow"><span class="body">'+shuoUbbAll(recordJSON[i].body)+'</span><a/>';
+							
+						}
+					}
+				}else if(recordJSON[i].actionName == "DV"){
+					str +='<span class="body" >摘要：'+ubbAll(recordJSON[i].body)+'</span><a data-davseq='+recordJSON[i].objectID+' data-href="new/dav/getDvViewPointNew?seq='+recordJSON[i].objectID+'" href="javascript:void(0)" onclick="tgbmdother(\'cjdt\',this,\'dv\')"  rel="nofollow">（全文）<a/>';
+				}
+			}
+			// 九宫格 图片 ＋ 语音
+	    	 	var imgesStr = recordJSON[i].images;
+			var voiceStr = recordJSON[i].voices;
+			str += getVoiceImg(imgesStr,voiceStr,i);
+		
+			if(recordJSON[i].actionName == "W"){
+				str += '<br/><span class="postdt" style="float:left">'+recordJSON[i].actionDate+'&nbsp;&nbsp;来自说说</span>';
+			}else{
+				str += '<br/><span class="postdt" style="float:left">'+recordJSON[i].actionDate+'</span>';
+			}
+		
+			if(selfID != recordJSON[i].userID){ 
+				if(recordJSON[i].actionName == "T"  ){ //主帖
+					str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'T\','+recordJSON[i].objectID+')">评论</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:addMyCol('+recordJSON[i].objectID+',\'S\');">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:AddUseful('+recordJSON[i].objectID+','+recordJSON[i].objectID+',\'T\',\'S\');">赞</a>';
+					str += '<div class="clear"></div><div id="showReply_T_'+recordJSON[i].objectID+'" class="showRDIV" style="display:none;width:580px"></div>';
+					str += '<div id="addActionReply_T_'+recordJSON[i].objectID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txt_T_'+recordJSON[i].objectID+'" class="textbox" >@'+recordJSON[i].userName+' </textarea><a onclick="subActionReply(\'T\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+	
+				}else if(recordJSON[i].actionName == "R"){//回帖
+					str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'R\','+recordJSON[i].otherID+')">评论</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:addReplyCol('+recordJSON[i].otherID+',\'S\',\'R\');">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:AddUseful('+recordJSON[i].objectID+','+recordJSON[i].otherID+',\'R\',\'S\');">赞</a>';
+					str += '<div class="clear"></div><div id="showReply_R_'+recordJSON[i].otherID+'" class="showRDIV" style="display:none;width:580px"></div>';
+					str += '<div id="addActionReply_R_'+recordJSON[i].otherID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txt_R_'+recordJSON[i].otherID+'" class="textbox" >@'+recordJSON[i].userName+' </textarea><a onclick="subActionReply(\'R\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+				}else if(recordJSON[i].actionName == "TT"){//推荐主帖
+					str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'TT\','+recordJSON[i].objectID+')">评论</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:addMyCol('+recordJSON[i].objectID+',\'S\');">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:AddUseful('+recordJSON[i].objectID+','+recordJSON[i].objectID+',\'T\',\'S\');">赞</a>';
+					str += '<div class="clear"></div><div id="showReply_TT_'+recordJSON[i].objectID+'" class="showRDIV" style="display:none;width:580px"></div>';
+					str += '<div id="addActionReply_TT_'+recordJSON[i].objectID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txt_TT_'+recordJSON[i].objectID+'" class="textbox"></textarea><a onclick="subActionReply(\'TT\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+				}else if(recordJSON[i].actionName == "SC"){//收藏主帖
+					str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'SC\','+recordJSON[i].objectID+')">评论</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:addMyCol('+recordJSON[i].objectID+',\'S\');">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:AddUseful('+recordJSON[i].objectID+','+recordJSON[i].objectID+',\'T\',\'S\');">赞</a>';
+					str += '<div class="clear"></div><div id="showReply_SC_'+recordJSON[i].objectID+'" class="showRDIV" style="display:none;width:580px"></div>';
+					str += '<div id="addActionReply_SC_'+recordJSON[i].objectID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txt_SC_'+recordJSON[i].objectID+'" class="textbox"></textarea><a onclick="subActionReply(\'SC\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+					
+				}else if(recordJSON[i].actionName == "TR"){//点赞跟帖
+					str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'TR\','+recordJSON[i].otherID+')">评论</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:addReplyCol('+recordJSON[i].otherID+',\'S\',\'R\');">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+					str += '<a style="float:right;font-size:12px;" href="javascript:AddUseful('+recordJSON[i].objectID+','+recordJSON[i].otherID+',\'R\',\'S\');">赞</a>';
+					str += '<div class="clear"></div><div id="showReply_TR_'+recordJSON[i].otherID+'" class="showRDIV" style="display:none;width:580px"></div>';
+					str += '<div id="addActionReply_TR_'+recordJSON[i].otherID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txt_TR_'+recordJSON[i].otherID+'" class="textbox"></textarea><a onclick="subActionReply(\'TR\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+				
+				}else if(recordJSON[i].actionName == "W"){//淘说说
+					if(recordJSON[i].objectName == "P"){ //评论
+						str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'W\',\''+recordJSON[i].otherID+"_"+recordJSON[i].objectID+'\')">评论</a>';
+//						str += '<a style="float:right" href="javascript:void(0);" onclick="AddCollect('+recordJSON[i].objectID+',this)">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+						str += '<a style="float:right;font-size:12px;" href="javascript:AddWeiboUseful('+recordJSON[i].objectID+');">赞&nbsp;|&nbsp;</a>';
+						str += '<div id="addActionReply_W_'+recordJSON[i].otherID+"_"+recordJSON[i].objectID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txte_W_'+recordJSON[i].otherID+"_"+recordJSON[i].objectID+'" class="textbox"></textarea><a onclick="addWeiboComment({\'type\':\'R\',\'data\':{' +
+								'\'feedID\':\''+recordJSON[i].otherID+'\',' +
+								'\'userName\':\''+recordJSON[i].userName+'\',' +
+								'\'msgUserID\':\''+recordJSON[i].userID+'\',' +
+								'\'refMsgUserID\':\''+recordJSON[i].userID+'\',' +
+								'\'refMsgUserName\':\''+recordJSON[i].userName+'\',' +
+								'\'refMsgID\':\''+recordJSON[i].objectID+'\'' +
+								'}})" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+						str += '<div class="clear"></div>';
+					}else{
+						str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="showAddReply(\'W\',\''+recordJSON[i].objectID+"_"+recordJSON[i].objectID+'\')">评论</a>';
+						str += '<a style="float:right;font-size:12px;" href="javascript:void(0);" onclick="AddCollect('+recordJSON[i].objectID+',this)">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+						str += '<a style="float:right;font-size:12px;" href="javascript:AddWeiboUseful('+recordJSON[i].objectID+');">赞</a>';
+						str += '<div id="addActionReply_W_'+recordJSON[i].objectID+"_"+recordJSON[i].objectID+'" style="display:none;width:580px"><textarea cols=105 rows=3 id="txte_W_'+recordJSON[i].objectID+"_"+recordJSON[i].objectID+'" class="textbox"></textarea><a onclick="addWeiboComment({\'type\':\'R\',\'data\':{' +
+								'\'feedID\':\''+recordJSON[i].objectID+'\',' +
+								'\'userName\':\''+recordJSON[i].userName+'\',' +
+								'\'msgUserID\':\''+recordJSON[i].userID+'\',' +
+								'\'refMsgUserID\':\''+recordJSON[i].userID+'\',' +
+								'\'refMsgUserName\':\''+recordJSON[i].userName+'\',' +
+								'\'refMsgID\':\''+recordJSON[i].objectID+'\'' +
+								'}})" href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a></div>';
+						str += '<div class="clear"></div>';
+					}
+				}
+//				else if(recordJSON[i].actionName == "W"  ){ //说说
+////					str += '<a style="float:right" href="javascript:void(0);" onclick="showAddReply(\'T\','+recordJSON[i].objectID+')">评论</a>';
+//					str += '<a style="float:right" href="#" ' +
+//							'onclick="$.openDialog({\'type\':\'R\',\'data\':{' +
+//							'\'feedID\':\''+recordJSON[i].objectID+'\',' +
+//							'\'userName\':\''+recordJSON[i].userName+'\',' +
+//							'\'msgUserID\':\''+recordJSON[i].userID+'\',' +
+//							'\'refMsgUserID\':\''+recordJSON[i].userID+'\',' +
+//							'\'refMsgUserName\':\''+recordJSON[i].userName+'\',' +
+//							'\'refMsgID\':\''+recordJSON[i].objectID+'\'' +
+//							'}});return false;">' +
+//							'评论</a>';
+//					str += '<a style="float:right" href="javascript:void(0);" onclick="AddCollect('+recordJSON[i].objectID+',this)">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>';
+//					str += '<a style="float:right" href="javascript:AddWeiboUseful('+recordJSON[i].objectID+');">赞</a>';
+//					str += '<div class="clear"></div>';
+////					str += '<div id="showReply_T_'+recordJSON[i].objectID+'" class="showRDIV" style="display:none;width:580px"></div>';
+////					str += '<div id="addActionReply_T_'+recordJSON[i].objectID+'" style="display:none;width:580px">' +
+////						   '<textarea cols=105 rows=3 id="txt_T_'+recordJSON[i].objectID+'" class="textbox" >@'+recordJSON[i].userName+' </textarea>' +
+////						   '<a onclick="subActionReply(\'T\','+recordJSON[i].userID+',\''+recordJSON[i].userName+'\','+recordJSON[i].objectID+','+recordJSON[i].otherID+',\''+userImg+'\',\''+recordJSON[i].objectName+'\')" ' +
+////						   	   'href="javascript:void(0);" class="subReplyStyle" style="color: white;">提交</a>' +
+////						   '</div>';
+//	
+//				}
+				str +='</td>';
+				str +='<td valign="top" width="28px" style="border-bottom: 1px solid #D8DEEA;color: #A8A8A8; font-size: 14px;line-height: 25px; padding-top: 10px;">';
+				str +='<div style="position:relative;" onclick="showEditBtn('+i+')" ><div id="showBtn_'+i+'"   style="width:13px;display:none" class="actionHover actionIcon03"></div>';
+				str +='<div class="clear"></div><div class="showBtnEdit" onmouseover="showEditBtn('+i+')"  onmouseout="outEditBtn('+i+')" style="display:none" id="showBtnEdit_'+i+'">';
+				str +='<ul><li>';
+				str +='<a href="javascript:void(0)" onclick="closeUAction(this,'+recordJSON[i].userID+');">屏蔽该网友消息</a>';
+				str +='</li></ul></div></div>';
+				str +='</td></tr>';
+			}
+		} 
+		return str;
+	 }
+	var shuoDomainPath,wwwDomainPath;
+	if(document.domain.indexOf("shuo") > -1){
+		shuoDomainPath = "https://"+document.domain+"/";
+		wwwDomainPath = shuoDomainPath.replace("shuo","www");
+	}else if(document.domain.indexOf("www") > -1){
+		wwwDomainPath = "https://"+document.domain+"/";
+		shuoDomainPath = wwwDomainPath.replace("www","shuo");
+	}
+	//页面UBB过滤
+ 	function UbbIMGUUB(strContent){
+		strContent = strContent.replace(/\[图片]/ig, "");
+		strContent = strContent.replace(/\图片]/ig, "");
+		strContent = strContent.replace(/\［图片］/ig, "");
+		strContent = strContent.replace(/\[图片]/ig, "");
+		strContent = strContent.replace(/\［语音]/ig, "");
+		strContent = strContent.replace(/\[语音]/ig, "");
+		strContent = strContent.replace(/\［语音］/ig, "");
+ 		return strContent;
+ 	}
+	//页面UBB过滤
+ 	function shuoUbbAll(strContent){
+		//个股吧（股票代码）
+		strContent = strContent.replace(/\[gguba\](.+?)\[\/gguba\]/ig,'<a class="atfont" href = "'+wwwDomainPath+'quotes/$1/"  target="_blank">$1</a>');
+		//个股吧（名称）
+		strContent = strContent.replace(/\[gubar\](.+?)\[\/gubar\]/ig,function($1){
+																	  $1 = $1.replace("[gubar]","");
+																	  $1 = $1.replace("[/gubar]","");
+																	  return '<a class="atfont" href="'+wwwDomainPath+'search/search?searchContent='+encodeURIComponent($1)+'&type=4" target="_blank">'+$1+'</a>';});
+	
+		//解析@
+		strContent = strContent.replace(/(\@)([a-zA-Z0-9\u4e00-\u9fa5]+)/ig,function($1,$2){	
+																		 // $1 = $1.replace("@","");
+																		  if(cnLength($1)>12){
+																			  return $1;
+																		  }else{
+																			  var n = $1.replace("@","");
+																		  	  return '<a href="'+shuoDomainPath+'n/'+encodeURIComponent(n)+'" onmouseover="userTips(this,\'0\',\''+n+'\');" class="atfont" target="_blank">'+$1+'</a>';
+																		  }});
+		//话题
+		strContent = strContent.replace(/\#([^\#|.]+)\#/ig,function($1){
+																	    $1 = $1.replace("#","");
+																	    $1 = $1.replace("#","");
+																	    $1 = removeHTMLTag($1);
+																	    return '<a style="color: #4793F1;" href="'+shuoDomainPath+'s/'+encodeURIComponent($1)+'" target="_blank">#'+$1+'#</a>';
+																	  });
+		//表情	
+		strContent = strContent.replace(/\[F](.*?)\[\/F]/ig,function($1,$2){
+																		return '[表情]';
+																		//<img style="vertical-align: text-bottom;" src="https://img.tgb.cn/images/'+$2+'" data_ue_src="https://img.tgb.cn/images/qq'+$1+'">
+																	});
+	
+		//隐藏图片
+		strContent = strContent.replace(/\[img\]\s*[javascript]*(.+?)(.JPEG|.jpeg|.JPG|.jpg|.GIF|.gif|.png|.PNG|.BMP|.bmp|.WEBP|.webp)\[\/img\]/ig,
+										'[图片]');
+		//解析个股
+		strContent = strContent.replace(/\[stock\](\d{6})\[\/stock\]/ig,"[$1]");
+		//分享超链接
+		strContent = strContent.replace(/\[link\](.+?)\[\/link\]/ig,'[分享链接]'); 
+		//超链接2
+		strContent = strContent.replace(/\[url\](.+?)\[\/url\]/ig,'$1'); 
+		//视频
+		strContent = strContent.replace(/\[video\](.+?)\[\/video\]/ig,'[视频]');	
+		
+		strContent=UbbIMGUUB(strContent);
+		return strContent;
+	 }
+ 	function removeHTMLTag(str) {
+			str = str.replace(/&lt;/ig,'<');
+			str = str.replace(/&gt;/ig,'>');
+            str = str.replace(/<\/?[^>]*>/g,''); //去除HTML tag
+            str = str.replace(/[ | ]*\n/g,'\n'); //去除行尾空白
+            //str = str.replace(/\n[\s| | ]*\r/g,'\n'); //去除多余空行
+            str=str.replace(/&nbsp;/ig,'');//去掉&nbsp;
+            return str;
+    }
+	  function addWeiboComment(options){
+			if($('#sessionUserID').val()=="0"){
+				loginPanel();
+				$('#mybg').css('z-index','999')
+				$('.shadowSelect').css('z-index','998');
+				return;
+			}
+		var txtvalue =document.getElementById("txte_W_"+options.data.feedID+"_"+options.data.refMsgID).value;
+		  if(cnLength(txtvalue)==0){
+        		showAlert("兄，请补充完内容后再提交。");
+        		return;
+        	};
+        	if(cnLength(txtvalue)>5000){
+        		showAlert("兄，您提交的内容过长了，请精简内容！评论支持仅5000个字符");
+				return;
+        	};
+        	var feedID = options.data.feedID,
+				userName = options.data.userName,
+				userID = options.data.msgUserID,
+				refMsgUserID = options.data.refMsgUserID,
+				refMsgUserName = options.data.refMsgUserName,
+				refMsgID = options.data.refMsgID,
+            	body = encodeURIComponent(txtvalue),
+				refMsgUserName = encodeURIComponent(refMsgUserName);
+//			var param = 'feedID=' + feedID + '&body=' + body + '&userID=' + userID
+//					+ '&refMsgUserID=' + refMsgUserID + '&refMsgUserName='
+//					+ refMsgUserName + '&refMsgID=' + refMsgID;
+			var param={
+     				feedID:feedID,
+     				body:body,
+     				userID:userID,
+     				refMsgUserID:refMsgUserID,
+     				refMsgUserName:refMsgUserName,
+     				refMsgID: refMsgID,
+     				machineType: 'pc'
+     		}
+			 var gethost = window.location.host;
+             if(gethost.indexOf("shuo") > -1 ){ //在说说的域名下
+            	 
+            	 var param={
+         				"shuoID":feedID,
+         				"replyBody":body,
+         			    "shuoReplyID":0,
+         				"type":'X',
+         				"pageNo":1
+         		}
+            	var url = 'https://' + gethost.replace('www.tgb','shuo.tgb') + '/shuo/addShuoReply';
+         		jsonlintAjax('POST',url,param,function(data){
+         				if (data.status) {
+         					showAlert("评论成功");
+         					document.getElementById("txte_W_"+options.data.feedID+"_"+options.data.refMsgID).value = "";
+         				} else {
+         					showAlert("评论失败");
+         				}
+         		},true)
+            	
+             }else{  //在www.taoguba 的域名下
+            	var url = shuoDomainPath+'subDiscuss';
+            	subWeiboComment(url,param,options.data.feedID,options.data.refMsgUserID,options.data.refMsgUserName,options.data.refMsgID);
+             }
+	  }
+	  //提交微博评论的方法(跨域)
+	 function subWeiboComment(url,param,feedID,refMsgUserID,refMsgUserName,refMsgID){
+		 //alert(url);
+		 var domainUrl = document.domain;
+		 var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"))
+		 var shuoDomain = "shuo."+rootDomain;
+		 var wwwDomainPath = "https://"+wwwDomain+"/";
+		 var shuoDomainPath = "https://"+shuoDomain+"/";
+		 document.domain = rootDomain; 
+		 var getiframe = window.frames['shuoProxy'];
+		 
+		 if(getiframe == null){
+			var iframe = document.createElement("iframe");
+				iframe.src = shuoDomainPath+"domainProxy.html";
+				iframe.id = "shuoProxy"; 
+				iframe.name = "shuoProxy";
+				iframe.style.display = "none";
+				document.body.appendChild(iframe);
+				$("#shuoProxy").bind("load",function(){
+					iframeXMLHttp(url,param,getiframe,feedID,refMsgUserID,refMsgUserName,shuoDomainPath,refMsgID);
+				});
+				return;
+				getiframe = window.frames['shuoProxy'];
+				if(window.attachEvent){
+					window.attachEvent("onload",function(){
+						getiframe = window.frames['shuoProxy'];
+						iframeXMLHttp(url,param,getiframe,feedID,refMsgUserID,refMsgUserName,shuoDomainPath,refMsgID);
+					});
+				}else{
+					window.addEventListener("load",function(){
+						getiframe = window.frames['shuoProxy'];
+						iframeXMLHttp(url,param,getiframe,feedID,refMsgUserID,refMsgUserName,shuoDomainPath,refMsgID);
+					});
+				}
+									
+		 }else{
+			iframeXMLHttp(url,param,getiframe,feedID,refMsgUserID,refMsgUserName,shuoDomainPath,refMsgID);
+		 }
+	 }
+	 
+	 function iframeXMLHttp(url,param,iframe,TopID,refMsgUserID,refMsgUserName,shuoDomainPath,refMsgID){
+		 $.ajax({
+  			type:"post",
+  			url:url,
+  			data:param,
+  			success:function(data){
+  				var p = data.dto ;
+				var size = p.size;
+				if (size == 1) {
+					showAlert("评论成功");
+					document.getElementById("txte_W_"+TopID+"_"+refMsgID).value = "";
+				} else if(size == -2){
+					showAlert("评论失败，您在对方的黑名单中");
+				} else if(size == -3){
+//					showAlert("评论失败，只有粉丝和网友才能评论");
+					noAllowPop(TopID,refMsgUserID,refMsgUserName,shuoDomainPath,iframe);
+				} else {
+					showAlert("评论失败");
+				}
+			}
+  		})
+	 }
+	  //不允许评论提示框
+   function noAllowPop(topicID,focusID, getfocusName,shuoDomainPath,iframe){
+		myAlert = document.createElement("div");
+		myAlert.setAttribute("id","popup");
+		myAlert.style.display = "block";
+		myAlert.style.position = "absolute";
+		myAlert.style.zIndex = "1000";
+		myAlert.style.height = "140px";
+		myAlert.style.width = "350px";
+		myAlert.style.backgroundColor = "#FAFAFA";
+		myAlert.style.border = "2px solid #A0A0A0";
+		var str = '<ul style="background-color: #ACACAC;width: 350px;height: 25px;line-height: 25px;"><li id="li_1_1" style="float:left;font-size: 14px;"><span>&nbsp;&nbsp;提示</span></li><li id="li_1_2" style="float:right;font-weight:blod;"><a style="margin-top:0px;" href="javascript:void(0);" onclick="closePop()">[关闭]&nbsp;&nbsp;</a></li></ul>';
+		str += '<ul style="width: 350px;height: 45px;"><li style="float:left;margin-top: 10px;margin-left: 40px;color: #4A4A4A;"><img src="https://css.tgb.cn/images/weibo/check01.png" height="30px;" width="30px;"></li><li style="float:left;margin-left: 10px;font-size: 14px;height: 40px;line-height: 50px;">评论失败，只有粉丝才能评论</li><br/></ul></ul><ul class = "clear"></ul>';
+		str += '<ul style="width: 280px;height: 38px;line-height: 38px;color: #4A4A4A;"><li ><input type="checkbox"  id= "fouce_comment_'+topicID+'" style="float: left;margin-top: 13px;margin-left: 70px;"></li><li style="float: left;margin-left: 10px;">关注成为TA的粉丝</li></ul><ul class = "clear"></ul>'	
+		str += '<ul><li style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcancle.png);margin-right: 10px;line-height: 24px;"><a href="javascript:void(0);" onclick="closePop()" style="color: #666666;">取消</a></li><li id = "popcheck" style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcheck.png);margin-right: 10px;line-height: 24px;"><a style="color:#FFF" href="javascript:void(0);" onclick = "addFocusComment('+topicID+','+focusID+',\''+getfocusName+'\',\''+shuoDomainPath+'\')">确定</a></li></ul>';
+		myAlert.innerHTML = str;
+		myAlert.style.left=(document.body.clientWidth-350)/2+document.documentElement.scrollLeft+'px';
+		if (typeof window.pageYOffset != 'undefined') {
+			scrollTop = window.pageYOffset;
+		} else if (typeof document.compatMode != 'undefined'
+				&& document.compatMode != 'BackCompat') {
+			scrollTop = document.documentElement.scrollTop;
+		} else if (typeof document.body != 'undefined') {
+			scrollTop = document.body.scrollTop;
+		}
+		var winHeight = $(window).height();
+		if($(window).height() == 0){
+			winHeight += document.body.offsetHeight;
+		}
+		myAlert.style.top=(winHeight-137)/2+scrollTop+'px';
+		mybg = document.createElement("div");
+		mybg.setAttribute("id","mybg");
+		mybg.style.background = "#C9C9C2";
+		mybg.style.width = "100%";
+		mybg.style.height = document.body.scrollHeight+"px";
+		mybg.style.position = "absolute";
+		mybg.style.top = "0";
+		mybg.style.left = "0";
+		mybg.style.zIndex = "801";
+		mybg.style.opacity = "0.3";
+		mybg.style.filter = "Alpha(opacity=30)";
+		document.body.appendChild(mybg);
+		document.body.appendChild(myAlert);
+	}
+   function closePop(){
+		document.body.removeChild(myAlert);
+		document.body.removeChild(mybg);
+	}
+    //添加评论时_加关注
+	function addFocusComment(topicID,focusID, getfocusName,shuoDomainPath) {
+		var isAllowFocus = document.getElementById("fouce_comment_"+topicID).checked;
+		if(isAllowFocus){
+			focusName = encodeURIComponent(getfocusName);
+			var url = shuoDomainPath+"addFocus?focusID=" + focusID + '&focusName=' + focusName+"&callback=?";
+			$.getJSON(url, function(json){  
+				var p = json.dto.result;
+				if (p == 1) {
+					showAlert("关注成功");
+				} else if (p == 0) {
+					showAlert("关注失败");
+				} else if (p == -1) {
+					showAlert("尚未登录");
+				}else if (p == -2) {
+					showAlert("对方将你设为黑名单");
+				}else if (p == -3) {
+					showAlert("已经关注了");
+				}else if (p == -4) {
+					showAlert("不能关注自己");
+				}else {
+					showAlert("异常操作");
+				}
+			});
+		}
+		closePop();//关闭对话框
+	}
+	function AddWeiboUseful(shuoid){
+		  var params = {
+				  'shuoReplyID':0,
+				  'flag':'W',
+				  'shuoID':shuoid
+			  };
+		  $.ajax({
+			type:'get',
+			 url:shuoDomainPath+'shuo/addUseful?shuoReplyID=0&flag=S&shuoID='+shuoid,
+			 dataType:"jsonp",
+			 jsonp : 'callback',
+			 success:function(data){
+				 var str = data.dto.result;
+				  if(str == "999999"){
+					showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+				}else if(str == "999998"){
+					showAlert("您不能投自己的票，让其他用户帮您投吧！");
+				}else if(str == "10000086"){
+					showAlert("由于您违反了点赞规则而被禁止发起赞！");
+				}else if(str == "10000087"){
+					showAlert("内容正在审核中，请稍后再试。");
+				}else if(str != "0" && str!='-1'){
+				  showAlert('点赞成功！')
+					  gioLikeSuccess(shuoid,'S',"L")
+				}else{
+					showAlert("您已经投过票了，一个ID对同个回帖或者主帖只允许投一票");
+					return;
+				}
+				 }
+			 })
+//	   jsonlintAjax('GET',shuoDomainPath+'/shuo/addUseful',params,function(data){
+//		   var str = data.dto.result;
+//			  if(str == "999999"){
+//				showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+//			}else if(str == "999998"){
+//				showAlert("您不能投自己的票，让其他用户帮您投吧！");
+//			}else if(str == "10000086"){
+//				showAlert("由于您违反了点赞规则而被禁止发起赞！");
+//			}else if(str == "10000087"){
+//				showAlert("内容正在审核中，请稍后再试。");
+//			}else if(str != "0" && str!='-1'){
+//			  showAlert('点赞成功！')
+//			}else{
+//				showAlert("您已经投过票了，一个ID对同个回帖或者主帖只允许投一票");
+//				return;
+//			}
+//	   },true)
+	}
+	function AddCollect(feedID,obj){
+			var url = shuoDomainPath+"addCollect?feedID="+feedID+"&callback=?";
+			  $.getJSON(url, function(json){  
+				var flag = json.dto.result;
+				var item = obj;
+				if (flag == "0"){
+					showAlert("请先登录！");
+				}else if(flag == "1"||flag == "2"){
+					var e = document.createElement("del_item");
+					e.type = "div";
+					$(e).prepend('<a href = "javascript:void(0);" class="right" onclick="allDeleteCollect('+feedID+',this)">&nbsp;|&nbsp;取消收藏&nbsp;|&nbsp;</a>');
+					$(e).insertBefore(item);
+					$(item).remove();
+				}else if(flag == "3"){
+					showAlert("该说说不存在，可能已被删除。");
+				}
+		        
+		    }); 
+		}
+		function allDeleteCollect(feedID,obj){
+			var url= shuoDomainPath+"deleteCollect?feedID="+feedID+"&callback=?";
+			 $.getJSON(url, function(json){  
+				var flag = json.dto.result;
+				var item = obj;
+				if (flag == "0"){
+					showAlert("请先登录！");
+				}else if(flag == "1"){
+					var e = document.createElement("add_item");
+					e.type = "div";
+					$(e).prepend('<a href = "javascript:void(0);" class="right" onclick="AddCollect('+feedID+',this)">&nbsp;|&nbsp;收藏&nbsp;|&nbsp;</a>');
+					$(e).insertBefore(item);
+					$(item).remove();
+				}else if(flag == "2"){
+					showAlert("已在删除成功，强刷新后再试！");
+				}
+		    },'json'); 
+		}
+		
+		var numGrid=0;
+		function getVoiceImg(imgesStr, voiceStr,num) {
+			var VoiceImgTemp = "";
+			// 九宫格 图片 ＋ 语音
+			var objImgVoice = new Array();
+			// var imgesStr = recordJSON[i].images;
+//			alert(imgesStr.length);
+			if (imgesStr != ""&& imgesStr != "[]" && imgesStr != null) {
+				var imgArray = imgesStr;
+				for ( var jj = 0; jj < imgArray.length; jj++) {
+					var imgText = imgArray[jj];
+					var _img = "https://image.tgb.cn/" +imgText +'_80wh.png';
+					var temp = '<li><img onclick="showImgTemp(this,1);" src="' + _img+ '" width="80" height="80" /></li>';
+//					var tempImg = '<img src='+_img+'>';
+//					var temp = '<li><a onlick="toolTip(\''+tempImg+'\')"  onMouseOver="toolTip(\''+tempImg+'\')" onMouseOut="toolTip()"><img src="' + _img+ '" width="80" height="80" /></a></li>';
+//					var temp = '<li><a onclick="toolTip(\''+tempImg+'\')"   onMouseOut="toolTip()"><img src="' + _img+ '" width="80" height="80" /></a></li>';
+					objImgVoice.push(temp)
+				}
+			}
+			// 语音
+			// var voiceStr = recordJSON[i].voices;
+			if (voiceStr != ""&& imgesStr != "[]" && voiceStr != null) {
+				var voiceArray = voiceStr;
+				for ( var w = 0; w < voiceArray.length; w++) {
+					var impText = voiceArray[w];
+					var nTime =parseInt(impText[1]);
+					var imgText =parseInt(impText[0]);
+					var temp = " <li class='g_yuy' onclick='showImgTemp(this,2);'><span><img  class='soundMoreClass upright'  name="+impText+" src='https://css.tgb.cn/images/video/yuyin_bf_ys.png' width='40' height='40' /></span><span>"+nTime+"'</span></li>";
+//					var temp = '<li><img onclick="showImgTemp(this,2);" class="soundMoreClass upright"  name="'+impText+'" src="images/video/yuyin_bf_ys.png" width="80" height="80" /></li>';
+					objImgVoice.push(temp)
+				}
+			}
+			var objTemp = "";
+			if (objImgVoice.length > 0) {
+				for ( var y = 0; y < objImgVoice.length; y++) {
+					if (y < 9) {// 九宫格
+						objTemp += objImgVoice[y];
+					}
+				}
+				var heigtTemp = showHigth(objImgVoice.length); 
+				
+				VoiceImgTemp += ' </br><div class="grid" id="grid_'+num+'_'+heigtTemp+'"  style="width:260px; height:'+heigtTemp+'px; position:relative;">' + objTemp + '</div>';
+			}
+			return VoiceImgTemp;
+		}
+		function showHigth(a){
+			if(a>7){
+				return "250";
+			}if(a<7 && a>3){
+				return "160";
+			}else{
+				return "100";
+			}
+		}
+		/**
+		 * 
+		 * @param o
+		 * @param type 1:图片 2:语音
+		 */
+		function showImgTemp(o,type){ 
+			
+			if(type=='2'){
+				stopVoice();
+				var dt = $("#jquery_jplayer_1");
+				var d = $("#jquery_jplayer_1").html();
+				
+				var imgX= $(o).children().children();
+				var _name =imgX.attr("name");	
+				var cKhtml = imgX.attr("class");// 获取样式
+				 var str =_name.split(","); 
+				 var vPath =soundPath+str[0]; 
+				 var vTime = Number(str[1])+2;//多加2秒 
+				
+				 var  dText = dt.data('jPlayer');
+					var isRead = dText.status.currentTime;// 0  是否在播放
+//					alert("isRead:"+isRead);
+					if(isRead!=0){ //播放中
+						var readPath =  $("#jp_poster_0").attr('class'); //获取播放路径
+//						alert("readPath:"+readPath);
+						 if(readPath==vPath){ //设置停止 
+								stopSound();
+								return false;
+						 }
+					} 
+				var var2 = cKhtml.split(' ');
+				if (var2[1] == "upright") {
+					imgX.attr("class", "soundMoreClass dynamic");
+					imgX.attr("src","https://css.tgb.cn/images/video/yuyin_bf_ys.gif");
+				} 
+				 //设置播放路径
+				 setSound(vPath);
+				  $("#jp_poster_0").removeClass();
+				  $("#jp_poster_0").addClass(vPath); //获取播放路径
+				 //定时关闭时间
+				 setTimeout("stopVoice()",1000*vTime); 
+				 
+			}else{
+				//获取每个div 的id
+				var gridId= $(o).parents("div").attr("id");
+//				var oldHeight = gridId.split("_");
+				//九宫格图片自适应伸缩
+				$(".grid").each(function(){
+			        var  _gid=$(this).attr("id");
+			        var oldHeight = _gid.split("_");
+			        $("#"+_gid).css("height",oldHeight[2]+"px")
+				});
+				//图片扩大
+				if(!o.bClick){
+					$("#"+gridId).css("height","280px");
+					$(".grid li").removeClass('active');
+					$(o).parent().addClass('active');
+					o.bClick = true;
+				}else{ 
+//					$("#"+gridId).css("height",oldHeight[2]+"px")
+					$(".grid li").removeClass('active');
+					o.bClick = false;
+				}
+			}
+		} 
+		//停止语音 
+		function stopVoice(){   
+			$(".soundMoreClass").attr("class", "soundMoreClass upright");
+			$(".soundMoreClass").attr("src","https://css.tgb.cn/images/video/yuyin_bf_ys.png");
+		}
+		
+		//start 开始
+		function startSound() {
+			$("#jquery_jplayer_1").jPlayer("play");
+		}
+		//停止
+		function stopSound() {
+			$(".soundMoreClass").attr("class", "soundMoreClass upright");
+			$(".soundMoreClass").attr("src","https://css.tgb.cn/images/video/yuyin_bf_ys.png");
+			$("#jquery_jplayer_1").jPlayer("stop");
+		}
+		//设置 切换播放MP3
+		function setSound(urlM) { 
+			$("#jquery_jplayer_1").jPlayer("setMedia", {
+				mp3 : urlM
+			});
+			startSound();
+		}
+
+		function pauseSound() {
+			$("#jquery_jplayer_1").jPlayer("pause");
+		}
+
+	

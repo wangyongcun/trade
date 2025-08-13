@@ -1,0 +1,93 @@
+/*
+*个股吧的GIO埋点
+ */
+$(function(){
+    var bodygio={}
+    var stockcode=$('.stockcodegio').text();
+    var stockname=$('.stocknamegio').text();
+    if(isEmptyGio(stockcode)||isEmptyGio(stockname)){
+        return;
+    }
+    var uri =  document.referrer;
+    var entryPage_var="";
+    var entryFunction_var=""
+    var path1="https://www.taoguba."+giodomain+"/";
+    var path="https://www.taoguba."+giodomain;
+     //这个在外面调不到，放心
+    var typegio= getQueryStringUrl("type",window.location.href);
+    //typegio 也可能没有
+    if("2"==typegio) {
+        entryPage_var = "首页";
+        if (uri.indexOf("newIndex/1") > -1){
+            entryPage_var = "研股";
+        }
+        entryFunction_var="今日热议"
+    }else  if("1"==typegio){
+        entryPage_var="首页";
+        if (uri.indexOf("newIndex/1") > -1){
+            entryPage_var = "研股";
+        }
+        entryFunction_var="热门股吧"
+    }else  if("3"==typegio){
+        entryPage_var="行情中心";
+        entryFunction_var="我的自选"
+    }else  if("4"==typegio){
+        entryPage_var="行情中心";
+        entryFunction_var="实时热搜"
+    }else  if("5"==typegio){
+        entryPage_var="行情中心";
+        entryFunction_var="24小时热搜"
+    }else  if("6"==typegio){
+        entryPage_var="行情中心";
+        entryFunction_var="热门股吧"
+    }
+    if(uri.indexOf("bbs")>-1){
+        entryPage_var="淘股论坛";
+        entryFunction_var="热门股吧"
+    }else if(uri.indexOf("zongban")>-1){
+        entryPage_var="社区总版";
+        entryFunction_var="热门股吧"
+    }else if(uri.indexOf("jinghua")>-1){
+        entryPage_var="精华加油";
+        entryFunction_var="热门股吧"
+    }else if(uri.indexOf("dianzan")>-1){
+        entryPage_var="网友点赞";
+        entryFunction_var="热门股吧"
+    }else if(uri.indexOf("ttcl")>-1){
+        entryPage_var="婷婷春蕾";
+        entryFunction_var="热门股吧"
+    }else if(uri.indexOf("shuo/shuoindex")>-1||uri.indexOf("shuo/shuohot")>-1){
+        entryPage_var="淘说说";
+        entryFunction_var="热门个股"
+    }else if(uri.indexOf("video")>-1){
+        entryPage_var="视频";
+        entryFunction_var="股票名称"
+    }else if(uri.indexOf("/a")>-1){
+        entryPage_var="淘股论坛";
+        entryFunction_var="内容栏"
+    }else if(uri.indexOf("user/getSelfInfo")>-1){
+        entryPage_var="我的股票";
+        entryFunction_var="自选股"
+    }else if (path==uri||path1==uri) {
+        entryPage_var="首页";
+        entryFunction_var="热门股吧"
+    }else if (uri.indexOf("searchContent")>-1){
+        entryPage_var="搜索页"
+        entryFunction_var="股票"
+    }else if(uri.indexOf("toViewShuo")>-1){
+        entryPage_var="淘说说视频";
+        entryFunction_var="视频页热门个股"
+    }else if (uri.indexOf("listShuoVideo")>-1){
+        entryPage_var="视频页";
+        entryFunction_var="视频列表"
+    }
+    if(isEmptyGio(entryPage_var)||isEmptyGio(entryFunction_var)){
+        return;
+    }
+    bodygio[GIOSHUXING.entryPage_var]=entryPage_var;
+    bodygio[GIOSHUXING.entryFunction_var]=entryFunction_var;
+    bodygio[GIOSHUXING.shares_id_var]=stockcode;
+    bodygio[GIOSHUXING.sharesrName_var]=stockname;
+    gioMessage(GIOSHIJIAN.individualSharesView,bodygio);
+})
+

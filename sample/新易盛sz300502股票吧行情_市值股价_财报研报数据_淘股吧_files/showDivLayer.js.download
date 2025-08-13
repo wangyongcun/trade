@@ -1,0 +1,268 @@
+var popup_mouseposX;
+var popup_mouseposY;
+var popup_oldfunction;
+
+var tempDiv = null;
+
+// ----- popup_show ------------------------------------------------------------
+var taoguba = 0
+/*
+ * <div id="popup1"> <div id="popup2"> id=1/2 obj=popop allid=2(总个数)
+ * widthnum=450 向左偏移450px w=Div的宽度 h=Div的高度
+ */
+function popup_showDiv(id, obj, widthnum, heightnum, w, h, className) {
+	taoguba++
+
+	if (tempDiv != null) {
+		document.body.removeChild(tempDiv);
+		tempDiv = null;
+	}
+
+	tempDiv = document.createElement("div");
+	tempDiv.id = obj + id;
+
+	var scrollTop;
+	var scrollLeft;
+	if (typeof window.pageYOffset != 'undefined') {
+		scrollTop = window.pageYOffset;
+		scrollLeft = window.pageXOffset;
+		// showAlert("d");
+	} else if (typeof document.compatMode != 'undefined'
+			&& document.compatMode != 'BackCompat') {
+		scrollTop = document.documentElement.scrollTop;
+		scrollLeft = document.documentElement.scrollLeft;
+		// showAlert("a");
+	} else if (typeof document.body != 'undefined') {
+		scrollTop = document.body.scrollTop;
+		scrollLeft = document.body.scrollLeft;
+		// showAlert("b");
+	}
+	if (className == "undefined") {
+		className = " ";
+	}
+	var innHTML = "<div style='width:100%;text-align:right'><a href='javascript:void(0)' onclick='popup_exit("
+			+ id + ",\"" + obj + "\");'>关闭</a></div>";
+	innHTML += "<div id=" + id + obj + " class='" + className
+			+ "'><img src='https://css.tgb.cn/images/Load1.gif'/></div>"
+	tempDiv.innerHTML = innHTML;
+	with (tempDiv.style) {
+		position = "absolute";
+		border = "2px solid #BEC0C0";
+		background = "#FFFFFF";
+		zIndex = 1;
+		left = scrollLeft + popup_mouseposX - widthnum + 'px';
+		top = scrollTop + popup_mouseposY - heightnum + 'px';
+		width = w + 'px';
+		if(h>0){
+			height = h + 'px';
+		}
+		textAlign = "left";
+		padding = "5px";
+		lineHeight = "1.6";
+		breakWord = "break-all";
+		overflow = "hidden";
+		visibility = "visible";
+		display = "block";
+	}
+	document.body.appendChild(tempDiv);
+	// showAlert(scrollPos);
+
+	// element = document.getElementById(obj+id);
+	// tempDiv.style.position = "absolute";
+	// tempDiv.style.visibility = "visible";
+	// tempDiv.style.display = "block";
+	// element.style.left = (scrollLeft+popup_mouseposX-widthnum)+'px';
+	// element.style.top = (scrollTop+popup_mouseposY-heightnum)+'px';
+}
+
+function popup_registerDiv(id, obj, widthnum, heightnum, w, h, className) {
+	var shield = document.getElementById("bgLayer");
+	if (shield != null) {
+		document.body.removeChild(shield);
+	}
+	shield = document.createElement("DIV");
+	shield.id = "bgLayer";
+	shield.style.position = "absolute";
+	shield.style.left = "0px";
+	shield.style.top = "0px";
+	shield.style.width = "100%";
+	shield.style.height = "160%";
+	shield.style.background = "#333";
+	shield.style.textAlign = "center";
+	shield.style.zIndex = "100";
+	shield.style.filter = "alpha(opacity=0)";
+	shield.style.opacity = 0;
+	shield.style.display = "";
+	document.body.appendChild(shield);
+
+	this.setOpacity = function(obj, opacity) {
+		if (opacity >= 1) {
+			opacity = opacity / 100;
+		}
+		try {
+			obj.style.opacity = opacity;
+		} catch (e) {
+		}
+		try {
+			if (obj.filters.length > 0 && obj.filters("alpha")) {
+				obj.filters("alpha").opacity = opacity * 150;
+			} else {
+				obj.style.filter = "alpha(opacity=\"" + (opacity * 150) + "\")";
+			}
+		} catch (e) {
+		}
+	};
+	var c = 0;
+	this.doAlpha = function() {
+		if (++c > 20) {
+			clearInterval(ad);
+			return 0;
+		}
+		setOpacity(shield, c);
+	};
+	// 为了防止瞬变，将shield的背景色放于此
+	shield.style.background = "#333";
+	var ad = setInterval("doAlpha()", 1);
+	document.body.oncontextmenu = function() {
+		return false;
+	};
+
+	taoguba++;
+	if (tempDiv != null) {
+		document.body.removeChild(tempDiv);
+		tempDiv = null;
+	}
+	tempDiv = document.createElement("div");
+	tempDiv.id = obj + id;
+	tempDiv.style.border = 1;
+
+	var scrollTop;
+	var scrollLeft;
+	if (typeof window.pageYOffset != 'undefined') {
+		scrollTop = window.pageYOffset;
+		scrollLeft = window.pageXOffset;
+	} else if (typeof document.compatMode != 'undefined'
+			&& document.compatMode != 'BackCompat') {
+		scrollTop = document.documentElement.scrollTop;
+		scrollLeft = document.documentElement.scrollLeft;
+	} else if (typeof document.body != 'undefined') {
+		scrollTop = document.body.scrollTop;
+		scrollLeft = document.body.scrollLeft;
+	}
+	if (className == "undefined") {
+		className = " ";
+	}
+	var innHTML = "<div style='width:100%;background:url(https://css.tgb.cn/images/22_04.gif) repeat-x; border-bottom:1px solid #a8a8a8;height:25px;line-height:25px;margin:0px'><div style='width:6px;float:left'></div><div style='float:left'><img src='https://css.tgb.cn/images/22_03.gif'></div><div style='font-size:13px;float:left;margin-left:10px'>报名提示</div><div style='float:right;padding-top:5px;margin-right:6px'><a href='javascript:void(0)' onclick='popup_exit("
+			+ id
+			+ ",\""
+			+ obj
+			+ "\");document.getElementById(\"bgLayer\").style.display=\"none\";'><img style='cursor:pointer;' alt='关闭' src='https://css.tgb.cn/images/shut.gif' unselectable='on'/></a></div></div>";
+	innHTML += "<div id=" + id + obj + " class='" + className
+			+ "'>正在加载...</div>"
+	tempDiv.innerHTML = innHTML;
+	with (tempDiv.style) {
+		position = "absolute";
+		border = "1px solid #AAAAAA";
+		background = "#FFFFFF";
+		zIndex = "101";
+		left = (document.body.offsetWidth - w) / 2 + "px";
+		top = (document.body.offsetHeight - h) / 2 + "px";
+		width = w + 'px';
+		height = h + 'px';
+		textAlign = "left";
+		padding = "0px";
+		lineHeight = "1.6";
+		breakWord = "break-all";
+		overflow = "hidden";
+		visibility = "visible";
+		display = "block";
+	}
+	document.body.appendChild(tempDiv);
+}
+function msg_showDiv(id,img,text,msg,widthnum, heightnum, w, h, className){
+	taoguba++;
+	if (tempDiv != null) {
+		document.body.removeChild(tempDiv);
+		tempDiv = null;
+	}
+	tempDiv = document.createElement("div");
+	tempDiv.id = "msg_showLayder"+id;
+	tempDiv.style.border = 1;
+	var scrollTop;
+	var scrollLeft;
+	if (typeof window.pageYOffset != 'undefined') {
+		scrollTop = window.pageYOffset;
+		scrollLeft = window.pageXOffset;
+	} else if (typeof document.compatMode != 'undefined'
+			&& document.compatMode != 'BackCompat') {
+		scrollTop = document.documentElement.scrollTop;
+		scrollLeft = document.documentElement.scrollLeft;
+	} else if (typeof document.body != 'undefined') {
+		scrollTop = document.body.scrollTop;
+		scrollLeft = document.body.scrollLeft;
+	}
+	if (className == "undefined") {
+		className = " ";
+	}
+	var innHTML = "<div style='width:100%;background:url(https://css.tgb.cn/images/22_04.gif) repeat-x; border-bottom:1px solid #a8a8a8;height:25px;line-height:25px;margin:0px'><div style='width:6px;float:left'></div><div style='float:left'><img src='https://css.tgb.cn/images/22_03.gif'></div><div style='font-size:13px;float:left;margin-left:10px'>"+text+"</div><div style='float:right;padding-top:5px;margin-right:6px'><a href='javascript:void(0)' onclick='popup_exit("+ id+",\"msg_showLayder\");document.getElementById(\"bgLayer\").style.display=\"none\";'><img style='cursor:pointer;' alt='关闭' src='https://css.tgb.cn/images/shut.gif' unselectable='on'/></a></div></div>";
+	innHTML += "<div id=" + id + "msg_showLayder"+ " class='" + className
+			+ "'>"
+			+"<div style='float:left;margin-top:15px;margin-left:10px;'><img src='"+img+"' width='94' height='121'></div>"
+			+"<div style='float:right;margin-top:10px;margin-right:7px;'>"+msg+"</div>"
+			+"</div>";
+	tempDiv.innerHTML = innHTML;
+	with (tempDiv.style) {
+		position = "absolute";
+		border = "1px solid #AAAAAA";
+		background = "#FFFFFF";
+		zIndex = "101";
+		left = (document.body.offsetWidth - w) / 2 + "px";
+		top = (document.body.offsetHeight - h) / 2 + "px";
+		width = w + 'px';
+		height = h + 'px';
+		textAlign = "left";
+		padding = "0px";
+		lineHeight = "1.6";
+		breakWord = "break-all";
+		overflow = "hidden";
+		visibility = "visible";
+		display = "block";
+	}
+	document.body.appendChild(tempDiv);
+}
+function popup_exit(i, obj) {
+	element = document.getElementById(obj + i);
+	if (element.style.visibility && element.style.visibility == "visible"
+			|| element.style.display == 'block'
+			&& element.style.display != 'none') {
+		element.style.visibility = 'hidden';
+		element.style.display = 'none';
+	}
+}
+// ---all_popup_exit--------------------
+function all_popup_exit(allId, obj) {
+	for ( var i = 1; i <= allId; i++) {
+		element = document.getElementById(obj + i);
+		if (element.style.visibility && element.style.visibility == "visible"
+				|| element.style.display == 'block'
+				&& element.style.display != 'none') {
+			element.style.visibility = 'hidden';
+			element.style.display = 'none';
+		}
+	}
+	taoguba = 0
+}
+// ----- popup_mousepos --------------------------------------------------------
+function popup_mousepos(e) {
+	var ie = navigator.appName == "Microsoft Internet Explorer";
+	popup_mouseposX = ie ? window.event.clientX : e.clientX;
+	popup_mouseposY = ie ? window.event.clientY : e.clientY;
+}
+// ----- Attach Events ---------------------------------------------------------
+
+if (navigator.appName == "Microsoft Internet Explorer") {
+	document.attachEvent('onmousedown', popup_mousepos);
+} else {
+	document.addEventListener('mousedown', popup_mousepos, false);
+
+}

@@ -1,0 +1,9 @@
+function openUser(webPath,userID){
+    window.open(webPath+"/blog/"+userID);
+}
+
+function openFollow(webPath,newTopicID,newReplyID){
+    window.open(webPath+"/follow/"+newTopicID+"_"+newReplyID+"_1");
+}
+
+

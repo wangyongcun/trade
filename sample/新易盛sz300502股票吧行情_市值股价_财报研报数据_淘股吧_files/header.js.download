@@ -1,0 +1,531 @@
+var baseMain = window.location.host.replace("shuo", "www");
+var wwwMain = "https://" + baseMain;
+var wwwMainNew = "https://" + baseMain+"/";
+var shuoMainNew = wwwMainNew.replace("www", "shuo");
+var ckDomainPath;
+var maidianum = 0;
+if(wwwDomain != null){
+    if(window.location.host.indexOf('m.tgb')>-1){
+        ckDomainPath = wwwDomainPath.replace("www","ck");
+        wwwDomainPath = wwwDomainPath.replace("www","m");
+    }else{
+        ckDomainPath = wwwDomainPath.replace("www","ck");
+    }
+
+//	ckDomainPath = wwwDomainPath.replace("https://","");
+}
+$(function(){
+    $(".close-wxb").click(function(){
+        $(".wangxinban").hide();
+    });
+    $(".canvas").bind("click",function(e){ //点击元素以外关闭
+        var target = $(e.target);
+        if(target.closest(".nianbao img").length == 0 && target.closest("#nbFrame").length == 0){
+            $('.wangxinban').hide();
+        }
+    });
+    //回到顶部
+    $("#toTop").click(function(){
+        $('body,html').animate({ scrollTop: 0 }, 200);
+    });
+    //屏幕小隐藏右侧浮动
+    if(document.body.clientWidth < 1400){
+        $(".content-right-scroll").hide();
+        $(".new-topic").hide();
+    }
+});
+function hidead(obj){
+    $(obj).parent().hide();
+}
+//用户头像
+if (localStorage.getItem(localName)) {
+    $('.NewH_Info_head_img').attr('src', localStorage.getItem(localName).replace("_80wh.png", "") + '_80wh.png')
+} else {
+    var shuoMain;
+    if(shuoMainNew.endsWith('/')){
+        shuoMain = shuoMainNew.slice(0, -1);
+    }else{
+        shuoMain=shuoMainNew;
+    }
+    var host = window.location.host;
+    var url = wwwMain + "/user/getUserImg";
+    if (host.startWith("shuo")){
+        url = shuoMain+"/shuo/getUserImg";
+    }
+    $.ajax({
+        type: "get",
+        url: url,
+        xhrFields:{withCredentials:true},
+        success: function (json) {
+            var headImg = "https://image.tgb.cn/img/" + json.dto;
+            $('.NewH_Info_head_img').attr('src', headImg + '_80wh.png');
+            localStorage.setItem(localName, headImg)
+        }
+    });
+}
+//存储当前页导航栏目
+var url_Path = window.location.href ;
+
+// var URL_namearr = ['淘股论坛','社区总版','精华加油','淘说说',
+//     '网友点赞','婷婷春蕾','策略参考','行情中心','基金排行','个股研究','淘县院子','实盘比赛','研究报告','股市直播','我的关注','我的股票','我的收藏','牛股宝','极速快讯','VIP栏目','视频']
+var TGLT_URL_Arr = ['/bbs/','/zongban/','/jinghua/','/shuo/', '/dianzan/','/ttcl/','/a','/follow','/dialog']
+var TGLT_URL_NameArr = ['淘股论坛','社区总版','精华加油','淘说说', '网友点赞','婷婷春蕾']
+var HQ_URL_Arr = ['new/dav/','/quotes/','new/ngb/','/feeds','/course']
+var HQ_URL_NameArr = ['投资策略','行情中心','牛股宝']
+var YG_URL_Arr = ['/newIndex/1','shenghuoba/','/video/','/weblive/']
+var YG_URL_NameArr = ['研股','淘县院子','视频','直播']
+var CJDT_URL_Arr = ['user/getMoreListAction','stock/moreStockInfo','collect/getFavoriteTopics','/getSelfInfo']
+var CJDT_URL_NameArr = ['我的关注','我的股票','我的收藏']
+var KX_URL_Arr = ['/newsFlash/','/newsFlash/vipColumn']
+var KX_URL_NameArr = ['极速快讯','VIP栏目']
+var SP_URL_Arr = ['spmatch/index/']
+var SP_URL_NameArr = ['实盘比赛']
+
+
+initHeadITEM();
+
+function initHeadITEM(){
+    if (url_Path == wwwMainNew ||url_Path == wwwMain || (url_Path.indexOf('/newIndex') > 0 && url_Path.indexOf('/newIndex/1') < 0)) {
+        $('#newIndex').addClass('act-header');
+        return;
+    }
+    $('#newIndex').removeClass('act-header');
+    //淘股论坛栏目下
+    for(var urlI= 0 ;urlI<TGLT_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(TGLT_URL_Arr[urlI]) > 0) {
+            var urlName1 = '淘股论坛'
+            if (urlI < 6) {
+                urlName1 = TGLT_URL_NameArr[urlI]
+            }
+            $('#TGLT').find('a').text(urlName1)
+            $('#TGLT').find('a').attr('href', url_Path)
+            $('#TGLT').parent().parent().addClass('act-header')
+            return
+        }
+    }
+    //行情中心栏目下
+    for(var urlI= 0 ;urlI<HQ_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(HQ_URL_Arr[urlI]) > 0) {
+            var urlName1 = '投资策略'
+            if (urlI < 3) {
+                urlName1 = HQ_URL_NameArr[urlI]
+            }
+            $('#HQcenter').find('a').text(urlName1)
+            $('#HQcenter').find('a').attr('href',url_Path)
+            $('#HQcenter').parent().parent().addClass('act-header')
+            return
+        }
+    }
+    //研股栏目下
+    for(var urlI= 0 ;urlI<YG_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(YG_URL_Arr[urlI]) > 0) {
+            var urlName1 = YG_URL_NameArr[urlI]
+            $('#YG').find('a').text(urlName1)
+            $('#YG').find('a').attr('href', url_Path)
+            $('#YG').parent().parent().addClass('act-header')
+            return
+        }
+    }
+    //超级动态
+    for(var urlI= 0 ;urlI<CJDT_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(CJDT_URL_Arr[urlI]) > 0) {
+            var urlName1 = '我的股票'
+            if (urlI<3){
+                urlName1 = CJDT_URL_NameArr[urlI]
+            }
+            $('#CJDT').find('a').text(urlName1)
+            $('#CJDT').find('a').attr('href', url_Path)
+            $('#CJDT').parent().parent().addClass('act-header')
+            return
+        }
+    }
+    //极速快讯
+    for(var urlI= 0 ;urlI<KX_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(KX_URL_Arr[urlI]) > 0) {
+            var urlName1 = KX_URL_NameArr[urlI]
+            $('#KX').find('a').text(urlName1)
+            $('#KX').find('a').attr('href', url_Path)
+            $('#KX').parent().parent().addClass('act-header')
+            return
+        }
+    }
+    //实盘比赛栏目下
+    for(var urlI= 0 ;urlI<SP_URL_Arr.length;urlI++){
+        if (url_Path.indexOf(SP_URL_Arr[urlI]) > 0) {
+            var urlName1 = SP_URL_NameArr[urlI]
+            $('#spmatchNew').text(urlName1);
+            $('#spmatchNew').attr('href', url_Path);
+            $('#spmatchNew').parent().addClass('act-header');
+            return
+        }
+    }
+}
+//元素外点击事件 -- start
+$(document).bind("click",function(e){
+    var target = $(e.target);
+    if(target.closest(".header-search").length == 0 && target.closest("#stock_suggest2").length == 0){
+        $('#stock_suggest2').hide();
+    }
+});
+//元素外点击事件 -- start
+
+//导航栏鼠标移入事件 -- start
+$(".chooseItem").hover(function(){
+    $(this).find(".header-list-title2").show();
+},function(){
+    $(this).find(".header-list-title2").hide();
+});
+//导航栏鼠标移入事件 -- end
+//存储当前页导航栏目
+//用户鼠标移入事件 -- start
+$(".header-user").hover(function(){
+    $(this).find(".header-user-title2").show();
+},function(){
+    $(this).find(".header-user-title2").hide();
+});
+$(".new-topic").hover(function(e){
+    e.stopPropagation();
+});
+//用户鼠标移入事件 -- end
+//搜索输入事件 -- start
+(function(window,$){
+    var $suggestDiv;
+    var $stockul;							//个股提示ul对象
+    var $input;
+    var isSearch = true;					//是否开始搜索的开关
+    var isSearchTheme = true;
+    var isSearchUser = true;
+    var stockArray = [];					//搜索结果容器
+    var tagsArray = [];
+    var userArray = [];
+    var stockbutton = null;
+    var weiboEdit_stock_url = document.domain;	//匹配资源加载域名
+    if (weiboEdit_stock_url.indexOf("www") == -1) {
+        weiboEdit_stock_url = "www." + weiboEdit_stock_url;
+    }
+
+    window.addKeyUp = function(obj){
+        if(!$input){
+            $input = $(obj);
+        }
+        if(!$suggestDiv){						//如果没有建议框就创建一个
+            $suggestDiv = $('<div id="stock_suggest2" style="width:250px;margin-left:0;"><ul></ul></div>').hide().appendTo($input.parent()).on("mouseover", "li",
+                function(ev) {
+                    $(ev.target).siblings().removeClass("selected").end().addClass("selected");
+                });
+            var end = '<a target="_blank" href="'+wwwMainNew+'search/hotPop" onclick="headerSearch(1)" style="display: inline-block;">' +
+                '<div class="header-search-buttom c999 left" style="border:1px solid #ccc;background-color: #f8f8f8;">搜索热度 ></div>' +
+                '</a>' +
+                '<a target="_blank" href="'+wwwMainNew+'search/toAdvanceSearch" onclick="headerSearch(2)" style="display: inline-block;">' +
+                '<div class="header-search-buttom cf90 left" style="border:1px solid #ffa825;background-color: #fff9f1;">高级搜索 ></div>' +
+                '</a>';
+            $("#stock_suggest2").append(end);
+        }
+        $stockul = $suggestDiv.find('>ul');
+        $input.unbind('propertychange paste input keydown');
+        var searchTime="";
+        $input.bind('propertychange paste input keydown',function(ev){
+            var keyCode = ev.keyCode || ev.which;
+            if(keyCode!=40&&keyCode!=38&&keyCode!=13){
+                var inputStr = $input.val();				//获取输入信息
+                if(inputStr==''){$suggestDiv.hide();return;}
+                inputStr = inputStr.replace(/\s/g, "");
+                var htmlStr = '<strong>包含"'+inputStr+'"的标题</strong><li><a target="_blank" href="'+wwwMainNew+'search/search?searchContent='+encodeURIComponent(inputStr)+'&type=0">'+inputStr+'</a></li>';
+                htmlStr += '<strong>包含"'+inputStr+'"的作者</strong><li><a target="_blank" href="'+wwwMainNew+'search/search?searchContent='+encodeURIComponent(inputStr)+'&type=1">'+inputStr+'</a></li>';
+                if(/^\d{0,3}$/ig.test(inputStr)||/^\d{7,}$/ig.test(inputStr)){	//股票代码>=4位才开始查询
+                    isSearch = false;
+                    if(inputStr.length<4||inputStr.length>6){
+                        $stockul.empty().html(htmlStr);
+                    }
+                    $suggestDiv.show();
+                    return;
+                }else{
+                    isSearch = true;
+                }
+                if(isSearch){		//开始搜索
+                    $stockul.empty().html('<li class="stockLoading">查询中...</li>').show();
+                    var url = wwwMainNew+"search/newQuick?s="+inputStr+"&searchTime="+new Date().getTime()+"&callback=?";		//跨域请求
+                    $.getJSON(url,function(data){
+                        if(data.status==false){
+                            showAlert(data.errorMessage);
+                            return;
+                        }
+                        if(searchTime=="" ||searchTime<=parseInt(data.dto.searchTime)){
+                            searchTime=parseInt(data.dto.searchTime);
+                        }else return;
+                        stockArray = data.dto.stock;
+                        tagsArray = data.dto.tags;
+                        userArray = data.dto.user;
+                        if(stockArray[0]==null && tagsArray[0]==null && userArray[0]==null){
+                            $stockul.empty().html(htmlStr);
+                            $suggestDiv.show();
+                            return;
+                        }else{
+                            var listr='';
+                            if(stockArray[0]!=null){
+                                listr='<strong>股票</strong>';
+                                for(var i=0,stockInfo;i<stockArray.length && i<3;i++){
+                                    stockInfo = stockArray[i];
+                                    for(var key in stockInfo ){
+                                        listr +="<li" + (i==0 ? ' class="selected"': ' class=""' ) + "><a onclick='gioSearch(1,\""+stockInfo[key]+"\",\""+key+"\",\""+wwwMainNew+"\")' target='_blank' >"+stockInfo[key]+"("+key+")</a></li>";
+                                    }
+                                }
+                            }
+                            var listr1='';
+                            var listr2='';
+                            var listr3='';
+                            if(userArray[0]!=null){
+                                listr2='<strong>用户</strong>';
+                                for(var i=0,userInfo;i<userArray.length && i<3;i++){
+                                    userInfo = userArray[i];
+                                    for(var key in userInfo ){
+                                        listr2 +="<li" + (i==0 ? ' class="selected"': ' class=""' ) + "><a  data-extra=\'"+key+"\' onclick='tgbmd(\"searchuser\", this);gioSearch(2,\""+userInfo[key]+"\",\""+key+"\",\""+wwwMainNew+"\")' target='_blank'  >"+userInfo[key]+"</a></li>";
+                                    }
+                                }
+                            }
+                            listr+=listr1+listr2+listr3+htmlStr;
+                            $stockul.empty().html(listr);
+
+                            $("li", $suggestDiv).removeClass("selected");
+                            $("li", $suggestDiv).removeClass("selected").eq(0).addClass("selected");
+                            $suggestDiv.show().data('atSelect',atSelect);
+                        }
+                    });
+                }
+            }
+            //监听上下移动及回车事件
+            if(keyCode == 40){ //向下
+                if ($suggestDiv.is(":visible")){
+                    $next = $("li.selected", $suggestDiv).next();
+                    if ($next.length) {
+                        $("li", $suggestDiv).removeClass("selected"); //全部的li样式
+                        if($next[0].nodeName=='STRONG'){
+                            $next.next().addClass("selected");
+                        }else{
+                            $next.addClass("selected");
+                        }
+                    } else {
+                        $("li", $suggestDiv).removeClass("selected").eq(0).addClass("selected");
+                    }
+                    ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
+                }
+            }
+            if(keyCode == 38){ //向上
+                if ($suggestDiv.is(":visible")) {
+                    $prev = $("li.selected", $suggestDiv).prev();
+                    if ($prev.length) {
+                        $("li", $suggestDiv).removeClass("selected");
+                        if($prev[0].nodeName=='STRONG'){
+                            $prev1 = $prev.prev();
+                            if($prev1.length){
+                                $prev1.addClass("selected");
+                            }else{
+                                $("li", $suggestDiv).removeClass("selected").eq(-1).addClass("selected");
+                            }
+                        }else{
+                            $prev.addClass("selected");
+                        }
+                    } else {
+                        $("li", $suggestDiv).removeClass("selected").eq(-1).addClass("selected");
+                    }
+                    ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
+                }
+            }
+            if(keyCode == 13){ //回车
+                ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
+                if ($suggestDiv.is(":visible")) {
+                    atSelect();
+                }
+            }
+        });
+        //选择某个个股
+        function atSelect() {
+            if (document.all && typeof (document.all) == "object") {   //IE
+                $("li.selected a")[0].click();
+            } else {
+                var e = document.createEvent('MouseEvent');
+                e.initEvent('click', false, true);
+                $("li.selected a")[0].dispatchEvent(e);
+            }
+        }
+        addKeyUp.search = function () {
+            if ($input.val() == '' || $input.val() == '搜索 股票/标题/作者') {
+                return false;
+            }
+            window.open(wwwMainNew+'search/search?searchContent=' + encodeURIComponent($input.val()) + '&type=2');
+        }
+    }
+
+})(window,jQuery);
+//搜索输入事件 -- end
+
+//tgbcnzz --start
+$("[data-maidian]").click(function(){
+//	var type = $("[data-maidian]").data("maidian");
+    var type = $(this).attr("data-maidian");
+    var flag = $(this).attr('data-type') || '';
+//	var userID = $("#mduserID").val();
+    maidianum ++;
+    var params = {};
+    //Document 瀵硅薄鏁版嵁
+//	params.userID = userID || '';
+//	params.domain = document.domain || '';  //鍩熷悕
+    params.url = document.URL || '';        //褰撳墠url鍦板潃
+//	params.title = document.title || '';
+    params.referrer = document.referrer || '';  //涓婁竴璺宠矾寰�
+    params.source = 'pc';
+    params.type = type;
+    params.num = maidianum;
+    //鎷兼帴鍙傛暟涓�
+    var args = '';
+    for(var i in params) {
+        if(args != '') {
+            args += '&';
+        }
+        args += i + '=' + params[i];   //灏嗘墍鏈夎幏鍙栧埌鐨勪俊鎭繘琛屾嫾鎺�
+    }
+    //閫氳繃 Image 瀵硅薄璇锋眰鍚庣鑴氭湰  杩欓噷鍥犱负ajax涓嶈兘璺ㄥ煙鍙戦€佽姹傦紝鎵€浠ヨ繖閲屼互鍥剧墖鐨勫舰寮忓彂閫佹暟鎹�
+    var img = new Image(1,1);
+//	img.src = ' http://ck.taoguba.cc/click/logCollect'+args;
+    img.src = ckDomainPath+'/click/logCollect?flag='+flag+'&'+args;
+    $(img).remove();
+});
+
+function tgbmd(type,obj){
+    //鐐瑰嚮鍚庤绠楃敤鎴�24灏忔椂鐑害
+    var userID = $(obj).attr("data-extra")
+    if (type == 'searchuser'){
+        $.ajax({
+            type:"get",
+            url:'/search/addUserHot',
+            data : {"userID": userID},
+            success:function(){
+            }
+        })
+    }
+//
+//		var userID = $("#mduserID").val();
+    maidianum ++;
+    var params = {};
+    //Document 瀵硅薄鏁版嵁
+//		params.userID = userID || '';
+//		params.domain = document.domain || '';  //鍩熷悕
+    params.url = document.URL || '';        //褰撳墠url鍦板潃
+//		params.title = document.title || '';
+    params.referrer = document.referrer || '';  //涓婁竴璺宠矾寰�
+    params.source = 'pc';
+    params.type = type;
+    params.num = maidianum;
+    var extra = $(obj).attr('data-extra') || ''
+    params.extra=extra;
+//		var s = $(obj).attr('data-type');
+    var flag = $(obj).attr('data-type') || '';
+
+    //xgwz鐩稿叧鏂囩珷
+    if(type == 'xgwz'){
+        var objectID = $(obj).attr('data-objectid');
+        //objectID ObjectType 瀛愭枃绔爄d銆佺被鍨�  鐩墠鍙拡瀵圭浉鍏虫枃绔�
+        if(objectID == undefined){
+            params.objectID = "";
+        }else{
+            var stype2= $(obj).attr('data-stype') || '';
+            if(stype2 != ''){
+                if(stype2 == "T"){
+                    params.objectType = "T";
+                }
+                if(stype2 == "S"){
+                    params.objectType = "S";
+                }
+            }
+
+            params.objectID = objectID;
+        }
+        //otherID otherType 鐖舵枃绔爄d銆佺被鍨� 鐩墠鍙拡瀵圭浉鍏虫枃绔�
+        var otherID = $(obj).attr('data-parentid');
+        if(otherID == undefined){
+            params.otherID = "";
+        }else{
+            params.otherID = otherID;
+            if(params.url != ''){
+                if(params.url.indexOf('Article')>-1){
+                    params.otherType = "T";
+                }else if(params.url.indexOf('toViewShuo')>-1){
+                    params.otherType = "S";
+                }
+            }
+        }
+    }
+    //鎷兼帴鍙傛暟涓�
+    var args = '';
+    for(var i in params) {
+        if(args != '') {
+            args += '&';
+        }
+        args += i + '=' + params[i];   //灏嗘墍鏈夎幏鍙栧埌鐨勪俊鎭繘琛屾嫾鎺�
+    }
+    //閫氳繃 Image 瀵硅薄璇锋眰鍚庣鑴氭湰
+//		var s = $(obj).attr('data-type');
+//		var flag = $(obj).attr('data-type') || '';
+    var img = new Image(1,1);
+    img.src = ckDomainPath+'/click/logCollect?flag='+flag+'&'+args;
+    $(img).remove();
+    var url = $(obj).attr('data-href') || '';
+    if(url != ''){
+        var newWindow = window.open();
+        newWindow.location.href = url.indexOf('taoguba')>-1?url:wwwDomainPath+url;
+    }
+}
+function tgbmdother(type,obj,flag){
+//
+//		var userID = $("#mduserID").val();
+    maidianum ++;
+    var params = {};
+    //Document 瀵硅薄鏁版嵁
+//		params.userID = userID || '';
+//		params.domain = document.domain || '';  //鍩熷悕
+    params.url = document.URL || '';        //褰撳墠url鍦板潃
+//		params.title = document.title || '';
+    params.referrer = document.referrer || '';  //涓婁竴璺宠矾寰�
+    params.source = 'pc';
+    params.type = type;
+    params.num = maidianum;
+    if("dv"==flag){
+        var davseq = $(obj).attr('data-davseq');
+        if(""==davseq){
+            davseq=0;
+        }
+        params.objectID = davseq;
+    }
+    if("ngb"==flag){
+        var planID = $(obj).attr('data-planID');
+        if(""==planID){
+            planID=0;
+        }
+        params.objectID = planID;
+    }
+    //鎷兼帴鍙傛暟涓�
+    var args = '';
+    for(var i in params) {
+        if(args != '') {
+            args += '&';
+        }
+        args += i + '=' + params[i];   //灏嗘墍鏈夎幏鍙栧埌鐨勪俊鎭繘琛屾嫾鎺�
+    }
+    //閫氳繃 Image 瀵硅薄璇锋眰鍚庣鑴氭湰
+    var img = new Image(1,1);
+    img.src = ckDomainPath+'click/logCollect?flag='+flag+'&'+args;
+    $(img).remove();
+    if($(obj).attr('type')=='dv' || $(obj).attr('type')=='ngb'){return;}
+    var url = $(obj).attr('data-href') || '' ;
+    if(url != ''){
+        if(url.indexOf('www.taoguba')>-1){
+            var newWindow = window.open();
+            newWindow.location.href = url;
+        }else{
+            var newWindow = window.open();
+            newWindow.location.href = wwwDomainPath.toString().substring(0,wwwDomainPath.toString().length-1)+url;
+        }
+
+    }
+}
+//tgbcnzz --end

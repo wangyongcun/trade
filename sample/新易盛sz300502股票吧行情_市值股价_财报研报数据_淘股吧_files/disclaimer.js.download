@@ -1,0 +1,8 @@
+DisclaimerConfig.Message = "郑重声明：用户在淘股吧发表的所有信息（包括但不限于文字、视频、音频、数据及图表）仅代表个人观点，与本网站立场无关，不对您构成任何投资建议，据此操作风险自担。"
+
+function DisclaimerConfig(){
+
+}
+(function () {
+
+})();

@@ -1,0 +1,97 @@
+//主入口
+function getRealJsonData(baseStr) {
+    if (!baseStr || typeof baseStr != 'string') return;
+    var jsonData = null;
+    try {
+        jsonData = JSON.parse(baseStr);
+    } catch (err){
+        return null;
+    }
+    var needReplaceStrs = [];
+    loopFindArrOrObj(jsonData,needReplaceStrs);
+    needReplaceStrs.forEach(function (replaceInfo) {
+        var matchArr = baseStr.match(eval('/"'+ replaceInfo.key + '":[0-9]{15,}/'));
+        if (matchArr) {
+            var str = matchArr[0];
+            var replaceStr = str.replace('"' + replaceInfo.key + '":','"' + replaceInfo.key + '":"');
+            replaceStr += '"';
+            baseStr = baseStr.replace(str,replaceStr);
+        }
+    });
+    var returnJson = null;
+    try {
+        returnJson = JSON.parse(baseStr);
+    }catch (err){
+        return null;
+    }
+    return returnJson;
+}
+
+//遍历对象类型的
+function getNeedRpStrByObj(obj,needReplaceStrs) {
+    for (var key in obj) {
+        var value = obj[key];
+        if (typeof value == 'number' && value > 100000000000000){
+            needReplaceStrs.push({key:key});
+        }
+        loopFindArrOrObj(value,needReplaceStrs);
+    }
+}
+
+//遍历数组类型的
+function getNeedRpStrByArr(arr,needReplaceStrs) {
+    for(var i=0; i<arr.length; i++){
+        var value = arr[i];
+        loopFindArrOrObj(value,needReplaceStrs);
+    }
+}
+
+//递归遍历
+function loopFindArrOrObj(value,needRpStrArr) {
+    var valueTypeof = Object.prototype.toString.call(value);
+    if (valueTypeof == '[object Object]') {
+        needRpStrArr.concat(getNeedRpStrByObj(value,needRpStrArr));
+    }
+    if (valueTypeof == '[object Array]') {
+        needRpStrArr.concat(getNeedRpStrByArr(value,needRpStrArr));
+    }
+}
+
+//使用：  原生ajax获取返回的JSON字符串;
+function jsonlintAjax(method,url,data,callback,flag) {
+	var params = '';
+		for(i in data){
+			params += i + "=" + data[i] +"&";
+		}
+		var geturl = url+'?'+params+'t='+geturl;
+		var postparams = params.replace(/&$/gi,'');
+    var xhr = null;
+    if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+        //兼容IE浏览器
+        xhr = new ActiveXObject("Microsoft.XMLHttp");
+    }
+    //防止请求方式输入小写
+    method = method.toUpperCase();
+    if (method == "GET") {
+        //初始化
+    	var newurl = data==''?url:geturl;
+        xhr.open(method, data==''?url:geturl);
+        xhr.setRequestHeader("X-Requested-With","XMLHttpRequest");
+        //发送请求
+        xhr.send();
+    } else if (method == "POST") {
+        xhr.open(method, url);
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader("X-Requested-With","XMLHttpRequest");
+        xhr.send(postparams);
+    }
+    //判断数据是否回来,请求是否成功
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status == 200) {
+                var backData = getRealJsonData(xhr.responseText);
+                callback(backData);
+        }
+    }
+}

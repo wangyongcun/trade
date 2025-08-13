@@ -1,0 +1,21 @@
+var domainUrl = document.domain;
+
+// var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"))
+
+// var hqDomain = "https://hq.tgb.cn/tgb/realHQList";
+// var hqRealDomain = "https://hq.tgb.cn/tgb/";
+var hqDomain;
+var hqRealDomain;
+
+if(domainUrl.indexOf("tgb.cn")>-1){
+    hqDomain = "https://hq.tgb.cn/tgb/realHQList";
+    hqRealDomain = "https://hq.tgb.cn/tgb/";
+}else if(domainUrl.indexOf("taoguba.com.cn")>-1){
+    hqDomain = "https://hq.taoguba.com.cn/tgb/realHQList";
+    hqRealDomain = "https://hq.taoguba.com.cn/tgb/";
+} else{
+    hqDomain = "https://hq.tgb.test/tgb/realHQList";
+    hqRealDomain = "https://hq.tgb.test/tgb/";
+}
+
+

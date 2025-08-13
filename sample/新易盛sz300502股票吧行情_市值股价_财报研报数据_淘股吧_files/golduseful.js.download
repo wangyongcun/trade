@@ -1,0 +1,560 @@
+
+var shuoDomainPath,wwwDomainPath;
+
+if(document.domain.indexOf("shuo") > -1){
+	shuoDomainPath = "https://"+document.domain+"/";
+	wwwDomainPath = shuoDomainPath.replace("shuo","www");
+}else if(document.domain.indexOf("www") > -1){
+	wwwDomainPath = "https://"+document.domain+"/";
+}
+function AddGoldUseful(feedID,bestNum,topic,flag){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	if(flag == 'F'){
+		showAlert("您还没有登陆，请登录后再进行点赞");
+		return;
+	}
+	if(flag == 'T'){
+		showAlert("您还没有手机验证，请验证后再加油");
+		return;
+	}
+	var url="addWeiboGoldUseful?feedID=" + feedID +  "&flag=" + topic + "&bestNum=" + bestNum ;
+	XMLHttp.sendReq("get",url,"",getGoldUseful);
+	
+}
+function getGoldUseful(obj) {
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	var insertFlag = obj.dto.root;
+	var str = insertFlag;
+	if (str != "error"){
+		if(str == "999999"){
+			confirm("目前您没有可用的加油券，是否购买加油券？",function(r){
+				if(r){
+					window.open(wwwDomainPath+"buyGold","_blank");
+				}
+			});
+		}else if(str == "1000000"){
+			showAlert("您不能为自己加油，让其他用户帮您吧！");
+		}else if(str == "1000002"){
+			showAlert("对不起，您已经投过一次了，不能再投了！");
+		}else if(str == "1000001"){
+			showAlert("您可能投了一张不存在的帖子，如不是请您告知股天乐，谢谢！");
+		}else if(str == "1000003"){
+			showAlert("现在正在清算稿费，请您过两分钟再投票，谢谢！");
+		}else if(str == "1000005"){
+			showAlert("该说说不存在");
+		}else if(str == "10000086"){
+			 showAlert("由于您违反了加油券规则而被禁止发起加油卷！");
+		}else if(str != "0"){
+			showAlert("加油成功，请勿重复投票。");
+			var topic = insertFlag.flag;
+			var bestNum = insertFlag.totalNum;
+			var feedID = insertFlag.id;
+			if(topic == "W"){
+				document.getElementById("goldUseful_"+feedID).innerHTML ='油('+ bestNum+')';
+			}
+		}else{
+			showAlert("您已经加油过了，一个ID对同一个说说只允许加油一次");
+		return;
+		}
+	}else{
+		showAlert("发生错误，请您联系股天乐");
+		return;
+	}
+} 
+//赞
+function AddWeiboUseful(feedID){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	var url = "addWeiboUseful?feedID="+feedID+"&flag=W"+"&callback=?";
+	  $.getJSON(url, function(json){
+		var flag = json.dto.result;
+		if(flag=="lockend"){
+			var lockend = json.lockend;
+			alert("抱歉由于您涉及恶意点赞行为，暂时不能点赞, 解除时间为："+lockend);
+		}else if(flag == "0"){
+			showAlert("系统错误！");
+		}else if(flag == "999999"){
+			showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+		}else if(flag == "999998"){
+			showAlert("您不能投自个的票，让其他用户帮您投吧，谢谢。");
+		}else if(flag < 100000 && parseInt(flag)>0){
+			showAlert("点赞成功，说说赞加1");
+			var getLink = document.getElementById("a_useful_"+feedID);
+			if(getLink != null){
+				getLink.innerHTML = "赞("+flag+")";
+			}
+		}else if(flag == "10000086"){
+			showAlert("账号被封，无法点赞。");
+		}else{
+			showAlert("您已经投过票了，一个ID对同一信息内容只允许投一票，谢谢");
+			return;
+		} 
+    }); 
+}
+//赞
+function AddWeiboLight(feedID){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	var url = "addWeiboUseful?feedID="+feedID+"&flag=W"+"&callback=?";
+	  $.getJSON(url, function(json){  
+		var flag = json.dto.result;
+		if(flag == "0"){
+			showAlert("系统错误！");
+		}else if(flag == "999999"){
+			showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+		}else if(flag == "999998"){
+			showAlert("您不能投自个的票，让其他用户帮您投吧，谢谢。");
+		}else if(flag < 100000 && parseInt(flag)>0){
+			showAlert("点赞成功，说说赞加1");
+			var getLink = document.getElementById("a_useful_"+feedID);
+			if(getLink != null){
+				getLink.innerHTML = "赞("+flag+")";
+			}
+		}else if(flag == "10000086"){
+			showAlert("账号被封，无法点赞。");
+		}else{
+			showAlert("您已经投过票了，一个ID对同一信息内容只允许投一票，谢谢");
+			return;
+		} 
+    }); 
+}
+var item = 0;
+function AddCollect(feedID,obj){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+		var url = "addCollect?feedID="+feedID+"&callback=?";
+		  $.getJSON(url, function(json){  
+			var flag = json.dto.result;
+			var item = obj;
+			if (flag == "0"){
+				showAlert("请先登入！");
+			}else if(flag == "1" ||flag == "2"){
+				var e = document.createElement("del_item");
+				e.type = "div";
+				$(e).prepend('<a style = " color: #5193C7;" href = "javascript:void(0);" onclick="allDeleteCollect('+feedID+',this)">取消收藏</a>');
+				$(e).insertBefore(item);
+				$(item).remove();
+			}else if(flag == "3"){
+				showAlert("该说说内容不存在，可能已被删除。");
+			}
+	        
+	    }); 
+}
+function deleteCollect(feedID){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	var url="deleteCollect?feedID=" + feedID+"&callback=?";
+	 $.getJSON(url, function(json){  
+		var flag = json.dto.result;
+		if (flag == "0"){
+			showAlert("请先登入！");
+		}else if(flag == "1"){
+			showAlert("删除成功！");
+			var item = document.getElementById('feed_'+feedID);
+			$(item).remove();
+		}else if(flag == "2"){
+			showAlert("已在删除成功，强刷新后再试！");
+		}
+        
+    },'json'); 
+}
+function allDeleteCollect(feedID,obj){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+		var url="deleteCollect?feedID=" + feedID+"&callback=?";
+		 $.getJSON(url, function(json){  
+			var flag = json.dto.result;
+			var item = obj;
+		
+			if (flag == "0"){
+				showAlert("请先登入！");
+			}else if(flag == "1"){
+				var e = document.createElement("add_item");
+				e.type = "div";
+				$(e).prepend('<a style = " color: #5193C7;" href = "javascript:void(0);" onclick="AddCollect('+feedID+',this)">收藏</a>');
+				$(e).insertBefore(item);
+				$(item).remove();
+			}else if(flag == "2"){
+				showAlert("已在删除成功，强刷新后再试！");
+			}
+	        
+	    },'json'); 
+}
+function SelfCollectDatatoHTML(recordJSON,selfID) {
+//	var str = '';
+//	for(var i = 0 ;i<recordJSON.length; i++){
+//	 	var mainCon = recordJSON[i].mainCon;
+//		var refCon = recordJSON[i].refCon;
+//		str += '<div class="selfContentFont" id = "colItem_'+mainCon.feedID+'">';
+//		str += '<a style="float: left;width: 80px;height: 70px;display: block;"  href="/weiboSelf?selfID='+mainCon.UserID+'"  target="_blank" >';
+//		str += '<img alt="" src="https://image.taoguba.com.cn/img/'
+//			if(mainCon.portrait == "" || mainCon.portrait == "null" ){
+//				str += 'user_icon_60.png' ;
+//			}else{
+//				str += mainCon.portrait ;
+//			}
+//		str +=	'" class="smallPhoto" />';
+//		str += '</a>';
+//		if(mainCon.content.length > 228){
+//			
+//		   str += '<div id="showCon_'+mainCon.feedID+'" onclick="toSingle('+mainCon.userID+','+mainCon.feedID+');"  class="text_overflow" style="margin: 5px 5px 25px 0;font-size: 14px;cursor: pointer;">';
+//		   str += mainCon.content;
+//		   str += '</div>';
+//		   str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+'">';  
+//		   str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\');">展开<span class="showAllConSpan"></span></a>';  
+//		   str += '</div>';  
+//		   str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+'">';  
+//		   str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\');">收起<span class="hidenConSpan"></span></a>';  
+//		   str += '</div>';  
+//	    }else{
+//	       str += '<div id="showCon_'+mainCon.feedID+'" onclick="toSingle('+mainCon.userID+','+mainCon.feedID+');"  style="margin: 5px 5px 25px 0;font-size: 14px;cursor: pointer;">';
+//		   str += mainCon.content;
+//		   str += '</div>';
+//	    }
+//		//<!-- 原文图片(缩略) -->
+////		str += '<div style="margin: 5px 5px 5px 0;"  id="content_small_' + mainCon.feedID + '" >';
+////		str += '<img alt="" src="images/weibo/user_img.jpg" onclick="showBigImg(\'content_small_'
+////				+ mainCon.feedID
+////				+ '\',\'content_big_'
+////				+ mainCon.feedID
+////				+ '\',\''
+////				+ mainCon.userImg
+////				+ '\')" class="showSmallImg" />';
+////		str += '</div>';
+////		//<!-- 原文图片(大图) -->
+////		str += '<div style="margin: 5px 5px 5px 0;" id="content_big_' + topicID + '" >';
+////		str += '</div>';
+//		
+//		//转发内容
+//	    if(refCon != 0){
+//		    str += '<div class="selfForwardDiv" style = "margin-left:80px;width:510px;">';
+//			str += '<div class="WB_arrow"><em class="S_line1_c">◆</em><span class="S_bg1_c">◆</span></div>';
+//			str += '<div><a href="#" class="weiboNick" >';
+//			str += refCon.userName;
+//			str += '</a>';
+//			if(refCon.content.length > 228){
+//				str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'"  class="text_overflow" >';
+//		        str += refCon.content;
+//		        str += '</div>';
+//			    str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+//			    str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\');">展开<span class="showAllConSpan"></span></a>';  
+//			    str += '</div>';  
+//			    str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+//			    str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\');">收起<span class="hidenConSpan"></span></a>';  
+//			    str += '</div>';  
+//			}else{
+//				str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'" >';
+//			    str += refCon.content;
+//			    str += '</div>';
+//			}
+//			str += '</div>';
+//			str += '<div class="clear"></div>';
+//			str += '<div class="selfForwardTool" style="width:500px;">';
+//			str += '<div style="float: left;">';
+//			var unixTimestamp = new Date(refCon.timeLine);
+//		    var commonTime = unixTimestamp.format("MM-dd hh:mm"); 
+//			str += '<span class="optTime">' + commonTime + '</span>';
+//			str += '</div>';
+//			str += '<div style="float: right;">';
+//			str += '<a href="javascript:void(0);" >转发('+refCon.transferCount+')</a>';
+//			str += '<span class="seperate2">|</span>';
+//			str += '<a href="javascript:void(0);" >评论('+refCon.commentCount+')</a>';
+//			str += '</div>';
+//			str += '</div>';
+//			str += '</div>';
+//	    }
+//		
+//		//<!-- 主微博内容操作 -->
+//		str += '<div class="selfConTool">';
+//		str += '<div style="float: left;">';
+//		var unixTimestamp = new Date(mainCon.timeLine);
+//		var commonTime = unixTimestamp.format("MM-dd hh:mm"); 
+//		str += '<span class="optTime">' + commonTime + '</span>';
+//		str += '<a href="javascript:void(0);" onclick="AddWeiboUseful('+mainCon.feedID+')">赞</a>';
+//		str += '<span class="seperate2">|</span>';
+//		str += '<a href="javascript:void(0);"  onclick="AddGoldUseful('+mainCon.feedID+','+mainCon.bestNum+',\'W\',\'R\')" ><span id="goldUseful_'+mainCon.feedID+'">油('+mainCon.bestNum+')</span></a>';
+//		str += '<span class="seperate2">|</span>';
+//		str += '<a href="javascript:void(0);" >咖啡卡</a>';
+//		str += '</div><div style="float: right;">';
+//	    if(refCon != 0){ //有转发内容的
+//	  	   str += '<a href="javascript:void(0);" onclick="showTransFer('+mainCon.userID+','+mainCon.feedID+',\''+mainCon.userName+'\','+refCon.userID+',\''+refCon.userName+'\','+refCon.feedID+')" >转发('+mainCon.transferCount+')</a>';
+//	    }else{  //转发原文的
+//		   str += '<a href="javascript:void(0);" onclick="showTransFer('+mainCon.userID+','+mainCon.feedID+',\''+mainCon.userName+'\','+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+')" >转发('+mainCon.transferCount+')</a>';
+//	    }
+//		str += '<span class="seperate2">|</span>';
+//		str += '<a href="javascript:void(0);" >分享</a>';
+//		str += '<span class="seperate2">|</span>';
+//		str += '<a href="javascript:void(0);" onclick="deleteCollect('+mainCon.feedID+')" >取消收藏</a>';
+//		str += '<span class="seperate2">|</span>';
+//		str += '<a href="javascript:void(0);" id="replyNum_btn_'+mainCon.feedID+'" onclick="selfShowReply(' + mainCon.feedID
+//				+ ',\'' + mainCon.userName + '\',' + mainCon.userID + ','
+//				+ mainCon.userID +',\'' + mainCon.userName + '\',' 
+//				+ mainCon.feedID+','+mainCon.commentCount+','+selfID+')" >评论('+mainCon.commentCount+')</a>';
+//		str += '</div></div>';
+//		//<!-- 评论内容及操作 -->
+//		str += '<div class="selfDiscussDiv" id="discussDiv_' + mainCon.feedID + '" style="display: none;"></div>';
+//		str += '</div>';
+//	}
+//	str += '<div class="clear"></div>';
+//    return str;
+    var str ="";
+	   for(var i = 0 ;i<recordJSON.length; i++){
+		   var mainCon = recordJSON[i].mainCon;
+		   var refCon = recordJSON[i].refCon;
+		   if(mainCon.feedID != 0 && mainCon.deleteflag == "N"){
+			   // <!-- 不带转发内容(带图片) -->
+			   str += '<div id="feed_'+mainCon.feedID+'" class="divLine">';
+			   str += '<div style="float: left;width: 80px;" >';
+			   str += '<img class="smallPhoto" alt="'+mainCon.userName+'" src="https://image.taoguba.com.cn/img/';
+			   if(mainCon.portrait == null){
+				   str += 'user_icon_60.png';
+			   }else{
+				   str += mainCon.portrait;
+			   }
+			   str += '@!80x80" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;"/></div>';
+			   str += '<div class="contentFont" style = "width:560px;">';
+			   str += '<a href="/weiboSelf?selfID='+mainCon.userID+'" target="_blank" class="weiboNick" >';
+			   str += mainCon.userName;
+			   str += '</a>';
+			   var arrayImg =getImgUrl(mainCon.content);
+			   var imgLength = arrayImg.length;
+			   var arrayStock =getStockUrl(mainCon.content);
+			   var stockLength = arrayStock.length;
+//			   var arrayVideo =isVideo(mainCon.content);   
+//			   var videoLength = arrayVideo.length;
+			   if(mainCon.content.length > 228 || imgLength > 0 || stockLength > 0 ){ //|| videoLength > 0
+				  var mCon = ubbAll(mainCon.content);
+				  if(mainCon.fromType == "V"){
+					  mCon = ubbPart1(mCon);
+					  str += '<div id="showCon_'+mainCon.feedID+'_showImg" name="showCon_'+mainCon.feedID+'" class="bodyLineHeight"  style="margin: 5px 5px 10px 0;font-size: 14px;">';
+					  str += '<span class="atfont">视频：</span>' + ubbShowImg(mCon);
+				      str += '</div>';
+				  }else{
+				      str += '<div id="showCon_'+mainCon.feedID+'" name="showCon_'+mainCon.feedID+'"  class="contentSubStr" style="margin: 5px 5px 10px 0;font-size: 14px;display:block;">';
+				      var subedCont = ubbClear(mainCon.content)
+				      subedCont = subedCont.substr(0,200);
+					  subedCont = ubbAll(subedCont);
+					  subedCont = ubbHiddenImg(subedCont);
+					  str += subedCont;
+				      str += '</div>';
+				      str += '<div id="showCon_'+mainCon.feedID+'_showImg" name="showCon_'+mainCon.feedID+'" class="bodyLineHeight"  style="margin: 5px 5px 10px 0;font-size: 14px;display:none;">';
+					  str += ubbShowImg(mCon);
+				      str += '</div>';
+					  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+'">';  
+					  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">展开<span class="showAllConSpan"></span></a>';  
+					  str += '</div>';  
+					  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+'">';  
+					  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">收起<span class="hidenConSpan"></span></a>';  
+					  str += '<div class="clear" ></div>';
+					  str += '</div>';  
+				  }
+			   }else{
+				  str += '<div id="showCon_'+mainCon.feedID+'"  style="margin: 5px 5px 10px 0;font-size: 14px;">';
+			      var mCon = ubbAll(mainCon.content);
+				  str += mCon;
+			      str += '<div class="clear" ></div>';
+			      str += '</div>';
+			   }
+			   if(imgLength > 0){
+				   // <!-- 原文图片(缩略) -->
+				   str += '<div style="margin: 5px 5px 5px 0;"  id="content_small_'+mainCon.feedID+'">';
+				   str += '<img alt="" src="'+arrayImg[0]+'" onclick="showBigImg(\'content_small_'+mainCon.feedID+'\',\'content_big_'+mainCon.feedID+'\',\''+arrayImg+'\')" class="showSmallImg" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;"/>';
+				   str += '</div>';
+				   //<!-- 原文图片(大图) -->
+			       str += '<div style="margin: 5px 5px 5px 0;" id="content_big_'+mainCon.feedID+'"></div>';
+			   }
+	
+			   //转发内容
+			   if(refCon != 0){
+				   str += '<div class="forwardDiv">';
+				   str += '<div class="WB_arrow">';
+				   str += '<em class="S_line1_c">◆</em>';
+				   str += '<span class="S_bg1_c">◆</span>';
+				   str += '</div>';
+				   str += '<div style="width: 500px">';
+				   var refDeleteFlag = refCon.deleteflag;
+				   if(refDeleteFlag == "Y" || refDeleteFlag == null){
+					   str +='该内容已被删除';
+				   }else{
+					   str += '<a href="/weiboSelf?selfID='+refCon.userID+'"  target="blank" class="weiboNick" >'+refCon.userName+'</a>';
+					   var arrayImgRef =getImgUrl(refCon.content);
+				   	   var imgLengthRef = arrayImgRef.length;
+				   	   var arrayStockRef =getStockUrl(refCon.content);
+			   		   var stockLengthRef = arrayStockRef.length;
+//			   		   var arrayVideoRef =isVideo(refCon.content);   
+//			   		   var videoLengthRef = arrayVideoRef.length;
+					   if(refCon.content.length > 228 || imgLengthRef > 0 || stockLengthRef > 0 ){ //|| videoLengthRef > 0
+						  var rCon = ubbAll(refCon.content);
+						  if(refCon.fromType == "V"){
+							  rCon = ubbPart1(rCon);
+							  str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'_showImg" class="bodyLineHeight"  >';
+					  		  str += '<span class="atfont">视频：</span>'+ ubbShowImg(rCon);
+						      str += '</div>';
+						  }else{
+						      str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'"  class="contentSubStr" style="display:block" >';
+					  		  var subedRefCont =ubbClear(refCon.content)
+				   			  subedRefCont = subedRefCont.substr(0,200);
+							  subedRefCont = ubbAll(subedRefCont);
+							  subedRefCont = ubbHiddenImg(subedRefCont);
+							  str += subedRefCont;
+						      str += '</div>';
+						      str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'_showImg" class="bodyLineHeight" style="display:none"  >';
+					  		  str += ubbShowImg(rCon);
+						      str += '</div>';
+							  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+							  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">展开<span class="showAllConSpan"></span></a>';  
+							  str += '</div>';  
+							  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+							  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">收起<span class="hidenConSpan"></span></a>';  
+							  str += '<div class="clear" ></div>';
+							  str += '</div>';  
+						  }
+					   }else{
+						   str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'" >';
+					       str += ubbAll(refCon.content);
+					       str += '<div class="clear" ></div>';
+					       str += '</div>';
+					   }
+					    str += '</div>';
+				   		if(imgLengthRef > 0){
+						   //转发的图片(缩略)
+						   str += '<div style="margin: 5px 5px 5px 0;"  id="forward_small_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '<img alt="" src="'+arrayImgRef[0]+'" onclick="showBigImg(\'forward_small_'+mainCon.feedID+"_"+refCon.feedID+'\',\'forward_big_'+mainCon.feedID+"_"+refCon.feedID+'\',\''+arrayImgRef+'\')" class="showSmallImg" />';
+						   str += '</div>';
+						   //转发的图片(大图)
+						   str += '<div style="margin: 5px 5px 5px 0;" id="forward_big_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '</div>';
+					    }
+					   //转发的图片(缩略)
+		//			   str += '<div style="margin: 5px 5px 5px 0;"  id="forward_small_'+mainCon.feedID+"_"+refCon.feedID+'">';
+		//			   str += '<img alt="" src="images/weibo/user_img.jpg" onclick="showBigImg(\'forward_small_'+mainCon.feedID+"_"+refCon.feedID+'\',\'forward_big_'+mainCon.feedID+"_"+refCon.feedID+'\',\'https://ww1.sinaimg.cn/bmiddle/a716fd45jw1e3pkl4j3i4j.jpg\')" class="showSmallImg" />';
+		//			   str += '</div>';
+					   //转发的图片(大图)
+		//			   str += '<div style="margin: 5px 5px 5px 0;" id="forward_big_'+mainCon.feedID+"_"+refCon.feedID+'">';
+		//			   str += '</div>';
+					   //转发内容操作
+					   str += '<div class="clear"></div>';
+					   str += '<div class="forwardTool">';
+					   str += '<div style="float: left;">';
+					   var unixTimestamp = new Date(refCon.timeLine);
+				       var commonTime = unixTimestamp.format("MM-dd hh:mm"); 
+					   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+refCon.userID+','+refCon.feedID+');" >' + commonTime + '</span>';
+					   str += '</div>';
+					   str += '<div style="float: right;">';
+	//				   str += '<a href="/weiboSingle?userID='+refCon.userID+'&feedID='+refCon.feedID+'&singleType=T" target="_blank" >转发('+refCon.transferCount+')</a>';
+					   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T",'+
+				  	 															 '"data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+				  	 															 '})\' >转发('+refCon.transferCount+')</a>';
+					   str += '<span class="seperate2">|</span>';
+					   str += '<a href="/weiboSingle?userID='+refCon.userID+'&feedID='+refCon.feedID+'" target="_blank" >评论('+refCon.commentCount+')</a>';
+					   str += '</div>';
+				  }
+				  str += '</div>';
+				  str += '</div>';
+				  
+			   }
+	//		   <!-- 主微博内容操作 -->
+			   str += '<div class="conTool" style="width:540px;">';
+			   str += '<div style="float: left;">';
+			   var unixTimestamp = new Date(mainCon.timeLine);
+			   var commonTime = unixTimestamp.format("MM-dd hh:mm"); 
+			   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+mainCon.userID+','+mainCon.feedID+');"  >' + commonTime + '</span>';
+			   str += '<a href="javascript:void(0);" onclick="AddWeiboUseful('+mainCon.feedID+')">赞</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" id="goldUseful_'+mainCon.feedID+'" onclick="AddGoldUseful('+mainCon.feedID+','+mainCon.bestNum+',\'W\',\'R\')" >油('+mainCon.bestNum+')</a>';
+			   var toolUrl="";  //工具箱
+			   toolUrl = tool(mainCon.feedID);
+			   if(toolUrl != null && toolUrl !=""){
+				   str += '<span class="seperate2">|</span>';
+				   str += toolUrl;
+			   }
+	//		   str +='<s:if test="#session.role==\'manage\'"><span class="seperate2">|</span><a href="checkWeibo?forumID='+mainCon.feedID+'" target="_blank">工具箱</a></s:if>';
+			   str += '</div><div style="float: right;">';
+			   
+	//		   if(refCon != 0){ //有转发内容的
+	//		  	 str += '<a href="javascript:void(0);" onclick="showTransFer('+mainCon.userID+','+mainCon.feedID+',\''+mainCon.userName+'\','+refCon.userID+',\''+refCon.userName+'\','+refCon.feedID+',\''+mainCon.content+'\')" >转发('+mainCon.transferCount+')</a>';
+	//		   }else{  //转发原文的
+	//			 str += '<a href="javascript:void(0);" onclick="showTransFer('+mainCon.userID+','+mainCon.feedID+',\''+mainCon.userName+'\','+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+',\'\')" >转发('+mainCon.transferCount+')</a>';
+	//		   }
+			    if(refCon != 0){ //有转发内容的
+			  	   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T",'+
+			  	 															 '"data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+			  	 															 '})\' >转发('+mainCon.transferCount+')</a>';
+			   }else{  //转发原文的
+				   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T",'+
+			  	 															 '"data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+mainCon.userID+'","refMsgUserName":"'+mainCon.userName+'","refMsgID":"'+mainCon.feedID+'","content":" "}' +
+			  	 															 '})\'>转发('+mainCon.transferCount+')</a>';
+			   }
+			   
+			   
+	//		   str += '<span class="seperate2">|</span>';
+	//		   str += '<a href="javascript:void(0);" >分享</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" onclick="deleteCollect('+mainCon.feedID+')" >取消收藏</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" id="replyNum_btn_'+mainCon.feedID+'" onclick="showShuoReply('+mainCon.feedID+',\''+mainCon.userName+'\','+mainCon.userID+','+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+','+mainCon.commentCount+','+selfID+',\''+mainCon.portrait+'\');return false;" >评论('+mainCon.commentCount+')</a>';
+			   str += '</div>';
+			   str += '</div>';
+	//		   <!-- 评论内容及操作 -->
+			   str += '<div class="discussDiv" id="discussDiv_'+mainCon.feedID+'" style="display: none;"></div>';
+			   str += '</div>';
+			   str += '<div class="clear"></div>';
+			   str += '</div>';
+			   
+	//		   str += '';
+		   }
+	   }
+	   str += '<div class="clear"></div>';
+	   return str;
+}
+
+	function changeAllow(flag){
+		var tranflag ;
+		if(flag == "Y"){
+			tranflag = "N";
+		}else{
+			tranflag = "Y";
+		}
+		var url="changeAllow?flag=" + tranflag;
+		
+		XMLHttp.sendReq("get",url,"",function(obj){
+			var result = obj.dto;
+			if(result == "1"){
+				if(flag == "Y"){
+					document.getElementById("replyFlag").innerHTML = '<a href="javascript:void(0);" onclick="changeAllow('+"'N'"+')"><img alt="" src="https://css.taoguba.com.cn/images/weibo/choose02.png"></a>';
+				}else{
+					document.getElementById("replyFlag").innerHTML = '<a href="javascript:void(0);" onclick="changeAllow('+"'Y'"+')"><img alt="" src="https://css.taoguba.com.cn/images/weibo/choose01.png"></a>';
+				}
+			}
+		});
+		}

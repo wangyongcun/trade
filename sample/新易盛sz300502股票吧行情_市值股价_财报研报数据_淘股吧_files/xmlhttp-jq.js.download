@@ -1,0 +1,69 @@
+/**
+ *  for old version XMLHttp AJAX
+ *
+ * @author    kunchong21
+ */
+var XMLHttp = {
+    // 发送请求(方法[post,get], 地址, 数据, 回调函数)
+    sendReq: function (method, siteUrl, data, callback) {
+        $.ajax({
+            type: method,
+            cache: false,
+            dataType: "json",
+            data: data,
+            url: siteUrl,
+            success: function (data) {
+                if (data.status) {
+                    callback(data);
+                    if (siteUrl.indexOf("/addBadFriend") != -1) {//拉黑GIO统计
+                        //拉黑GIO统计 -- start
+                        var userName = siteUrl.substring(siteUrl.indexOf("userName=") + 9);
+                        $.ajax({
+                            type: 'GET',
+                            url: "/user/getUserByName",
+                            data: {userName: userName, fansID: loginUserID},
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.status) {
+                                    var userID = data.dto.userID;
+                                    var auth = data.dto.auth;
+                                    var fansLevel = data.dto.fansLevel;
+                                    var body = {};
+                                    body.user_id_var = loginUserID;
+                                    if (fansLevel != "") {
+                                        body.userStatus_var = "粉丝";
+                                        if (fansLevel == "Lv1") {
+                                            body.userLevel_var = "普通粉丝";
+                                        } else if (fansLevel == "Lv2") {
+                                            body.userLevel_var = "银粉";
+                                        } else if (fansLevel == "Lv3") {
+                                            body.userLevel_var = "金粉";
+                                        } else {
+                                            body.userLevel_var = "-";
+                                        }
+                                    } else {
+                                        body.userStatus_var = "非粉丝";
+                                        body.userLevel_var = "-";
+                                    }
+                                    body.creator_id_var = userID;
+                                    body.creatorName_var = userName;
+                                    if (auth > 54) {
+                                        body.ifBigV_var = "是";
+                                    } else {
+                                        body.ifBigV_var = "否";
+                                    }
+                                    gioMessage("blockSuccess", body);
+                                }
+                            }
+                        })
+                        //拉黑GIO统计 -- end
+                    }
+                } else {
+                    showAlert(data.errorMessage)
+                }
+            }, error: function (error) {
+                //showAlert('网络错误')
+            }
+        });
+    }
+};

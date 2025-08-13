@@ -1,0 +1,2243 @@
+   var totalheight = 0;     //定义一个总的高度变量
+   var currtentPage = 1; //当前的页数
+   var tempPage = 1;   //临时页码，判断是否重复载入
+   var lazyTime = 1;
+   var tempFeedID = 0;
+   var startFlag = true;
+   var currentType = "";
+   var totalPage = 0;
+   var totalLazyNum = 1;
+   var notViewShuoNumListenerStart = false;
+   var isIE=!!window.ActiveXObject;
+   var isIE6=isIE&&!window.XMLHttpRequest;
+   var setDay = 1;
+   var setType = "B";
+   var setStockCode = "";
+   var targetUserID =0;
+   var wwwDomainPath = "";
+   var shuoDomainPath = "";
+   if(document.domain.indexOf("shuo") > -1){
+		shuoDomainPath = "https://"+document.domain+"/";
+		wwwDomainPath = shuoDomainPath.replace("shuo","www");
+	}else if(document.domain.indexOf("www") > -1){
+		wwwDomainPath = "https://"+document.domain+"/";
+		shuoDomainPath = wwwDomainPath.replace("www","shuo");
+	}  
+   //时间格式化
+Date.prototype.format = function(format){
+    var o = {
+    "M+" : this.getMonth()+1, //month
+    "d+" : this.getDate(),    //day
+    "h+" : this.getHours(),   //hour
+    "m+" : this.getMinutes(), //minute
+    "s+" : this.getSeconds(), //second
+    "q+" : Math.floor((this.getMonth()+3)/3),  //quarter
+    "S" : this.getMilliseconds() //millisecond
+    }
+    if(/(y+)/.test(format)) format=format.replace(RegExp.$1,
+    (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+    for(var k in o)if(new RegExp("("+ k +")").test(format))
+    format = format.replace(RegExp.$1,
+    RegExp.$1.length==1 ? o[k] :
+    ("00"+ o[k]).substr((""+ o[k]).length));
+    return format;
+}
+   function lazyLoad(sessionID,selfID){
+	 	var scrollTop = $(document).scrollTop();
+	 	var checkDivTop = $("#checkDiv").offset().top;
+	 	var clientHeight  = $(window).height();
+		if($(window).height() == 0){
+			clientHeight += document.body.offsetHeight;
+		}
+//	    console.log("clientHeight:"+clientHeight);
+//	 	console.log("scrollTop:"+scrollTop);
+//	 	console.log("last:"+(scrollTop+clientHeight)>$("#checkDiv").offset().top);
+	 	if((scrollTop + clientHeight) >= checkDivTop){
+		   if(lazyTime <= 3 && startFlag && tempPage != currtentPage ){
+		    if( currentType =="all"){
+	       		 //说说首页数据
+	    	  	 getContentByFeedID(sessionID,tempFeedID,currtentPage);
+	       	  }else if(currentType =="weibo"){
+	       		 //个人说说首页数据
+	       		 addSelfWeibo(selfID,tempFeedID,sessionID,currtentPage);
+	       	  }else if(currentType =="comment"){
+	       		 //个人说说_评论
+	       		 addComment(selfID,tempFeedID,sessionID,currtentPage);
+	       	  }else if(currentType =="col"){
+	       		 //个人说说_收藏
+	       		 addCollectWeibo(selfID,tempFeedID,sessionID,currtentPage);
+	       	  }
+//	       	  else if(currentType =="best"){
+//	       		 //首页_加油
+//	       		 getBestWeibo(selfID,currtentPage,setDay,setType);
+//	       	  }else if(currentType =="useful"){
+//	       		 //首页_推荐
+//	       		 getBestWeibo(selfID,currtentPage,setDay,setType);
+//	       	  }
+//	       	  else if(currentType =="BarBest"){
+//	       		 //个股吧_加油
+//	       		 getBarBestWeibo(selfID,currtentPage,setDay,setType,setStockCode);
+//	       	  }else if(currentType =="BarUseful"){
+//	       		 //个股吧_推荐
+//	       		 getBarBestWeibo(selfID,currtentPage,setDay,setType,setStockCode);
+//	       	  }
+		   }
+	   }
+	    
+   }
+   //返回浏览器的可视区域位置
+　　 function getClient(){
+ 　　　　 var l,t,w,h;
+ 　　　　 l  =  document.documentElement.scrollLeft || document.body.scrollLeft;
+ 　　　　 t  =  document.documentElement.scrollTop || document.body.scrollTop;
+ 　　　　 w =   document.documentElement.clientWidth;
+ 　　　　 h =   document.documentElement.clientHeight;
+ 　　　　 return {'left':l,'top':t,'width':w,'height':h} ;
+　　 }
+ 　　//返回待加载资源位置
+　　 function getSubClient(p){
+　　　　  var l = 0,t = 0,w,h;
+ 　　　　 w = p.offsetWidth ;
+ 　　　　 h = p.offsetHeight;
+  　　　　while(p.offsetParent){
+	   　　　　l += p.offsetLeft ;
+	 　　　　  t += p.offsetTop ;
+	  　　　　 p = p.offsetParent;
+	  　　}
+	  　　return {'left':l,'top':t,'width':w,'height':h } ;
+	}
+    //判断两个矩形是否相交,返回一个布尔值
+　　 function intens(rec1,rec2){
+ 　　　　 var lc1,lc2,tc1,tc2,w1,h1;
+ 　　　　 lc1 = rec1.left + rec1.width / 2;
+　　　　  lc2 = rec2.left + rec2.width / 2;
+  　　　　tc1 = rec1.top + rec1.height / 2 ;
+ 　　　　 tc2 = rec2.top + rec2.height / 2 ;
+ 　　　　 w1 = (rec1.width + rec2.width) / 2 ;
+　　　       h1 = (rec1.height + rec2.height) / 2;
+ 　　　　 return Math.abs(lc1 - lc2) < w1 && Math.abs(tc1 - tc2) < h1 ;
+　　 }
+	//比较某个子区域是否呈现在浏览器区域
+ 　　function jiance(arr,prec1,callback){
+  　　　var prec2;
+  　　　for(var i = arr.length - 1 ; i >= 0 ;i--){
+  　　　　 if(arr[i]){
+	   　　　　 prec2 =  getSubClient(arr[i]);
+	   　　　　 if(intens(prec1,prec2)){
+	     　　　　　　callback(arr[i]);
+	    　　　　　　 //加载资源后，删除监测
+	   　　　　 　　 delete arr[i];
+	    　　　　}
+   　　　　}
+  　　　}
+ 　　}
+ 
+ 　　//检测目标对象是否出现在客户区
+ 　　function autocheck(arr,sessionID,selfID){
+ 　　　　 var prec1 = getClient(); 
+  　　　　jiance(arr,prec1,function(obj){
+　　　　　//加载资源...
+  　　　　// alert(obj.innerHTML);
+  　　　　})
+ 　　}
+   
+   
+   function changese(obj){
+//	  var selIndex = obj.options.selectedIndex;
+//	  document.getElementById("pageSelect").options[selIndex+1].selected = true;
+	  window.location.href= obj.value;
+   }
+/*   function inPageNum(feedID){
+	   var str = "";
+	   str += '当前页：';
+	   str += '<select size="1" id="pageSelect" name="pageSelect" style="width:80px;margin:5px;" onchange="changese(this)">';
+	   str += '<option value="/shuoshuoIndex?cPageNo=1&tempFeedID=0">第一页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=2&tempFeedID='+feedID+'">第二页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=3&tempFeedID='+feedID+'">第三页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=4&tempFeedID='+feedID+'">第四页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=5&tempFeedID='+feedID+'">第五页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=6&tempFeedID='+feedID+'">第六页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=7&tempFeedID='+feedID+'">第七页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=8&tempFeedID='+feedID+'">第八页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=9&tempFeedID='+feedID+'">第九页</option>';
+	   str += '<option value="/shuoshuoIndex?cPageNo=10&tempFeedID='+feedID+'">第十页</option>';
+	   str += '</select>';
+	   return str ;
+   }
+   */
+   /**
+    * 智能显示页码
+    * @param {Object} action 把参数拼好传进来
+    * @param {Object} pageNo
+    * @param {Object} pageNum
+    * @cur_page_li 当前页显示的样式class名称
+    */
+   function pagerHtml(action,pageNo,pageNum){
+//	   if(action.indexOf("?")> -1){
+//		   action+="&cPageNo=";
+//	   }else{
+//		   action+="?cPageNo=";
+//	   }
+		if(Number(pageNo) > Number(pageNum)){
+		   pageNo = pageNum;
+	   }
+	   var buf = [];
+	   buf.push("<ul>");
+	   if(pageNum <= 7){
+		   for(var i = 1;i<=pageNum;i++){
+			   if(i == pageNo){
+					buf.push('<li id="cur_page_li">'+i+'</a>');   
+			   }else{
+					buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+			   }			   
+		   }
+	   }else{
+		  if(pageNo < 4){
+		   	for(var i = 1;i<=6;i++){
+		   	   if(i == pageNo){
+					buf.push('<li id="cur_page_li">'+i+'</a>');   
+			   }else{
+					buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+			   }	
+		   	}
+		   	buf.push("...");
+		   	buf.push('<li><a href="'+action+pageNum+'">'+pageNum+'</a>');
+	 	  }else{
+	 		 buf.push('<li><a href="'+action+'1">1</a>');
+	 		 buf.push('...');
+	 		 if(pageNo > (pageNum -4)){
+	 			 for(var i = (pageNum-6) ;i <= pageNum;i++){
+ 					if(i == pageNo){
+							buf.push('<li id="cur_page_li">'+i+'</a>');   
+				    }else{
+						buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+				    }
+	 			 }
+	 		 }else{
+	 			 for(var i = pageNo-2;i< pageNo+2;i++){
+	 				if(i == pageNo){
+						buf.push('<li id="cur_page_li">'+i+'</a>');   
+			  		}else{
+						buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+			   		}
+	 			 }
+	 			 buf.push("...");
+		   		 buf.push('<li><a href="'+action+pageNum+'">'+pageNum+'</a>');
+	 		 }
+	 	  }
+		  
+	   }
+	   buf.push("</ul>");
+	   buf.push("<div class=\"clear\" ></div>");
+	   return buf.join("");
+   }
+    /**
+    * 智能显示页码(针对评论)
+    * @param {Object} action
+    * @param {Object} pageNo
+    * @param {Object} pageNum
+    * @cur_page_li 当前页显示的样式class名称
+    */
+   function pagerHtmlForReply(action,pageNo,pageNum){
+	   pageNo = Number(pageNo);
+	   pageNum = Number(pageNum)
+	   if(pageNo > pageNum){
+		   pageNo = pageNum;
+	   }
+	   var buf = [];
+	   buf.push("<ul>");
+	   if(pageNum <= 7){
+		   for(var i = 1;i<=pageNum;i++){
+			   if(i == pageNo){
+					buf.push('<li id="cur_page_li">'+i+'</a>');   
+			   }else{
+					buf.push('<li><a href="'+action+i+');" >'+i+'</a>');
+			   }			   
+		   }
+	   }else{
+		  if(pageNo < 4){
+		   	for(var i = 1;i<=6;i++){
+		   	   if(i == pageNo){
+					buf.push('<li id="cur_page_li">'+i+'</a>');   
+			   }else{
+					buf.push('<li><a href="'+action+i+');">'+i+'</a>');
+			   }	
+		   	}
+		   	buf.push("...");
+		   	buf.push('<li><a href="'+action+pageNum+');">'+pageNum+'</a>');
+	 	  }else{
+	 		 buf.push('<li><a href="'+action+'1);">1</a>');
+	 		 buf.push('...');
+	 		 if(pageNo > (pageNum -4)){
+	 			 for(var i = (pageNum-6) ;i <= pageNum;i++){
+ 					if(i == pageNo){
+							buf.push('<li id="cur_page_li">'+i+'</a>');   
+				    }else{
+						buf.push('<li><a href="'+action+i+');">'+i+'</a>');
+				    }
+	 			 }
+	 		 }else{
+	 			 for(var i = pageNo-2;i< pageNo+2;i++){
+	 				if(i == pageNo){
+						buf.push('<li id="cur_page_li">'+i+'</a>');   
+			  		}else{
+						buf.push('<li><a href="'+action+i+');">'+i+'</a>');
+			   		}
+	 			 }
+	 			 buf.push("...");
+		   		 buf.push('<li><a href="'+action+pageNum+');">'+pageNum+'</a>');
+	 		 }
+	 	  }
+		  
+	   }
+	   buf.push("</ul>");
+	   buf.push("<div class=\"clear\" ></div>");
+	   return buf.join("");
+   }
+   var newFeedID = 0 ;
+   var newFlashFlag = false ;
+   
+   
+    function addAllfocus(){
+		confirm("确定吗?",function(flag){
+			if(flag == true){
+				document.addAllFocus.submit();
+			}
+		});		
+	}
+    function getHotUser(){
+		var url = "hotShouUser?pageNo="+roundHot+"&callback=?";
+		$.getJSON(url, function(json){
+			var userList = json.dto.record;
+			var followList = json.dto.followRelation;
+			var str = "";
+			str += '<form id="addAllFocus" name="addAllFocus" method="post" action="addAllFocus">';
+			var  num=0;
+			for(var i=0;i<followList.length;i++){
+				if(followList[i]=="N"){	
+					num++;
+					str += '<div style="width:300px;float:left;margin-left: 10px;height: 80px;"><input type="hidden" name="allUser" value="'+userList[i].userID+'" checked="checked" disable = "disable">';
+					str += '<div style="width: 60px;float:left"><img style="width: 55px;height: 55px;" alt="'+userList[i].userName+'" src="https://image.tgb.cn/img/';
+					if(userList[i].portrait == 'null'){
+						str += 'user_icon_60.png' ;
+					}else{
+						str += userList[i].portrait ;
+					}
+					str += '_60wh.png"></div><div class="simpleContent" style="width:200px;margin-left: 5px;">';				
+					str += '<a href="/weiboSelf?selfID='+userList[i].userID+'" onmouseover="userTips(this,'+userList[i].userID+');" onmouseout="offTip()" target="_blank" class="weiboNick" style="display:block;float:left;">'+userList[i].userName+'</a>';
+					str += '<span style="text-align: center;margin-bottom:5px;display:block;float:right;" id="followBtn_'+userList[i].userID+'"><a class="W_btn_b" style="text-decoration:none;" href="javascript:void(0);" onclick="addIndexFocusSelf('+userList[i].userID+',\''+userList[i].userName+'\','+'0'+')"><span><em class="addicon">+</em>关注</span></a></span>';
+					console.log(userList[i].bestNum);
+					if(userList[i].bestNum==null||""==userList[i].bestNum||"undefined"==userList[i].bestNum){
+						str += '<br/><br/><span style="color: #4793F1;margin-left:10px;">精华：</span>'+'0'+'<span style="color: #4793F1;margin-left:10px;">赞：</span>'+userList[i].usefulNum+'<span style="color: #4793F1;margin-left:10px;">粉丝：</span>'+userList[i].fansNum+'<div class="clear"></div></div></div>';
+					}else{
+					str += '<br/><br/><span style="color: #4793F1;margin-left:10px;">精华：</span>'+userList[i].bestNum+'<span style="color: #4793F1;margin-left:10px;">赞：</span>'+userList[i].usefulNum+'<span style="color: #4793F1;margin-left:10px;">粉丝：</span>'+userList[i].fansNum+'<div class="clear"></div></div></div>';
+					}
+				}				
+				if(num == 6){
+					break;
+				}		
+			}
+			str +='</form>';
+			str +='<div class="clear"></div>';
+			str +='<div style="background-color:#4793F1;width:80px;height:30px;line-height:30px;font-size:14px;margin-left:500px;"><a style="color:white;" href = "javascript:addAllfocus();" >一键加关注</a></div>';
+			document.getElementById("hotUsers").innerHTML = str;
+		
+		});
+	}
+	function hotUserRound(){
+		if(roundHot<5){
+			roundHot = roundHot +1;
+		}else{
+			roundHot = 1;
+		}
+		getHotUser();
+	}
+   //获取单页feedID列表,并获取具体内容
+   function getContentByFeedID(userID,feedID,pageNo){
+	  document.getElementById("status_div").innerHTML = "";
+	  tempPage = pageNo;
+	  document.getElementById("content_more").style.display="block";
+	  var url = "getFeedIDList?feedID="+feedID+"&pageNo="+pageNo+"&totalPage=0&newFeedID="+newFeedID;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var getfeedID = p.feedID;
+			var successFlag = p.size;
+			var getPageNo = p.pageNo;
+			var totalPage = p.totalPage;
+			var perPageNum = p.perPageNum;
+			var indexNum = ((Number(getPageNo)-1)/3)+1 ;
+			indexNum = parseInt(indexNum);//取整数
+			//判断是否在载入热门推荐
+			if(getPageNo == 1 && successFlag < 10 ){
+				indexHotCom(userID);
+				document.getElementById("hotUser_div").style.display="block";
+				getHotUser();
+				
+			}
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				startFlag = false;
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容,您可以多关注几个好友</span>';
+				startFlag = false;
+//				document.getElementById("pageNumDiv").innerHTML = inPageNum(tempFeedID);
+//			    document.getElementById("pageSelect").options[Math.floor(indexNum)-1].selected = true;
+			    var acName = "/shuoshuoIndex?tempFeedID="+getfeedID+"&totalPage="+totalPage+"&cPageNo=";
+				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+				return;
+			}else{
+				
+				
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+				$("#divContent").append(str);
+				
+				currtentPage = (Number(getPageNo)+1);
+				var pageStr="";
+				if(successFlag < perPageNum){
+					pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了，您可以多关注几个好友</span>';
+					startFlag = false;
+				}else{
+					if(getPageNo == 1 && !newFlashFlag){
+						getfeedID = feedList[0].mainCon.feedID;
+						tempFeedID = getfeedID;
+					}
+					if(lazyTime == 4){
+						//pageStr += '<a style="font-size:16px;font-weight:bold;color:#4793F1;" href="javascript:nextPage('+userID+','+getfeedID+','+(Number(getPageNo)+1)+');" >点击查看更多内容...</a>';
+					}
+					lazyTime += 1;
+				}
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+//				document.getElementById("pageNumDiv").innerHTML = inPageNum(tempFeedID);
+//			    document.getElementById("pageSelect").options[Math.floor(indexNum)-1].selected = true;
+				var	acName = "/shuoshuoIndex?tempFeedID="+getfeedID+"&totalPage="+totalPage+"&cPageNo=";
+				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+				//启动最近说说数提醒
+				if(feedID==0){
+					feedID = parseInt($(".divLine:first").attr("id").substring(5));
+				}
+				if(!(!!window.ActiveXObject&&!window.XMLHttpRequest)){
+					var currentTime = new Date().getTime();
+					if(!isIE6){
+						store.set("timeKey",currentTime+60000);			//保存时间
+			   			store.set("messageKey",0);
+						if(!notViewShuoNumListenerStart){
+							notViewShuoNumListener();					//启动监听器
+							notViewShuoNumListenerStart=true;
+						}
+					}
+				}
+				//直呼
+			 	 setTimeout('zhihu();', 500);
+			}
+ 	  });
+ 	  
+ 	 
+	
+ 	  //未读说说数的监听器
+   function notViewShuoNumListener(){
+	   var shuoNuminterval = setInterval(function(){
+		   var currentTime = new Date().getTime();			//获取当前时间
+		   if(currentTime>=store.get("timeKey")){			//当前时间到达一分钟
+			 	var url = "/notViewShuoNum?feedID="+feedID;
+		   		XMLHttp.sendReq("get",url,"",function(data){
+		   		var result = data.dto;
+		   		if(result){
+		   			if(result.msgnum<0){
+			   			 $('#notViewShuoTips a').html("加载数据<span style='display:none;'></span>异常!请重新刷新试试").slideDown();		//出现异常关闭监听器
+			   			 clearInterval(shuoNuminterval);
+			   		  }else{
+			   			 store.set("messageKey",result.msgnum);	//保存内容
+						 store.set("timeKey",currentTime+60000);	//更新时间线
+						 handlerNotViewNum(parseInt(result.msgnum));
+			   		  }
+		   		}
+		   		 
+				});								//重新加载
+		   }else{											//还没有达到一分钟就从store中取
+			   var result = store.get("messageKey");								//从store中取数据
+			   handlerNotViewNum(parseInt(result));
+		   }
+	   },60000);
+   }
+   function handlerNotViewNum(shuoNum){
+	   if(shuoNum>0){
+		    $('#notViewShuoTips a span').html(shuoNum);
+		   	if(shuoNum>=25){			//大于25条就重新刷新
+		   		$("#notViewShuoTips a").attr("href", "/shuoshuoIndex?urlType=I"); 
+		   	}else{						//加载数据插在
+		   		$("#notViewShuoTips a").unbind("click");
+		   		$("#notViewShuoTips a").bind("click",function(){
+		   			var url = "/notViewShuo?feedID="+feedID;
+		   			XMLHttp.sendReq("get",url,"",function(data){
+		   				var dataObj = data.dto;
+		   				var sucessFlag = dataObj.size;
+		   				var getPageNo = dataObj.pageNo;
+		   				if(sucessFlag =='error'){
+		   					$('#notViewShuoTips a').html("加载数据<span style='display:none;'></span>异常!请重新刷新试试");
+		   					return;
+		   				}
+		   				var dataList= dataObj.record;
+		   				targetUserID = userID;
+		   				var dataStr = Json_HTML(dataList,userID);
+		   				showSpmatchFirstSign(targetUserID);
+		   				$(".divLine:first").before(dataStr);
+		   				feedID = dataList[0].mainCon.feedID;
+		   				newFeedID = feedID;
+		   				newFlashFlag = true;
+		   				var indexNum = ((Number(getPageNo)-1)/3)+1 ;
+						indexNum = parseInt(indexNum);//取整数
+		   				var	acName = "/shuoshuoIndex?tempFeedID="+feedID+"&cPageNo=";
+		   				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,10);
+		   				$('#notViewShuoTips').hide();
+		   			});
+		   		});
+		   	}
+	  		$('#notViewShuoTips').slideDown();
+	  	}else{
+	  		$('#notViewShuoTips').hide();
+	  	}
+   };
+   }
+   
+   
+   
+   //获取最近发表
+   function getNearByFeed(userID,feedID,pageNo){ 
+	  tempPage = pageNo;
+	  document.getElementById("status_div").innerHTML = "";
+	  document.getElementById("content_more").style.display="block";
+	  var url = "getNearyList?userID="+userID+"&feedID="+feedID+"&totalPage="+totalPage+"&pageNo="+pageNo;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var feedID = p.feedID;
+			tempFeedID = feedID;
+			var successFlag = p.size;
+			var getPageNo = p.pageNo;
+			currtentPage = Number(getPageNo)+1;
+			var perPageNum = p.perPageNum;
+			totalPage = p.totalPage;
+			totalLazyNum = totalPage;
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				startFlag = false;
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容</span>';
+				startFlag = false;
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+				$("#divContent").append(str);
+				var pageStr="";
+				if(successFlag < perPageNum){
+					pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了</span>';
+					startFlag = false;
+				}else{
+					feedID = feedList[feedList.length-1].mainCon.feedID;
+//					pageStr += '<a style="font-size:16px;font-weight:bold;color:#4793F1;" href="javascript:getNearByFeed('+userID+','+feedID+','+(Number(pageNo)+1)+');" >点击查看更多内容...</a>';
+					lazyTime += 1;
+				} 
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+				//直呼
+			 	 setTimeout('zhihu();', 500);
+			}
+ 	  });
+   }
+   //获取单条说说内容
+   function getSingleCon(feedID){
+	   var url = "getFeedIDCon?feedID="+feedID;
+ 	   XMLHttp.sendReq("get",url,"",function(data){
+ 		   var p = data.dto;
+		   var str = '';
+		   var successFlag = p.size;
+		   if(successFlag == 0){
+			   
+		   }else if(successFlag == 'error'){
+			   
+		   }else{
+		   	  var weiboCon = p.content;
+		   }
+ 	   });
+   }
+   //获取首页内容
+   function getContent(userID,feedID){ 	
+	  var url = "weiboData?userID="+userID+"&feedID="+feedID;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var recordJSON = p.record;
+			var str = '';
+			var feedID = p.feedID;
+			var successFlag = p.size;
+			//var pageNo = p.pageNo;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容,您可以多关注几个好友</span>';
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(recordJSON,userID);
+				showSpmatchFirstSign(targetUserID);
+//				if(feedID == 0){
+//					document.getElementById("divContent").innerHTML=str;
+//				}else{
+//					document.getElementById("divContent").innerHTML+=str;
+//				}
+				$("#divContent").append(str);
+				var pageStr="";
+				if(successFlag < perPageNum){
+					pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了，您可以多关注几个好友</span>';
+				}else{
+					feedID = recordJSON[recordJSON.length-1].mainCon.feedID;
+					pageStr += '<a style="font-size:16px;font-weight:bold;color:#4793F1;" href="javascript:getContent('+userID+','+feedID+');" >点击查看更多内容...</a>';
+				}  //<span id="loadID" style="display:none;font-size:14px;"><img src="https://img.tgb.cn/images/Load.gif" />正在载入...</span>
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+			}
+ 	  });
+   }
+   	//获取评论内容_最新
+	function getReplyCon(topicID,feedID,userID,refMsgID,selfID,totalNum,userName,pageNo){
+		document.getElementById("getNearyLink_"+topicID).style.color = "#666666";
+		document.getElementById("getNearyLink_"+topicID).style.fontWeight = "bold";
+		document.getElementById("getFarLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getFarLink_"+topicID).style.fontWeight = "normal";
+		document.getElementById("getLightLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getLightLink_"+topicID).style.fontWeight = "normal";
+		var url = shuoDomainPath+"getReplyIDList?userID="+userID+"&feedID="+feedID+"&refMsgID="+topicID+"&pageNo="+pageNo+"&jsoncallback=?";
+		
+		$.ajax({
+			url:url,
+			dataType:'text',
+			success:function(data){
+				var data2 = JSON.parse(data);
+		 		var p = data2.dto;
+				var recordJSON = p.record;
+				var str = '';
+				feedID = p.feedID;
+				var successFlag = p.size;
+				var pageNo = p.pageNo;
+				var replyAllow = p.replyAllow;
+				totalNum = p.totalReplyNum;
+				var states = '';
+				if(replyAllow == "noFans" ){
+					states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>对方设置了只有粉丝才能评论</div>';
+				}else if( replyAllow == "black"){
+					states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>您在对方的黑名单中，不能评论</div>';
+				}
+				
+				document.getElementById("allowDiv_"+topicID).innerHTML = states;
+				var perPageNum = p.perPageNum;
+				var pageNum = 1;
+				if(totalNum % perPageNum > 0){
+					pageNum = totalNum/perPageNum +1;
+				}else{
+					pageNum = totalNum/perPageNum ;
+				}
+				pageNum = parseInt(pageNum);
+				if(successFlag=='error'){
+					document.getElementById("content_more_reply_"+topicID).style.display="none";
+					document.getElementById("status_div_reply_"+topicID).innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+					return;
+				}else if(successFlag == '0'){
+					document.getElementById("content_more_reply_"+topicID).style.display="none";
+					var	acName = "javascript:getReplyCon("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+					document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+					return;
+				}else{
+					str += Json_Reply_HTML(recordJSON,selfID,userID,topicID,userName);
+					document.getElementById("putReply_"+topicID).innerHTML=str;
+					var pageStr="";
+					if(successFlag < perPageNum){
+					}else{
+						feedID = recordJSON[recordJSON.length-1].mainCon.feedID;
+					}  
+					document.getElementById("putReply_"+topicID).style.display="block";
+					document.getElementById("content_more_reply_"+topicID).style.display="none";
+					document.getElementById("status_div_reply_"+topicID).innerHTML = pageStr;
+					var	acName = "javascript:getReplyCon("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+					document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+				}
+			}
+		})
+	
+	}
+	//获取评论内容_最早
+	function getReplyCon_eary(topicID,feedID,userID,refMsgID,selfID,totalNum,userName,pageNo){
+		document.getElementById("getFarLink_"+topicID).style.color = "#666666";
+		document.getElementById("getFarLink_"+topicID).style.fontWeight = "bold";
+		document.getElementById("getNearyLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getNearyLink_"+topicID).style.fontWeight = "normal";
+		document.getElementById("getLightLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getLightLink_"+topicID).style.fontWeight = "normal";
+		var url = "getReplyIDListEary?userID="+userID+"&feedID="+feedID+"&refMsgID="+topicID+"&pageNo="+pageNo;
+		XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var recordJSON = p.record;
+			var str = '';
+			feedID = p.feedID;
+			var successFlag = p.size;
+			var pageNo = p.pageNo;
+			var replyAllow = p.replyAllow;
+			totalNum = p.totalReplyNum;
+			var states = '';
+			if(replyAllow == "noFans" ){
+				states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>对方设置了只有粉丝才能评论</div>';
+			}else if( replyAllow == "black"){
+				states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>您在对方的黑名单中，不能评论</div>';
+			}
+			document.getElementById("allowDiv_"+topicID).innerHTML = states;
+			var perPageNum = p.perPageNum;
+			var pageNum = 1;
+			if(totalNum % perPageNum > 0){
+				pageNum = totalNum/perPageNum +1;
+			}else{
+				pageNum = totalNum/perPageNum ;
+			}
+			if(successFlag=='error'){
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+//				document.getElementById("status_div_reply_"+topicID).innerHTML = '<span style="font-size:12px;color:#f48c12;font-weight:bold;margin-top:5px;">这还没有评论，来抢个沙发吧？</span>';
+				var	acName = "javascript:getReplyCon_eary("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+				document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+				return;
+			}else{
+				str += Json_Reply_HTML(recordJSON,selfID,userID,topicID,userName);
+//				if(feedID == 0){
+					document.getElementById("putReply_"+topicID).innerHTML=str;
+//				}else{
+//					document.getElementById("putReply_"+topicID).innerHTML+=str;
+//				}
+				var pageStr="";
+				if(successFlag < perPageNum){
+//					pageStr +='<span style="font-size:12px;color:#4793F1;margin-top:5px;">没有更多评论了</span>';
+				}else{
+					feedID = recordJSON[recordJSON.length-1].mainCon.feedID;
+				} 
+				document.getElementById("putReply_"+topicID).style.display="block";
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = pageStr;
+				var	acName = "javascript:getReplyCon_eary("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+				document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+			}
+		});	
+	}
+	//获取评论内容_点赞
+	function getReplyConLight(topicID,feedID,userID,refMsgID,selfID,totalNum,userName,pageNo){
+		document.getElementById("getNearyLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getNearyLink_"+topicID).style.fontWeight = "normal";
+		document.getElementById("getFarLink_"+topicID).style.color = "#4793F1";
+		document.getElementById("getFarLink_"+topicID).style.fontWeight = "normal";
+		document.getElementById("getLightLink_"+topicID).style.color = "#666666";
+		document.getElementById("getLightLink_"+topicID).style.fontWeight = "bold";
+		var url = "getReplyIDListLight?userID="+userID+"&feedID="+feedID+"&refMsgID="+topicID+"&pageNo="+pageNo;
+		XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var recordJSON = p.record;
+			var str = '';
+			feedID = p.feedID;
+			var successFlag = p.size;
+			var pageNo = p.pageNo;
+			var replyAllow = p.replyAllow;
+			totalNum = p.totalReplyNum;
+			var states = '';
+			if(replyAllow == "noFans" ){
+				states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>对方设置了只有粉丝才能评论</div>';
+			}else if( replyAllow == "black"){
+				states +='<div class="replyAllowed"><img src="https://css.tgb.cn/images/weibo/tixin.gif"/>您在对方的黑名单中，不能评论</div>';
+			}
+			document.getElementById("allowDiv_"+topicID).innerHTML = states;
+			var perPageNum = p.perPageNum;
+			var pageNum = 1;
+			if(totalNum % perPageNum > 0){
+				pageNum = totalNum/perPageNum +1;
+			}else{
+				pageNum = totalNum/perPageNum ;
+			}
+			pageNum = parseInt(pageNum);
+			if(successFlag=='error'){
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				var	acName = "javascript:getReplyConLight("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+				document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+				return;
+			}else{
+				str += Json_Reply_HTML(recordJSON,selfID,userID,topicID,userName);
+				document.getElementById("putReply_"+topicID).innerHTML=str;
+				var pageStr="";
+				if(successFlag < perPageNum){
+				}else{
+					feedID = recordJSON[recordJSON.length-1].mainCon.feedID;
+				}  
+				document.getElementById("putReply_"+topicID).style.display="block";
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = pageStr;
+				var	acName = "javascript:getReplyConLight("+topicID+","+feedID+","+userID+","+refMsgID+","+selfID+","+totalNum+",\'"+userName+"\',";
+				document.getElementById("putReplyNum_"+topicID).innerHTML = pagerHtmlForReply(acName,pageNo,pageNum);
+			}
+		});	
+	}
+	//获取转发内容
+	function getTranferCon(topicID,feedID,userID,refMsgID,selfID,userName,pageNo){
+		var url = "getTranferIDList?userID="+userID+"&feedID="+feedID+"&refMsgID="+refMsgID+"&pageNo="+pageNo;
+ 	  	XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var recordJSON = p.record;
+			var str = '';
+			feedID = p.feedID;
+			var successFlag = p.size;
+			var pageNo = p.pageNo;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+//				document.getElementById("divContent").innerHTML ="";
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+//				document.getElementById("divContent").innerHTML = "";
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+//				document.getElementById("status_div").innerHTML = '<span style="font-size:12px;color:#f48c12;font-weight:bold;margin-top:5px;">暂无转发内容</span>';
+				document.getElementById("status_div_reply_"+topicID).innerHTML = '';
+				return;
+			}else{
+				str += Json_Reply_HTML(recordJSON,selfID,userID,topicID,userName);
+				if(feedID == 0){
+					document.getElementById("putReply_"+topicID).innerHTML=str;
+				}else{
+					document.getElementById("putReply_"+topicID).innerHTML+=str;
+				}
+				var pageStr="";
+				if(successFlag < perPageNum){
+					pageStr +='<span style="font-size:12px;color:#4793F1;margin-top:5px;">没有更多转发内容了</span>';
+				}else{
+					feedID = recordJSON[recordJSON.length-1].mainCon.feedID;
+					pageStr += '<a style="font-size:12px;font-weight:bold;color:#4793F1;" href="javascript:getTranferCon('+topicID+','+feedID+','+userID+','+refMsgID+','+selfID+',\''+userName+'\','+(Number(pageNo)+1)+');" >点击查看更多转发观点...</a>';
+				}  
+				document.getElementById("putReply_"+topicID).style.display="block";
+				document.getElementById("content_more_reply_"+topicID).style.display="none";
+				document.getElementById("status_div_reply_"+topicID).innerHTML = pageStr;
+			}
+		});	
+	}
+   //载入评论内容
+   function Json_Reply_HTML(recordJSON,selfID,hostUserID,topicID,hostUserName){
+
+	   var str ="";
+	   for(var i = 0 ;i<recordJSON.length; i++){
+	   	    var mainCon = recordJSON[i].mainCon;
+//	   	    var refCon = recordJSON[i].refCon;
+	   	    if(mainCon.deleteflag == "Y"){
+	   	    }else{
+	  	        var secondID = recordJSON[i].secondID;
+	  	        if(secondID == null ){
+	  	        	secondID = 0;
+	  	        }
+		   	    str += '<div class="replyDiv" id="replyDiv_'+mainCon.feedID+'">';
+		   	    str += '<div class="replyDivPhoto" >';
+		   	    str += '<img class="replyPhoto" alt="'+mainCon.userName+'" src="https://image.tgb.cn/img/';
+			   	if(mainCon.portrait == null){
+				   str += 'user_icon_60.png';
+			   	}else{
+				   str += mainCon.portrait;
+			   	}
+		   	    str += '_60wh.png" /></div>';
+		   	    str += '<div class="replyDivCont" >';
+		   	    str += '<div><a href="/weiboSelf?selfID='+mainCon.userID+'" onmouseover="userTips(this,'+mainCon.userID+');" onmouseout="offTip()" target="_blank" class="replyUName" >'+mainCon.userName+'</a>：</div>';
+	//	   	    var mcont = ubbArt(mainCon.content);
+	//	   	    mcont = ubbAll(mcont);
+		   	    var mianCon = ubbAll(mainCon.content);
+			   	var ubbedCon = ubbArt(mianCon);
+		   	    str += ubbShowImg(ubbedCon);
+	//	   	    str += ubbAll(mainCon.content);
+		   	    
+		   	    str += '</div>';
+		   	    str += '<div class="informbutton">';
+		   	    str += '<span style="float:left;color:#CCCCCC;margin:5px 5px 5px 0;">';
+				var unixTimestamp = new Date(mainCon.timeLine);
+				var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+		   	    str += commonTime;
+		   	    str += '</span>';
+		   	    if(mainCon.userID!=selfID){
+		   	    	var wr = "'" + "WR" + "'";
+		   	   	   str += '<a href="javascript:setReport(1,'+mainCon.refMsgID+','+mainCon.feedID+','+wr+','+mainCon.userID+',0);" href="javascript:void(0);" style="margin:5px;float:left;" >举报</a>';
+		   	    }
+		   	     str += '<a href="javascript:#;" style="margin:5px;float:right;" onclick="addReplyToUser('+topicID+',\''+mainCon.userName+'\','+mainCon.userID+','+mainCon.feedID+','+secondID+','+hostUserID+',\''+hostUserName+'\',\'reply\');return false;">回复</a>';
+		   	    if(secondID != null && secondID != 0 ){
+		   	    	str += '<a href="javascript:void(0);" style="margin:5px;float:right;" onclick="lookChat('+topicID+','+mainCon.feedID+','+secondID+','+hostUserID+',\''+hostUserName+'\',1)">查看对话</a>';
+		   	    }
+		   	    if( (selfID !=0 && selfID == hostUserID) ||mainCon.userID == selfID ){
+		   	    	if(selfID == mainCon.userID){
+						str += '<a href="javascript:void(0);" style="margin:5px;float:right;" onclick="delReply('+mainCon.feedID+','+topicID+','+hostUserID+','+selfID+')">删除</a>';   	    		
+		   	    	}else{
+			   	    	str += '<a href="javascript:void(0);" style="margin:5px;float:right;" onclick="delReply('+mainCon.feedID+','+topicID+','+hostUserID+')">删除</a>';	
+		   	    	}
+		   	    }
+		   	 
+		   	    str += '<a onclick="setShuoPc(\'F\','+mainCon.feedID+',\''+mainCon.userName+'\')" href="javascript:void(0);" style="margin:5px;float:right;" >打赏</a>';
+		   	   // str += '<a onclick="getPoint1('+mainCon.feedID+')" style="margin:5px;float:right;"><span >查看排行榜</span></a>';
+		   	    if(mainCon.totalPcPoint!=0){						//有被打赏的需要有这个按钮
+		   	    	str += '<a onclick="getReplyMorePc('+mainCon.feedID+')" style="margin:5px;float:right;""><span >查看更多打赏</span></a>';
+		   	    }
+		   	    str += '<a onclick="AddWeiboLight('+mainCon.feedID+')" href="javascript:void(0);" style="margin:5px;float:right;" >赞('+mainCon.usefulNum+')</a>';
+		   	    var delToolUrl="";  //工具箱
+			    delToolUrl = delTool(mainCon.feedID,topicID,hostUserID);
+			    if(delToolUrl != null && delToolUrl !=""){
+				   str += delToolUrl;
+			    }
+		   	    str +='<div class="clear" ></div>';
+		   	    str += '</div >';
+		   	    if(mainCon.totalPcPoint!=0){
+		   	    	str+='<div id="pc_reply_list_'+mainCon.feedID+'" class="pc_reply_lists"></div>';
+		   	    }
+		   	    str += '<div id="txtDiv_'+mainCon.feedID+'" class="replyEditorClass" style="display:none">';
+		   	    str += '</div >';
+		   	    str += '<div class="clear"></div>';
+		   	    str += '</div>';
+		   	}    
+	   }
+	 
+	   return str;
+   }
+   //评论下面的回复
+  var content_last_editor_value;
+  var content_js_reply_editor;
+  var r2rCon;
+  function addReplyToUser(topicID,userName,userID,feedID,secondID,hostUserID,hostUserName,replyType){
+	   if(replyType == 'chat'){ //查看对话的回复框
+		    var txtDiv = document.getElementById("txtDiv_chat_" + feedID);
+	   }else{
+	   		var txtDiv = document.getElementById("txtDiv_" + feedID);
+	   }
+		   //提交回复的方法
+	   addReplyToUser.subReply = function(TopID,refMsgUserID, refMsgUserName,refMsgID,secondID,hostUserID,hostUserName) {
+				var getText = content_js_reply_editor.getPlainTxt();
+				//将文本的首尾空格去掉
+				getText = getText.replace(/(^\s*)|(\s*$)/g, "");
+				//将表情转化为Ubb
+				getText = getText.replace(/<img[^>]*?data_ue_src="http:\/\/css\.taoguba\.com\.cn\/images\/qq\/(.*?)">/ig,function($1,$2){return '[F]/qq/'+$2+'[\/F]'});
+				//影子笔名ID
+				var getShadeID = $('.replyEditorClass:visible .shadowSelect:first').val();
+				//影子笔名名称
+				var getShadeName = $('.replyEditorClass:visible .shadowSelect:first').find("option:selected").text();
+				if (cnLength(getText) == 0 ) { 
+					showAlert("兄，您还没填写内容！");
+					return;
+				} else if (cnLength(getText) > 10000) {
+					showAlert("兄，您提交的内容过长了，请精简内容！恢复仅支持5000个字");
+					return;
+				}
+				getText = "[回复]" + refMsgUserName + " :"+getText;
+				if(r2rCon){
+					if(r2rCon == getText){
+						showAlert("兄，请不要发表相同的内容哦");
+						return;
+					}
+				}	
+				var body = encodeURIComponent(getText);
+				var refMsgUserName = encodeURIComponent(refMsgUserName);
+				var url = 'subDiscuss';
+//				var param = url + '?feedID=' + TopID + '&body=' + body 
+//						+ '&refMsgUserID=' + hostUserID + '&refMsgUserName='
+//						+ hostUserName + '&refMsgID=' + refMsgID+ '&secondID='+secondID+ '&replyType=RR'
+//						+'&hostUserID=' +hostUserID;
+				
+//				if(getShadeName != null && getShadeName != "" && getShadeID != null && getShadeID != ""){
+//					param += "&shadeName="+encodeURIComponent(getShadeName)+"&shadeID="+getShadeID;
+//				}
+
+				var param={
+						feedID:TopID,
+						body:body,
+						refMsgUserID:hostUserID,
+						refMsgUserName:hostUserName,
+						refMsgID:refMsgID,
+						secondID: secondID,
+						replyType:'RR',
+						hostUserID:hostUserID,
+						shadeName: getShadeName,
+						shadeID:getShadeID,
+						machineType: 'pc'
+				}
+				
+				$.ajax({
+					type:"post",
+					url:url,
+					data:param,
+					success:function(data){
+						var p = data.dto;
+						var size = p.size;
+						var getFeedID = p.feedID;
+						var totalReplyNum = p.totalReplyNum;
+						if (size == 1) {
+							if(replyType == 'chat'){ //查看对话的回复框
+							    var txtDiv = document.getElementById("txtDiv_chat_" + refMsgID);
+						    }else{
+						   		var txtDiv = document.getElementById("txtDiv_" + refMsgID);
+						    }
+//							var txtDiv = document.getElementById("txtDiv_" + refMsgID);
+							$(txtDiv).hide();
+							content_js_reply_editor.ready(function(){
+								content_js_reply_editor.setContent("");
+							});
+							var userName = p.userName;
+							var str = "";
+					   	    str += '<div id="replyDiv_'+getFeedID+'">';
+					   	    str += '<div class="replyDivPhoto" >';
+					   	    str += '<img class="replyPhoto" alt="'+userName+'" src="https://image.tgb.cn/img/';
+						   	var portrait = p.portrait;
+					   	    if(portrait == null || portrait == "" || portrait == "null"){
+							   str += 'user_icon_60.png';
+						   	}else{
+							   str += portrait;
+						   	}
+					   	    str += '_60wh.png" /></div>';
+					   	    str += '<div class="replyDivCont" >';
+					   	    str += '<div><a href="/weiboSelf?selfID='+p.userID+'" class="replyUName" >'+userName+'</a>：</div>';
+//					   	    str += ubbAll(getText);
+					   	    var mianCon = ubbAll(getText);
+			   				var ubbedCon = ubbArt(mianCon);
+		   	    			str += ubbShowImg(ubbedCon);
+					   	    str += '</div>';
+					   	    str += '<div class="clear"></div>';
+					   	    str += '</div>';
+							$("#putReply_"+TopID).prepend(str);
+							showAlert("回复成功");
+							//在页面保存
+							if(!isIE6){
+								store.set('r2rCon', getText);
+							}
+						    document.getElementById("replyNum_btn_"+TopID).innerHTML="评论("+totalReplyNum+")";
+						} else if(size == -2){
+							showAlert("评论失败，您在对方的黑名单中");
+						} else if(size == -3){
+							noAllowPop(TopID,hostUserID, hostUserName);
+						} else if(size == -4){
+							showAlert("该说说已经被删除了，无法评论");
+						}  else if(size == "locked"){//用户被封
+							showAlert(p.lockMsg);  
+						} else {
+							showAlert("评论失败");
+						}
+					}
+				})
+			}
+	   if($('.replyEditorClass:visible').length==0){			//第一次点击评论
+	 		loadData();				//展现评论框
+	 		return;
+	 	}else{
+	 		if($(txtDiv).is(":visible")){			//再次点击同一个编辑框则关闭
+	 			$(txtDiv).hide();
+	 			return;
+	 		}	
+	 		content_js_reply_editor.ready(function(){
+	 			content_last_editor_value = content_js_reply_editor.getContentTxt();			//获取当前所打开编辑框的内容值
+	 		});
+	 		if(content_last_editor_value!=' '&&content_last_editor_value!=''){	//如果当前编辑框中的内容不等于空就要进行confirm提醒
+	 			confirm("确定要取消当前编辑框的内容吗？",function(result){
+	 				if(result){
+	 					$('.replyEditorClass:visible').hide();			//隐藏当前展示的编辑框
+	 						content_js_reply_editor=null;
+				 			loadData();
+				 		return;
+	 				}else{
+	 					return;
+	 				}
+	 			});
+	 		}else{
+	 			$('.replyEditorClass:visible').hide();			//隐藏当前展示的编辑框
+				 		content_js_reply_editor=null;
+				 		loadData();
+		 		return;
+	 		}
+	 	}
+ 		function loadData(){
+		   var str ='<div class="clear"></div><div class="replayToReply">';
+		   str +='<div id="txtArea_'+feedID+'"></div>';
+		   str +='<a class="disSubBtn" onclick="addReplyToUser.subReply('+ topicID+','+ userID+ ',\''+ userName+ '\','+ feedID +','+secondID+','+hostUserID+',\''+hostUserName+'\',\'reply\');" href="javascript:void(0);" >'+ 
+				  '回复</a></div>';
+		   str +=shadeName();
+		   txtDiv.innerHTML = str;
+		   content_js_reply_editor = new UE.ui.Editor({
+				toolbars:[["emotion","stock"]],
+				autoClearinitialContent:true,
+				initialFrameWidth:"100%",
+				minFrameHeight:50
+			});
+		   content_js_reply_editor.render('txtArea_'+feedID);
+		   $(txtDiv).show();
+   		}
+	 }
+    function lookChat(hostFeedID,currentFeedID,secondID,hostUserID,hostUserName,pageNo){
+    	var url = "lookChat?currentFeedID=" + currentFeedID+
+    			  "&hostFeedID="+hostFeedID+
+    			  "&secondID="+secondID+
+    			  "&hostUserID="+hostUserID+
+    			  "&pageNo="+pageNo;
+    	var str = "";
+		XMLHttp.sendReq("get", url, "", function(data) {
+			var p = data.dto;
+			var feedList = p.record;
+			var getPageNo = p.pageNo;
+			var successFlag = p.size;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+				document.getElementById("chat_content_more").style.display="none";
+				document.getElementById("chat_status_div").innerHTML = '<span style="font-size:14px;height: 16px;line-height: 16px;color:#4793F1;margin-top:5px;">获取数据异常，请联系股天乐。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("chat_content_more").style.display="none";
+				document.getElementById("chat_status_div").innerHTML = '<span style="font-size:14px;height: 16px;line-height: 16px;color:#4793F1;margin-top:5px;">暂无对话内容</span>';
+				return;
+			}else{
+				for(var i = 0 ;i<feedList.length; i++){
+					var mainCon = feedList[i].mainCon;
+			   	    
+			   	    str += '<div class="replyDiv" id="replyDiv_'+mainCon.feedID+'" style="width:500px;">';
+			   	    str += '<div class="replyDivPhoto" >';
+			   	    str += '<img class="replyPhoto" alt="'+mainCon.userName+'" src="https://image.tgb.cn/img/';
+				   	if(mainCon.portrait == null){
+					   str += 'user_icon_60.png';
+				   	}else{
+					   str += mainCon.portrait;
+				   	}
+			   	    str += '_60wh.png" /></div>';
+			   	    str += '<div class="replyDivCont" style="width:410px;" >';
+			   	    str += '<div><a href="/weiboSelf?selfID='+mainCon.userID+'" class="replyUName" >'+mainCon.userName+'</a>：</div>';
+			   	    var subedCont = mainCon.content;
+			  	 	subedCont = ubbAll(subedCont);
+			   		subedCont = ubbStock(subedCont);
+			   		str += subedCont;
+//			   	    str += ubbAll(mainCon.content);
+			   	    str += '</div>';
+			   	    str += '<div class="informbutton" style="width:440px;">';
+			   	    str += '<span style="float:left;color:#CCCCCC;margin:5px 5px 5px 0;">';
+					var unixTimestamp = new Date(mainCon.timeLine);
+					var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+			   	    str += commonTime;
+			   	    str += '</span>';
+			   	    
+			   	    str += '<a href="javascript:#;" style="margin:5px;float:right;" onclick="addReplyToUser('+hostFeedID+',\''+mainCon.userName+'\','+mainCon.userID+','+mainCon.feedID+','+secondID+','+hostUserID+',\''+hostUserName+'\',\'chat\');return false;">回复</a>';
+			   	    str += '<a onclick="AddWeiboLight('+mainCon.feedID+')" href="javascript:void(0);" style="margin:5px;float:right;" >赞('+mainCon.usefulNum+')</a>';
+			   	    str +='<div class="clear" ></div>';
+			   	    str += '</div >';
+			   	    str += '<div id="txtDiv_chat_'+mainCon.feedID+'" class="replyEditorClass lookChatDiv" style="display:none">';
+			   	    
+			   	    str +='<div class="clear" ></div>';
+			   	    str += '</div >';
+			   	    str += '<div class="clear"></div>';
+			   	    str += '</div>';
+				}
+				var divID = 1;
+				var divObj = "showAlert"
+				var _width=520;
+				var _height=400;
+				popup_commentDiv(divID,divObj,0,0,_width,_height,'bmpop');
+				$("#"+divID+divObj).html(str);
+//				document.getElementById(divID+divObj).innerHTML += str;
+				
+				var pageStr ="";
+				if(successFlag == perPageNum){
+					//pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多评论了</span>';
+					pageStr += '<a style="font-size:14px;height: 16px;line-height: 16px;color:#4793F1;" href="javascript:lookChat('+hostFeedID+','+currentFeedID+','+secondID+','+hostUserID+',\''+hostUserName+'\','+(Number(getPageNo)+1)+');" >>>查看更多的对话</a>';
+				}
+				document.getElementById("chat_content_more").style.display="none";
+				document.getElementById("chat_status_div").innerHTML = pageStr;
+			}
+			
+		});
+    }
+    //删除评论
+	function delReply(feedID,topicID,focusID,selfID) {
+		createPop(feedID,topicID,focusID,selfID);
+	} 
+	function checkDelReply(feedID,topicID,focusID){
+		var checkObj = document.getElementById("lahei")
+		if(checkObj && checkObj.checked){
+			var url = "delReply?feedID=" + feedID+"&topicID="+topicID+"&flag=Y&focusID="+focusID;
+		}else{
+			var url = "delReply?feedID=" + feedID+"&topicID="+topicID+"&flag=N&focusID="+focusID;
+		}
+		closePop();
+		XMLHttp.sendReq("get", url, "", function(data) {
+			var p = data.dto;
+			if (p == 1) {
+				var getFeed = document.getElementById("replyDiv_" + feedID);
+				getFeed.parentNode.removeChild(getFeed);
+			} else if (p == 0) {
+				showAlert("删除失败");
+			} else if (p == -1) {
+				showAlert("尚未登录");
+			} else {
+				showAlert("异常操作");
+			}
+		});
+	}
+	function createPop(feedID,topicID,focusID,selfID){
+				myAlert = document.createElement("div");
+				myAlert.setAttribute("id","popup");
+				myAlert.style.display = "block";
+				myAlert.style.position = "absolute";
+				myAlert.style.zIndex = "1000";
+				myAlert.style.height = "137px";
+				myAlert.style.width = "350px";
+				myAlert.style.backgroundColor = "#FAFAFA";
+				myAlert.style.border = "2px solid #A0A0A0";
+				var str = '<ul style="background-color: #ACACAC;width: 350px;height: 25px;line-height: 25px;"><li id="li_1_1" style="float:left;font-size: 14px;"><span>&nbsp;&nbsp;提示</span></li><li id="li_1_2" style="float:right;font-weight:blod;"><a style="margin-top:0px;" href="javascript:void(0);" onclick="closePop()">[关闭]&nbsp;&nbsp;</a></li></ul>';
+				str += '<ul style="width: 350px;height: 45px;"><li style="float:left;margin-top: 10px;margin-left: 40px;color: #4A4A4A;"><img src="https://css.tgb.cn/images/weibo/check01.png" height="30px;" width="30px;"></li><li style="float:left;margin-left: 10px;font-size: 14px;height: 40px;line-height: 50px;">确定要删除该回复吗？</li><br/></ul></ul><ul class = "clear"></ul>';
+				if(selfID != focusID){
+					str += '<ul style="width: 280px;height: 35px;line-height: 35px;color: #4A4A4A;"><li ><input type="checkbox" id= "lahei" style="float: left;margin-top: 13px;margin-left: 70px;"></li><li style="float: left;margin-left: 10px;">同时将此用户拉入黑名单</li></ul><ul class = "clear"></ul>'	
+				}			
+				str += '<ul><li style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcancle.png);margin-right: 10px;line-height: 24px;"><a href="javascript:void(0);" onclick="closePop()" style="color: #666666;">取消</a></li><li id = "popcheck" style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcheck.png);margin-right: 10px;line-height: 24px;"><a style="color:#FFF" href="javascript:void(0);" onclick = "checkDelReply('+feedID+','+topicID+','+focusID+')">确定</a></li></ul>';
+				myAlert.innerHTML = str;	
+				myAlert.style.left=(document.body.clientWidth-350)/2+document.documentElement.scrollLeft+'px';
+				if (typeof window.pageYOffset != 'undefined') {
+					scrollTop = window.pageYOffset;
+				} else if (typeof document.compatMode != 'undefined'
+						&& document.compatMode != 'BackCompat') {
+					scrollTop = document.documentElement.scrollTop;
+				} else if (typeof document.body != 'undefined') {
+					scrollTop = document.body.scrollTop;
+				}
+				var winHeight = $(window).height();
+				if($(window).height() == 0){
+					winHeight += document.body.offsetHeight;
+				}
+				myAlert.style.top=(winHeight-137)/2+scrollTop+'px';
+				mybg = document.createElement("div");
+				mybg.setAttribute("id","mybg");
+				mybg.style.background = "#C9C9C2";
+				mybg.style.width = "100%";
+				mybg.style.height = document.body.scrollHeight+"px";
+				mybg.style.position = "absolute";
+				mybg.style.top = "0";
+				mybg.style.left = "0";
+				mybg.style.zIndex = "1000";
+				mybg.style.opacity = "0.3";
+				mybg.style.filter = "Alpha(opacity=30)";
+				document.body.appendChild(mybg);
+				document.body.appendChild(myAlert);
+				//document.body.style.overflow = "scroll";
+	}
+	function closePop(){
+		document.body.removeChild(myAlert);
+		document.body.removeChild(mybg);
+	}
+   //跳转页面
+   function toSingle(userID,feedID){
+	  window.open ('/shuo/toViewShuo?shuoID='+feedID,'','');
+   }
+   
+   
+   //动态数据载入排版
+   function Json_HTML(recordJSON,selfID){
+	   var str ="";
+	   for(var i = 0 ;i<recordJSON.length; i++){
+		   var mainCon = recordJSON[i].mainCon;
+		   var refCon = recordJSON[i].refCon;
+		   if(mainCon.feedID != 0 && mainCon.deleteflag == "N"){
+			   // <!-- 不带转发内容(带图片) -->
+			   str += '<div id="feed_'+mainCon.feedID+'" name="feed_'+mainCon.feedID+'" class="divLine">';
+			   str += '<div style="float: left;width: 80px;" >';
+			   str += '<img class="smallPhoto" alt="'+mainCon.userName+'" src="https://image.tgb.cn/img/';
+			   if(mainCon.portrait == null){
+				   str += 'user_icon_60.png';
+			   }else{
+				   str += mainCon.portrait;
+			   }
+			  
+			   str += '_80wh.png" />';
+			   var followRelation = recordJSON[i].isFollow;
+			   if(followRelation != null && followRelation == "N" && selfID != mainCon.userID ){
+				    str += '<div style="text-align: center;margin-bottom:5px;" id="followBtn_'+mainCon.feedID+'">'; 
+				  	str +='<a class="W_btn_b" style="text-decoration:none;" href="javascript:void(0);" onclick="addIndexFocusSelf('+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+')">';
+					str +='<span>';
+					str +='<em class="addicon">+</em>';
+					str +='关注';
+					str +='</span>';
+					str +='</a>';
+				    str += '</div>'; 
+			   }
+			   str += '</div>';
+			   str += '<div class="contentFont">';
+			   str += '<a href="/weiboSelf?selfID='+mainCon.userID+'" onmouseover="userTips(this,'+mainCon.userID+');" onmouseout="offTip()" target="_blank" class="weiboNick" >';
+			   str += mainCon.userName;
+			   str += '</a>';
+			   str += '<span id="isSpmatchSignCheck" style = '+'position:absolute'+'></span>';
+			   var arrayImg =getImgUrl(mainCon.content);
+			   var imgLength = arrayImg.length;
+			   var arrayStock =getStockUrl(mainCon.content);
+			   var stockLength = arrayStock.length;
+			   //var arrayVideo =isVideo(mainCon.content);   
+			   //var videoLength = arrayVideo.length;
+			   if(mainCon.content.length > 228 || imgLength > 0 || stockLength > 0 ){ //|| videoLength > 0
+				  var mCon = ubbAll(mainCon.content);
+				  if(mainCon.fromType == "V"){
+					  mCon = ubbPart1(mCon);
+					  str += '<div id="showCon_'+mainCon.feedID+'_showImg" class="bodyLineHeight" style="margin: 5px 5px 10px 0;font-size: 14px;color:black;">';
+					  str += '<span class="atfont">视频：</span>'+ubbShowImg(mCon);
+				      str += '</div>';
+				  }else{
+					  str += '<div id="showCon_'+mainCon.feedID+'"  class="contentSubStr" style="margin: 5px 5px 10px 0;font-size: 14px;display:block;color:black;">';
+					  var subedCont = ubbClear(mainCon.content)
+				      subedCont = subedCont.substr(0,200);
+					  //subedCont = ubbAll(subedCont);
+					  subedCont = ubbHiddenImg(subedCont);
+					  str += subedCont;
+				      str += '</div>';
+				      str += '<div id="showCon_'+mainCon.feedID+'_showImg" class="bodyLineHeight" style="margin: 5px 5px 10px 0;font-size: 14px;display:none;color:black;">';
+					  str += ubbShowImg(mCon);
+	//				  if(videoLength > 0){
+	//				  	  str += innerVideo(arrayVideo);
+	//				  }
+				      str += '</div>';
+					  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+'">';  
+					  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">展开<span class="showAllConSpan"></span></a>';  
+					  str += '</div>';  
+					  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+'">';  
+					  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">收起<span class="hidenConSpan"></span></a>';  
+					  str += '<div class="clear" ></div>';
+					  str += '</div>'; 
+				  }
+			   }else{
+				  str += '<div id="showCon_'+mainCon.feedID+'"  style="margin: 5px 5px 30px 0;font-size: 14px;color:black;">';
+				  var mCon = ubbAll(mainCon.content);
+				  if(mainCon.zhihuSeq != 0){
+					  str += '	直呼 <span class="bluelan zhihuname_'+mainCon.zhihuSeq+'"></span> 问题 ：'
+				  }
+				  str += mCon;
+				  if(mainCon.zhihuSeq != 0){
+					  str += '<div class="zhihu_tablelazy zhihu_'+mainCon.zhihuSeq+'" id="zhihu_'+mainCon.zhihuSeq+'"></div>'
+				  }
+				  
+			      str += '<div class="clear" ></div>';
+			      str += '</div>';
+			   }
+			   if(imgLength > 0){
+				   // <!-- 原文图片(缩略) -->
+				   str += '<div style="margin: 5px 5px 5px 0;"  id="content_small_'+mainCon.feedID+'">';
+				  var newimgPath = arrayImg[0];//.replace("img.tgb.cn","image.tgb.cn");
+				   str += '<img alt="" src="'+arrayImg[0]+'" style="max-width: 120px;" onclick="showBigImg(\'content_small_'+mainCon.feedID+'\',\'content_big_'+mainCon.feedID+'\',\''+newimgPath+'\')" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;" class="showSmallImg"/>';
+				   str += '</div>';
+				   //<!-- 原文图片(大图) -->
+			       str += '<div style="margin: 5px 5px 5px 0;" id="content_big_'+mainCon.feedID+'"></div>';
+			   }
+	
+			   //转发内容
+			   if(refCon != 0){
+				   str += '<div class="forwardDiv">';
+				   str += '<div class="WB_arrow">';
+				   str += '<em class="S_line1_c">◆</em>';
+				   str += '<span class="S_bg1_c">◆</span>';
+				   str += '</div>';
+				   str += '<div style="width: 500px">';
+				   var refDeleteFlag = refCon.deleteflag;
+				   if(refDeleteFlag == "Y" || refDeleteFlag == null){
+					   str +='该内容已被删除';
+				   }else{
+					   str += '<a href="/weiboSelf?selfID='+refCon.userID+'" onmouseover="userTips(this,'+refCon.userID+');" onmouseout="offTip()"  target="blank" class="weiboNick" >'+refCon.userName+'</a>';
+					  
+					   var arrayImgRef =getImgUrl(refCon.content);
+				   	   var imgLengthRef = arrayImgRef.length;
+				   	   var arrayStockRef =getStockUrl(refCon.content);
+			   		   var stockLengthRef = arrayStockRef.length;
+//			   		   var arrayVideoRef =isVideo(refCon.content);   
+//			   		   var videoLengthRef = arrayVideoRef.length;
+					   if(String(refCon.content || '').length > 228 || imgLengthRef > 0 || stockLengthRef > 0 ){ //|| videoLengthRef > 0
+						  var rCon = ubbAll(refCon.content);
+						  if(refCon.fromType == "V"){
+							  rCon = ubbPart1(rCon);
+							  str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'_showImg" class="bodyLineHeight" style="color:black;"  >';
+					  		  str += '<span class="atfont">视频：</span>'+ ubbShowImg(rCon);
+						      str += '</div>';
+						  }else{
+							  str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'"  class="contentSubStr" style="display:block;color:black;" >';
+							  var subedRefCont =ubbClear(refCon.content)
+				   			  subedRefCont = subedRefCont.substr(0,200);
+							 // subedRefCont = ubbAll(subedRefCont);
+							  subedRefCont = ubbHiddenImg(subedRefCont);
+							  str += subedRefCont;
+					  		  str += '</div>';
+						      str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'_showImg" class="bodyLineHeight" style="display:none;color:black;"  >';
+					  		  str += ubbShowImg(rCon);
+	//				  		  if(videoLengthRef > 0){
+	//						  	  str += innerVideo(arrayVideoRef);
+	//						  }
+						      str += '</div>';
+							  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+							  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">展开<span class="showAllConSpan"></span></a>';  
+							  str += '</div>';  
+							  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+							  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">收起<span class="hidenConSpan"></span></a>';  
+							  str += '<div class="clear" ></div>';
+							  str += '</div>';  
+						  }
+					   }else{
+						   str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'" style="color:black;" >';
+					       str += ubbAll(refCon.content);
+					       str += '<div class="clear" ></div>';
+					       str += '</div>';
+					   }
+				   
+					    str += '</div>';
+				   		if(imgLengthRef > 0){
+						   //转发的图片(缩略)
+						   str += '<div style="margin: 5px 5px 5px 0;"  id="forward_small_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '<img alt="" src="'+arrayImgRef[0]+'" onclick="showBigImg(\'forward_small_'+mainCon.feedID+"_"+refCon.feedID+'\',\'forward_big_'+mainCon.feedID+"_"+refCon.feedID+'\',\''+arrayImgRef+'\')" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;" class="showSmallImg"/>';
+						   str += '</div>';
+						   //转发的图片(大图)
+						   str += '<div style="margin: 5px 5px 5px 0;" id="forward_big_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '</div>';
+					    }
+					   //转发内容操作
+					   str += '<div class="clear"></div>';
+					   str += '<div class="forwardTool">';
+					   str += '<div style="float: left;">';
+					   var unixTimestamp = new Date(refCon.timeLine);
+				       var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+					   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+refCon.userID+','+refCon.feedID+');" >' + commonTime + '</span>';
+					   str += '</div>';
+					   str += '<div style="float: right;">';
+					   str += '<a href="#" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+			  	 															 '});return false;\' >转发('+refCon.transferCount+')</a>';
+					   str += '<span class="seperate2">|</span>';
+					   str += '<a href="/shuo/toViewShuo?shuoID='+refCon.feedID+'" target="_blank" >评论('+refCon.commentCount+')</a>';
+					   str += '</div>';
+				  }
+				  str += '</div>';
+				  str += '</div>';
+				  
+			   }
+	//		   <!-- 主说说内容操作 -->
+			   str += '<div class="conTool">';
+			   str += '<div style="float: left;">';
+			   var unixTimestamp = new Date(mainCon.timeLine);
+			   var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+			   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+mainCon.userID+','+mainCon.feedID+');"  >' + commonTime + '</span>';
+			   str += '<a href="javascript:void(0);" id="a_useful_'+mainCon.feedID+'" onclick="AddWeiboUseful('+mainCon.feedID+')">赞('+mainCon.usefulNum+')</a>';
+			   str += '<span class="seperate2">|</span>';
+			 //  str += '<a href="javascript:void(0);" id="goldUseful_'+mainCon.feedID+'" onclick="AddGoldUseful('+mainCon.feedID+','+mainCon.bestNum+',\'W\',\'R\')" >油('+mainCon.bestNum+')</a>';
+			   var wr = "'" + "WR" + "'";
+			   var wrT = "'" + "W" + "'";
+			   if(refCon!=0){
+				   str += '<a href="javascript:setReport(1,'+mainCon.refMsgID+','+mainCon.feedID+','+wr+','+mainCon.userID+',0);" >举报</a>';
+			   }else{
+				   str += '<a href="javascript:setReport(1,'+mainCon.feedID+',0,'+wrT+','+mainCon.userID+',0);" >举报</a>';
+			   }
+			   var toolUrl="";  //工具箱
+			   toolUrl = tool(mainCon.feedID);
+			   if(toolUrl != null && toolUrl !=""){
+				   str += '<span class="seperate2">|</span>';
+				   str += toolUrl;
+			   }
+			   str += '<span class="seperate2">|</span>';
+			 //  str += '<a onclick="getPoint('+mainCon.feedID+')"><span >查看排行榜</span></a>';
+			  // str += '<span class="seperate2">|</span>';
+			 //  str += '<a onclick="getMore(\'S\','+mainCon.feedID+')" ><span >更多打赏</span></a>';
+			//   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" onclick="setShuoPc(\'S\','+mainCon.feedID+',\''+mainCon.userName+'\')">打赏</a>';
+			   str += '</div><div style="float: right;">';
+			   if(mainCon.userID == selfID){
+				   str +='<a href="javascript:void(0);" onclick="delWeibo('+mainCon.feedID+')">删除</a>';
+				   str +='<span class="seperate2">|</span>';
+			   }
+			   
+			   if(refCon != 0){ //有转发内容的
+			  	   str += '<a href="#" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+			  	 															 '});return false;\' >转发('+mainCon.transferCount+')</a>';
+			   }else{  //转发原文的
+				   str += '<a href="#" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+mainCon.userID+'","refMsgUserName":"'+mainCon.userName+'","refMsgID":"'+mainCon.feedID+'","content":" "}' +
+			  	 															 '});return false;\'>转发('+mainCon.transferCount+')</a>';
+			   }
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" onclick="AddCollect('+mainCon.feedID+',this)" >收藏</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="#" id="replyNum_btn_'+mainCon.feedID+'" onclick="showShuoReply('+mainCon.feedID+',\''+mainCon.userName+'\','+mainCon.userID+','+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+','+mainCon.commentCount+','+selfID+',\''+mainCon.portrait+'\');return false;" >评论('+mainCon.commentCount+')</a>';
+			   str += '</div>';
+			   str += '</div>';
+	//		   <!-- 评论内容及操作 -->
+			   str += '<div class="discussDiv" id="discussDiv_'+mainCon.feedID+'" style="display: none;"></div>';
+			   str += '</div>';
+			   str += '<div class="clear"></div>';
+			   str += '</div>';
+			   
+		   }
+	   }
+	   str += '<div id="pointrank"></div>';
+	   str += '<div class="clear"></div>';
+	   return str;
+   }
+   //进入个人说说页面
+   function getContentBySelfID(userID,feedID,pageNo){ 
+	  var url = "getMyFeedIDList?userID="+userID+"&feedID="+feedID+"&pageNo="+pageNo;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var feedID = p.feedID;
+			var successFlag = p.size;
+			//var pageNo = p.pageNo;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+//				document.getElementById("divContent").innerHTML ="";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+//				document.getElementById("divContent").innerHTML = "";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容,您可以多关注几个好友</span>';
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+//				if(feedID == 0){
+//					document.getElementById("divContent").innerHTML=str;
+//				}else{
+//					document.getElementById("divContent").innerHTML+=str;
+//				}
+				$("#divContent").append(str);
+				var pageStr="";
+				if(successFlag < perPageNum){
+					pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了，您可以多关注几个好友</span>';
+				}else{
+					feedID = feedList[feedList.length-1].mainCon.feedID;
+					pageStr += '<a style="font-size:16px;font-weight:bold;color:#4793F1;" href="javascript:getContentBySelfID('+userID+','+feedID+','+(Number(pageNo)+1)+');" >点击查看更多内容...</a>';
+				}  
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+				
+			}
+ 	  });
+   }
+   function getPoint(feedID){
+	   
+		var iframe = window.frames["iframeProxy"]; 
+		var url ="getfeedIDpoint?feedID="+feedID;
+		XMLHttp.sendReq("get",url,"",getShuoshuo);			
+	}
+   
+   function getShuoshuo(obj){
+		var pcrecord = obj.dto;
+		
+		if(pcrecord.error == "error"){
+			alert("暂时没有人捧过该帖子");
+			return;
+		}			
+		for(i = 0;i<pcrecord.allName.PcRecordVO.length;i++){
+				alert(pcrecord.allName.PcRecordVO[i].pointnum);
+				alert(pcrecord.allName.PcRecordVO[i].sendusername);
+				alert(pcrecord.allName.PcRecordVO[i].pic);
+				alert(pcrecord.allName.PcRecordVO[i].totalpoint);	
+		}
+		var str = "";
+		
+		document.getElementById("pointrank").innerHTML=str;
+	}
+	
+   //获取 最近讨论个股
+   function userTalkStock(selfID,pageNo){ 
+	  if(selfID != null && selfID != ""){
+		 var url = "userTalkStock?selfID="+selfID+"&callback=?";
+		  $.getJSON(url, function(json){
+			var status = json.dto.status;
+			var str ="";
+			if(status != null ){
+				if( status=="error"){
+					str +='<span class="discussStock">请求异常</span>';
+				}else if(status=="0"){
+					str +='<span class="discussStock">暂无讨论个股</span>';
+				}
+			}else{
+				$.each(json.dto,function(idx,item){
+					str +='<a href="wbStock?userID='+selfID+'&stockCode='+item.stockCode+'" target="_blank" title="'+item.stockName+'" class="discussStock">'+item.stockName+'<span >('+item.talkNum+'条讨论)</span></a>';
+				});
+			}
+			str +='<div class="clear"></div>';
+			document.getElementById("discussStock").innerHTML = str;
+	    }); 
+	  }
+	  
+   }
+  //热门转发
+   function getHotRef(){ 
+	  document.getElementById("hotRef_status").style.display="block";
+	  var url = "getHotRefList";
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+ 		var p = data.dto;
+		var feedList = p.record;
+		var successFlag = p.size;
+		if(successFlag=='error'){
+			document.getElementById("hotRefCon").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">获取热门转发数据有误</span>';
+			document.getElementById("hotRef_status").style.display="none";
+			return;
+		}else if(successFlag == '0'){
+			document.getElementById("hotRefCon").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">暂无热门转发内容</span>';
+			document.getElementById("hotRef_status").style.display="none";
+			return;
+		}else{
+			document.getElementById("hotRefCon").innerHTML = Json_HTML_HOT(feedList,"ref");
+			document.getElementById("hotRef_status").style.display="none";
+		}
+ 	  });
+   }
+   //热门收藏
+   function getHotCol(){ 
+	  document.getElementById("hotCol_status").style.display="block";
+	  var url = "getHotColList";
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+ 		var p = data.dto;
+		var feedList = p.record;
+		var successFlag = p.size;
+		if(successFlag=='error'){
+			document.getElementById("hotColCon").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">获取热门收藏数据有误</span>';
+			document.getElementById("hotCol_status").style.display="none";
+			return;
+		}else if(successFlag == '0'){
+			document.getElementById("hotColCon").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">暂无热门收藏内容</span>';
+			document.getElementById("hotCol_status").style.display="none";
+			return;
+		}else{
+			document.getElementById("hotColCon").innerHTML = Json_HTML_HOT(feedList,"col");
+			document.getElementById("hotCol_status").style.display="none";
+		}
+ 	  });
+   }
+   
+    //热门评论(原最热话题)
+   function HotHuati(){ 
+	  document.getElementById("hotHuaTi_status").style.display="block";
+	  var url = "getHotComList";
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+ 		var p = data.dto;
+		var feedList = p.record;
+		var successFlag = p.size;
+		if(successFlag=='error'){
+			document.getElementById("hotHuaTi_content").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">获取热门评论数据有误</span>';
+			document.getElementById("hotHuaTi_status").style.display="none";
+			return;
+		}else if(successFlag == '0'){
+			document.getElementById("hotHuaTi_content").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">暂无热门评论内容</span>';
+			document.getElementById("hotHuaTi_status").style.display="none";
+			return;
+		}else{
+			document.getElementById("hotHuaTi_content").innerHTML = Json_HTML_HOT(feedList,"com");
+			document.getElementById("hotHuaTi_status").style.display="none";
+		}
+ 	  });
+   }
+   
+   //今日推荐
+   function DayRecommend(){ 
+	  document.getElementById("recommend_status").style.display="block";
+	  var url = wwwDomainPath + "/getWonderJson?pageNo=1&callback=?";
+ 	  $.getJSON(url, function(json){
+		var feedList = json.dto.record;
+		var successFlag = json.dto.size;
+		if(successFlag=='0'){
+			document.getElementById("recommend_content").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">获取今日推荐数据失败</span>';
+			document.getElementById("recommend_status").style.display="none";
+			return;
+		}else{
+			var str = '';
+			str += '<ul class="disc">';
+			for(var i =0;i<feedList.length;i++){
+				if(i<5){
+					var body;  
+					if(getBytesLength(feedList[i].subject) > 40){
+						body = feedList[i].subject.substr(0,20)+'...';
+					}else{
+						body = feedList[i].subject;
+					}
+		   			str += '<li style = "margin-left:20px;"><span style="text-align:left;line-height:180%;margin-left:10px;">';
+		   			if(feedList[i].topictype == "T"){
+		   				str += '<a  onclick="rec(this,\'说说\',\'今日推荐\');" style="color:#000;font-size:13px;"  href="'+wwwDomainPath+'Article/'+feedList[i].topicID+'/1" target="_blank">'+body;
+		   			}else{
+		   				str += '<a  onclick="rec(this,\'说说\',\'今日推荐\');" style="color:#000;font-size:13px;"  href = "'+feedList[i].topicurl+'" target="_blank">'+body;
+		   			}
+		   			str += '</a></span></li>';
+		   		}
+			}
+			str += '</ul>';
+			document.getElementById("recommend_content").innerHTML = str;
+			document.getElementById("recommend_status").style.display="none";
+		}
+ 	  });
+	   
+   }
+   var StockTimer;
+   //热门个股
+   function HotStock(){ 
+	  if(StockTimer != null){
+	 	clearInterval(StockTimer);
+	 }
+	 document.getElementById("hotstock_status").style.display="block";
+	 var stockPage = Number(document.getElementById("stockRow").value);
+	 var stockList = "";
+	 var url = wwwDomainPath + "/hotStock?pageNo=1&callback=?";
+	 	  $.getJSON(url, function(json){
+			var feedList = json.dto.record;
+			var successFlag = json.dto.size;
+			if(successFlag=='0'){
+				document.getElementById("hotstock_content").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">暂时没有热门个股数据</span>';
+				document.getElementById("hotstock_status").style.display="none";
+				return;
+			}else if(successFlag=='error'){
+				document.getElementById("hotstock_content").innerHTML = '<span style="font-size:12px;color:#4793F1;margin-top:5px;">获取热门个股数据有误</span>';
+				document.getElementById("hotstock_status").style.display="none";
+				return;
+			}else{
+				var str = '';
+				str += '<table style="margin-left:5px;" class="stockTab" width = "100%" ><tr><td align="left" style="font-size:14px;color:#666666;width:80px;">股票名称</td><td style="font-size:14px;color:#666666;">价格</td><td style="font-size:14px;color:#666666;">涨跌</td><td style="font-size:14px;color:#666666;">热度</td></tr>';
+				var countS = 0;
+				for(var i =0;i<feedList.length;i++){
+					if(i<(5+5*(stockPage))&&i>=5*(stockPage)){
+						var fullCode = fullStockCode(feedList[i].stockCode);
+						stockList += fullCode;
+						if(i!=(5*(stockPage)+4)&&i!=(feedList.length-1)){
+							stockList += ',';
+						}
+			   			str += '<tr style="height:25px;"><td align="left"><a id="sname_'+fullCode+'" style="color: #4793F1;font-size:13px;" href = "'+wwwDomainPath+'quotes/'+feedList[i].stockCode+'/" onclick="rec(this,\'说说\',\'热度个股\');"  target="_blank">'+feedList[i].stockName;
+			   			str += '</a></td><td><span id="sxj_'+fullCode+'" style="font-size:13px;">--</span></td><td><span id="szd_'+fullCode+'" style="font-size:13px;">--</span></td><td align="center"><div style="color:#FFF;background-color:#B5B5B5;width:20px;">'+(i+1)+'</div></td></tr>';
+			   		countS++;
+					}
+				}
+				str += '</table>'
+				if(countS == 0){
+					document.getElementById("stockRow").value = 0;
+					HotStock();
+					return false;
+				}else{
+					document.getElementById("stockRow").value = Number(stockPage+1);
+				}
+				document.getElementById("hotstock_content").innerHTML = str;
+				document.getElementById("hotstock_status").style.display="none";
+				loadJS({ src : 'https://hq.sinajs.cn/list='+stockList, charset : 'gb2312', callback : hotStock_change,listCode: stockList});
+				StockTimer = setInterval(function(){
+					loadJS({ src : 'https://hq.sinajs.cn/list='+stockList, charset : 'gb2312', callback : hotStock_change,listCode: stockList});
+				},10000);  
+				
+			}
+	 	  });
+		
+   }
+   //右边热门内容样式
+   function Json_HTML_HOT(recordJSON,type){
+	   var  ttype={"com":"热门评论","ref":"热门转发"}
+	   
+	   var str ="";
+	   for(var i = 0 ;i<recordJSON.length; i++){
+		   var mainCon = recordJSON[i].mainCon;
+		   if(mainCon.feedID != 0 && mainCon.feedID != null){
+			   str += '<div style="margin-bottom: 10px;" >';
+			   str += '<div style="float: left;width: 80px;" >';
+			   str += '<img class="smallPhoto" alt="'+mainCon.userName+'" src="https://image.tgb.cn/img/';
+			   if(mainCon.portrait == null){
+				   str += 'user_icon_60.png';
+			   }else{
+				   str += mainCon.portrait;
+			   }
+			   str += '_80wh.png" /></div>';
+			   str += '<div class="simpleContent">';
+			   str += '<a onclick="rec(this,\'说说\',\''+ttype[type]+'\');" href="/weiboSelf?selfID='+mainCon.userID+'" onmouseover="userTips(this,'+mainCon.userID+');" onmouseout="offTip()" target="_blank" class="weiboNick" >';
+			   str += mainCon.userName;
+			   str += '</a>';
+			   str += '<span class="text_overflow" style="color: #666666;height:46px;" target="_blank">';
+	//		   str += mainCon.content;
+			   if(mainCon.content != null && mainCon.content != ""){
+				     mainCon.content = videoDisplay(mainCon.content);
+			   }
+			   var subedCont = ubbHiddenImg(mainCon.content);
+			       subedCont =subedCont.substr(0,200);
+				   subedCont = ubbAll(subedCont);
+			   str += subedCont;
+		       str += '</span>';
+		       
+			   str += '<a href="/shuo/toViewShuo?shuoID='+mainCon.feedID+'" target="_blank" style="color:#4793F1">';
+			   if(type == "com"){ //评论
+		    	    str += '<span style="margin-right:5px;">评论数(';
+		    	    str += mainCon.commentCount;
+		    	    str += ')</span>';
+		       }else if(type=="ref"){ //转发
+		    	    str += '<span style="margin-right:5px;">转发数(';
+		    	    str += mainCon.transferCount;
+		    	    str += ')</span>';
+		       }
+			   str += '详情';
+			   str += '</a>';
+			   str += '</div>';
+			   str += '<div class="clear"></div>';
+			   str += '</div>';
+		      
+		   }
+		  
+	   }
+	   return str ;
+   } 	   
+
+   //不允许评论提示框
+   function noAllowPop(topicID,focusID, getfocusName){
+		myAlert = document.createElement("div");
+		myAlert.setAttribute("id","popup");
+		myAlert.style.display = "block";
+		myAlert.style.position = "absolute";
+		myAlert.style.zIndex = "1001";
+		myAlert.style.height = "140px";
+		myAlert.style.width = "350px";
+		myAlert.style.backgroundColor = "#FAFAFA";
+		myAlert.style.border = "2px solid #A0A0A0";
+		//opacity = "0.3";
+		var str = '<ul style="background-color: #ACACAC;width: 350px;height: 25px;line-height: 25px;"><li id="li_1_1" style="float:left;font-size: 14px;"><span>&nbsp;&nbsp;提示</span></li><li id="li_1_2" style="float:right;font-weight:blod;"><a style="margin-top:0px;" href="javascript:void(0);" onclick="closePop()">[关闭]&nbsp;&nbsp;</a></li></ul>';
+		str += '<ul style="width: 350px;height: 45px;"><li style="float:left;margin-top: 10px;margin-left: 40px;color: #4A4A4A;"><img src="https://css.tgb.cn/images/weibo/check01.png" height="30px;" width="30px;"></li><li style="float:left;margin-left: 10px;font-size: 14px;height: 40px;line-height: 50px;">评论失败，只有粉丝和好友才能评论</li><br/></ul></ul><ul class = "clear"></ul>';
+		str += '<ul style="width: 280px;height: 38px;line-height: 38px;color: #4A4A4A;"><li ><input type="checkbox"  id= "fouce_comment_'+topicID+'" style="float: left;margin-top: 13px;margin-left: 70px;"></li><li style="float: left;margin-left: 10px;">关注成为TA的粉丝</li></ul><ul class = "clear"></ul>'	
+		str += '<ul><li style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcancle.png);margin-right: 10px;line-height: 24px;"><a href="javascript:void(0);" onclick="closePop()" style="color: #666666;">取消</a></li><li id = "popcheck" style="float:right;width: 55px;height: 24px;background-image: url(https://css.tgb.cn/images/weibo/popcheck.png);margin-right: 10px;line-height: 24px;"><a style="color:#FFF" href="javascript:void(0);" onclick = "addFocusComment('+topicID+','+focusID+',\''+getfocusName+'\')">确定</a></li></ul>';
+		myAlert.innerHTML = str;	
+		myAlert.style.left=(document.body.clientWidth-350)/2+document.documentElement.scrollLeft+'px';
+		if (typeof window.pageYOffset != 'undefined') {
+			scrollTop = window.pageYOffset;
+		} else if (typeof document.compatMode != 'undefined'
+				&& document.compatMode != 'BackCompat') {
+			scrollTop = document.documentElement.scrollTop;
+		} else if (typeof document.body != 'undefined') {
+			scrollTop = document.body.scrollTop;
+		}
+		var winHeight = $(window).height();
+		if($(window).height() == 0){
+			winHeight += document.body.offsetHeight;
+		}
+		myAlert.style.top=(winHeight-137)/2+scrollTop+'px';
+		mybg = document.createElement("div");
+		mybg.setAttribute("id","mybg");
+		mybg.style.background = "#C9C9C2";
+		mybg.style.width = "100%";
+		mybg.style.height = document.body.scrollHeight+"px";
+		mybg.style.position = "absolute";
+		mybg.style.top = "0";
+		mybg.style.left = "0";
+		mybg.style.zIndex = "1000";
+		mybg.style.opacity = "0.3";
+		mybg.style.filter = "Alpha(opacity=30)";
+		document.body.appendChild(mybg);
+		document.body.appendChild(myAlert);
+		//document.body.style.overflow = "scroll";
+	}
+	function getBytesLength(str) {
+  		return str.replace(/[^\x00-\xff]/g, 'xx').length;
+	}
+	/**
+	 * 设置QQ或新浪是否同步(跨域)
+	 */
+	function setShuoShare(id,type){
+		var getBox = document.getElementById(id);
+		var shareType = "N";
+		if(getBox.checked){
+			shareType = "Y";
+		}else{
+			shareType = "N";
+		}
+		var url=wwwDomainPath+"setShare?shareType="+shareType+"&userType="+type;
+		XMLHttp.sendReq("get",url,"",function(obj){
+			var str=obj.dto;
+			if(str=="0"){
+				showAlert("设置默认同步选项错误，请联系股天乐");
+			}else if(str == "1"){
+			}else{
+				showAlert("出错了，请联系股天乐");
+			}
+		});
+	}
+	
+	//首页_加油内容
+   function getBestWeibo(userID,pageNo,day,type){
+	  document.getElementById("status_div").innerHTML = "";
+	  document.getElementById("content_more").style.display="block";
+	  if(pageNo == 1){
+		  var titleStr = '<div style="display: block;float:left;font-size:14px;margin-bottom:5px;">';
+		  titleStr += '<a onclick="bestWeiboUtil(1,\''+type+'\')" href="javascript:void(0);"  style="margin:0 5px;'+(day==1?"color: #4793F1;":"")+'">最近24小时</a>';
+		  titleStr += '<a onclick="bestWeiboUtil(7,\''+type+'\')" href="javascript:void(0);"  style="margin:0 5px;'+(day==7?"color: #4793F1;":"")+'">最近7天</a>';
+		  titleStr += '<a onclick="bestWeiboUtil(30,\''+type+'\')" href="javascript:void(0);" style="margin:0 5px;'+(day==30?"color: #4793F1;":"")+'">最近30天</a>';
+		  if(type == "B"){
+			   titleStr += '<a onclick="bestWeiboUtil(0,\''+type+'\')" href="javascript:void(0);" style="margin:0 5px;'+(day==0?"color: #4793F1;":"")+'">历史加油</a>';
+		  }
+		  titleStr += '</div>';
+		  titleStr += '<div class="clear"></div>';
+		  titleStr += '<div id="showHistory" style="width: 640px;font-size:14px;float:left"></div>';
+		  titleStr += '<div class="clear"></div>';
+		  $("#divContent").append(titleStr);
+		  if(day == 0){
+		  	  getPeriod(userID);
+		  	  return;
+		  }else{
+			   document.getElementById("showHistory").innerHTML = "";
+			   document.getElementById("divBestContent").innerHTML = "";
+		  }
+	  }
+	  var url = "getBestWeibo?type="+type+"&day="+day+"&pageNo="+pageNo+"&totalPage="+totalPage;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var successFlag = p.size;
+			var getPageNo = p.pageNo;
+			totalPage = p.totalPage;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+//				startFlag = false;
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容</span>';
+//				startFlag = false;
+//			    var acName = "/getBestWeibo?type="+type+"&day="+day+"&totalPage="+totalPage+"&cPageNo=";
+//				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+				$("#divContent").append(str);
+				var pageStr= "";
+				if(successFlag == perPageNum){
+					pageStr='<a onclick="getBestWeibo('+userID+','+(Number(getPageNo)+1)+','+day+',\''+type+'\')" href="javascript:void(0);" style="font-size:16px;color:#4793F1;margin-top:5px;">点击查看更多</a>';
+				}else{
+				}
+				
+//				if(lazyTime == 4){
+//				}
+//				lazyTime += 1;
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+				//var	acName = "/getBestWeibo?type="+type+"&day="+day+"&totalPage="+totalPage+"&cPageNo=";
+				//document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+			}
+ 	  });
+  } 
+   
+	function showSpmatchFirstSign(targetUserID){
+		if(targetUserID == 0){
+			var url = wwwDomainPath+"userTips?userID="+targetUserID+"&name="+name+"&callback=?";
+		}else{
+			var url = wwwDomainPath+"userTips?userID="+targetUserID+"&callback=?";
+		}
+		$.ajax({ 
+			url: url, 
+			dataType:"jsonp",
+			cache:true,
+			success: function(json){
+				res = json;
+				var innHTML = '';
+				if(res.cert=='H'){
+					innHTML = '<div style="float: left"><img src="https://css.tgb.cn/images/spMatch_First_Sign/huangguan.png" onmouseover="showSpmatchTips4('+targetUserID+',this)" onmouseout="closeSpmatchTips(this)" target="_blank"><span></span></div>';
+				}
+				$('#isSpmatchSignCheck').html(innHTML);
+			}
+		});   
+	}
+
+	var time11;
+	function showSpmatchTips4(targetUserID,obj){
+	var url = wwwDomainPath+"user/showSpmatchTips?targetUserID="+targetUserID+"&callback=?";
+	$.ajax({ 
+		url:url,
+		dataType:"jsonp",
+		cache:true,
+		success: function(json){
+			res = json.dto;
+			var innHTML = '';
+			var str = res.certName;
+			var userCertName= new Array();
+			if(str.indexOf(",") > 0 ){
+			    userCertName = str.split(",");
+			}
+			innHTML +='<div style="padding:10px;background-image:url(https://css.tgb.cn/res/images/spmatch/sptips.png);background-size:100%;width: 415px;top:27px;z-index:1001;text-align: center;position:absolute">';
+			if(userCertName!=''){
+				var user = userCertName[0];
+				var userName = user[0];
+				innHTML +='<p style="text-align:center;color: lightskyblue;">'+userName+'——实盘比赛获得的荣誉'+'<p/>';
+				for(var i=0 ;i<userCertName.length;i++){
+					var user = userCertName[i].split("_");
+					var userName = user[0];
+					var simpleName = user[1];
+					var title = user[2]; 
+					var topicID = user[3];
+					innHTML += '<div style="text-align: center;">'
+					+'<span style="color: cornflowerblue;">●&nbsp;</span>'
+					+'<a class="smallPhoto" target="_blank;" style="color: #000000;" href='+wwwDomainPath+'Article/'+topicID+'/1'+'>'+simpleName+':'+'</a>'
+					+'<span style="color: red;">&nbsp;&nbsp;'+title+'</span>'
+					+'</div>'; 
+				}
+			}else{
+				var user = str.split("_");
+				var userName = user[0];
+				var simpleName = user[1];
+				var title = user[2]; 
+				var topicID = user[3];
+				innHTML +='<p style="text-align:center;color: lightskyblue;">'+userName+'——实盘比赛获得的荣誉'+'<p/>'
+				+'<div style="text-align: center;">'
+				+'<span style="color: cornflowerblue;">●&nbsp;</span>'
+				+'<a class="smallPhoto" target="_blank;" style="color: #000000;" href='+wwwDomainPath+'Article/'+topicID+'/1'+'>'+simpleName+':'+'</a>'
+				+'<span style="color: red;">&nbsp;&nbsp;'+title+'</span>'
+				+'</div>'; 
+			}
+
+			innHTML +='</div>'; 
+			var newHtml=$(innHTML)
+			$(obj).next().append(newHtml);
+			newHtml.mouseout(function(e){
+				clearTimeout(time11);
+	 			if(checkHover(e,this)){
+					newHtml.remove();
+			    	}
+	        });
+		}
+	});
+}
+	 function closeSpmatchTips(obj){
+			var parentnode = $($(obj).next().children("div"));
+			time11 = setTimeout(function(){parentnode.remove();},350)
+		 }	
+		
+	 function checkHover(e,target){	
+		if (getEvent(e).type=="mouseover") {
+			return !contains(target,getEvent(e).relatedTarget||getEvent(e).fromElement) && !((getEvent(e).relatedTarget||getEvent(e).fromElement)===target);
+		} else {
+			return !contains(target,getEvent(e).relatedTarget||getEvent(e).toElement) && !((getEvent(e).relatedTarget||getEvent(e).toElement)===target);
+		}
+	}
+	
+   	//个股吧_加油或推荐内容
+   function getBarBestWeibo(userID,pageNo,day,type,stockCode,realm){
+	  document.getElementById("status_div").innerHTML = "";
+	  tempPage = pageNo;
+	  document.getElementById("content_more").style.display="block";
+	  if(pageNo == 1){
+		  var titleStr = '<div style="display: block;float:left;font-size:14px;margin-bottom:5px;">';
+		  titleStr += '<a onclick="bestBarWeiboUtil(1,\''+type+'\')" href="javascript:void(0);"  style="margin:0 5px;'+(day==1?"color: #4793F1;":"")+'">最近24小时</a>';
+		  titleStr += '<a onclick="bestBarWeiboUtil(7,\''+type+'\')" href="javascript:void(0);"  style="margin:0 5px;'+(day==7?"color: #4793F1;":"")+'">最近7天</a>';
+		  titleStr += '<a onclick="bestBarWeiboUtil(30,\''+type+'\')" href="javascript:void(0);" style="margin:0 5px;'+(day==30?"color: #4793F1;":"")+'">最近30天</a>';
+		  titleStr += '</div>';
+		  titleStr += '<div class="clear"></div>';
+		  $("#divContent").html(titleStr);
+	  }
+	  var url = "";
+	  if(realm){
+		  url = realm+ "/getBarBestWeibo?type="+type+"&day="+day+"&stockCode="+stockCode+"&pageNo="+pageNo+"&totalPage="+totalPage+"&callback=?";
+	  }else{
+		  url = "getBarBestWeibo?type="+type+"&day="+day+"&stockCode="+stockCode+"&pageNo="+pageNo+"&totalPage="+totalPage+"&callback=?";
+	  }
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var successFlag = p.size;
+			var getPageNo = p.pageNo;
+			totalPage = p.totalPage;
+			var perPageNum = p.perPageNum;
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容</span>';
+
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+				//$("#divContent").append(str);
+				
+				var pageStr="";
+/*				if(successFlag == perPageNum){
+					pageStr='<a onclick="getBarBestWeibo('+userID+','+(Number(getPageNo)+1)+','+day+',\''+type+'\',\''+stockCode+'\')" href="javascript:void(0);" style="font-size:16px;color:#4793F1;margin-top:5px;">点击查看更多</a>';
+				}else{
+				}*/
+
+				lazyTime += 1;
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("stockInfo").innerHTML = str;
+				
+				  //分页
+				var pagedom="";
+			      var viewPage=10;
+			      var pageC="";
+			      var jianshu=4;
+			      var jiashu=0;
+			      if(totalPage-getPageNo<5){
+			    	  jianshu=9-(totalPage-getPageNo);
+			      }
+			      for(var i=1;i<=viewPage;i++){
+			    	  if(i>totalPage || i>viewPage )break;
+			    	  if(getPageNo<5 || totalPage<=10){
+			    		  if(getPageNo==i) pageC="pageActive";
+			    		  else pageC="";
+			    		  if(realm){
+			    			  pagedom+="<a class='pageSpan "+pageC+"' onclick='getBarBestWeibo(\""+userID+"\","+i+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>"+i+"</a>"; 
+			    		  }else{
+			    			  pagedom+="<a class='pageSpan "+pageC+"' onclick='getBarBestWeibo(\""+userID+"\","+i+","+day+",\""+type+"\",\""+stockCode+"\")'>"+i+"</a>"; 
+			    		  }
+			    	  }else{
+			    		  if(jianshu==0 && jiashu==0){
+			    			  getBarBestWeibo(userID,pageNo,day,type,stockCode)
+			    			  pageC="pageActive";
+			    			  if(realm){
+			    				  pagedom+="<a class='pageSpan pageActive' onclick='getBarBestWeibo(\""+userID+"\","+getPageNo+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>"+getPageNo+"</a>";
+			    			  }else{
+			    				  pagedom+="<a class='pageSpan pageActive' onclick='getBarBestWeibo(\""+userID+"\","+getPageNo+","+day+",\""+type+"\",\""+stockCode+"\")'>"+getPageNo+"</a>";
+			    			  }
+			    			  jiashu=jiashu+1;
+			    		  }else{
+			    			  if(jianshu>0){
+			    				  if(realm){
+			    					  pagedom+="<a class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo-jianshu)+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>"+(getPageNo-jianshu)+"</a>";   
+			    				  }else{
+			    					  pagedom+="<a class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo-jianshu)+","+day+",\""+type+"\",\""+stockCode+"\")'>"+(getPageNo-jianshu)+"</a>";   
+			    				  }
+			    				  jianshu=jianshu-1;
+			    			  }else{
+			    				  if(realm){
+			    					  pagedom+="<a class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo+jiashu)+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>"+(getPageNo+jiashu)+"</a>"; 
+			    				  }else{
+			    					  pagedom+="<a class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo+jiashu)+","+day+",\""+type+"\",\""+stockCode+"\")'>"+(getPageNo+jiashu)+"</a>"; 
+			    				  }
+			    				  jiashu=jiashu+1;
+			    			  } 
+			    		  }
+			    		  
+			    	  }
+
+			      }
+			      var nextDom="";
+			      var prveDom="";
+			      if(getPageNo!=1){
+			    	  if(realm){
+			    		  prveDom="<a style='width:50px' class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo-1)+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>上一页</a>";
+			    	  }else{
+			    		  prveDom="<a style='width:50px' class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(getPageNo-1)+","+day+",\""+type+"\",\""+stockCode+"\")'>上一页</a>";
+			    	  }
+			      }
+			      if(getPageNo!=totalPage){
+			    	  if(realm){
+			    		  nextDom="<a style='width:50px' class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(parseInt(getPageNo)+1)+","+day+",\""+type+"\",\""+stockCode+"\",\""+realm+"\")'>下一页</a>";
+			    	  }else{
+			    		  nextDom="<a style='width:50px' class='pageSpan' onclick='getBarBestWeibo(\""+userID+"\","+(parseInt(getPageNo)+1)+","+day+",\""+type+"\",\""+stockCode+"\")'>下一页</a>";
+			    	  }
+			      }
+			      pagedom=prveDom+pagedom+nextDom;
+			     document.getElementById("page").innerHTML = pagedom;
+			     window.scrollTo('0','0');
+
+			}
+ 	  });
+  } 
+   	//获取精华加油的期数
+   function getPeriod(userID){
+	  var url = "getBestPeriod";
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var pList = p.record;
+			var successFlag = p.size;
+			var showStr = "";
+			if(successFlag > 0 ){
+			    for(var i = 0 ;i<pList.length; i++){
+					showStr += '<a onclick="getBestByPeriod('+userID+',1,'+pList[i]+')" href="javascript:void(0);" id="period_'+pList[i]+'" class="setPeriod" style="margin:0 5px;float:left">第'+pList[i]+'期</a>'; //'+(day==30?"color: #4793F1;":"")+'
+			    }
+			    $("#showHistory").append(showStr);
+			    getBestByPeriod(userID,1,pList[0]);
+			}else if(successFlag > 0){
+				alert("暂无历史记录");
+			}else{
+				alert("获取错误");
+			}
+ 	  });
+  }
+   
+   	//获取每期的精华加油内容
+   function getBestByPeriod(userID,pageNo,period){
+	  document.getElementById("status_div").innerHTML = "";
+	  document.getElementById("content_more").style.display="block";
+	  if(pageNo == 1){
+		  var tilSty = $(".setPeriod");
+	   	  for(var i =0;i<tilSty.length;i++){
+	   		 tilSty[i].style.color = "#666666"
+	   	  }
+		  document.getElementById("period_"+period).style.color = "#4793F1";
+		   document.getElementById("divBestContent").innerHTML = "";
+	  }
+	  var url = "getBestByPeriod?period="+period+"&pageNo="+pageNo;
+ 	  XMLHttp.sendReq("get",url,"",function(data){
+	 		var p = data.dto;
+			var feedList = p.record;
+			var str = '';
+			var successFlag = p.size;
+			var getPageNo = p.pageNo;
+			var totalPage = p.totalPage;
+			var perPageNum = p.perPageNum;
+//			var indexNum = (Number(getPageNo)-1)+1 ;
+//			indexNum = parseInt(indexNum);//取整数
+			if(successFlag=='error'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+				return;
+			}else if(successFlag == '0'){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无内容</span>';
+//			    var acName = "/getBestByPeriod?period="+period+"&totalPage="+totalPage+"&cPageNo=";
+//				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+				return;
+			}else{
+				targetUserID = userID;
+				str += Json_HTML(feedList,userID);
+				showSpmatchFirstSign(targetUserID);
+				$("#divBestContent").append(str);
+				var pageStr= "";
+				if(successFlag == perPageNum){
+					pageStr='<a onclick="getBestByPeriod('+userID+','+(Number(getPageNo)+1)+','+period+')" href="javascript:void(0);" style="font-size:16px;color:#4793F1;margin-top:5px;">点击查看更多</a>';
+				}else{
+				}
+//				currtentPage = (Number(getPageNo)+1);
+				document.getElementById("divContent").style.display="block";
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = pageStr;
+//				var acName = "/getBestByPeriod?period="+period+"&totalPage="+totalPage+"&cPageNo=";
+//				document.getElementById("pageNumDiv").innerHTML = pagerHtml(acName,indexNum,totalPage);
+			}
+ 	  });  
+ 	  
+ 	 
+  } 

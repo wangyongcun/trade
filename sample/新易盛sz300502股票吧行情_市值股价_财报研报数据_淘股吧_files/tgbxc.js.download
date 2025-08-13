@@ -1,0 +1,53 @@
+(function () {
+	var domainUrl = document.domain;
+	var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"))
+	//跨域html域名
+	   var newDomain='https://www.tgb.cn';
+	//组合的广告ID
+	
+    // 对联广告
+	var bigImgArr = [];
+	var smaImgArr = [];
+	var linkUrlArr = [];
+//	var seqArr = [];
+	$('.distichgg').each(function(){
+		bigImgArr.push('https://image.tgb.cn/'+$(this).attr('bigImg')+'_1100h.png');
+		smaImgArr.push('https://image.tgb.cn/'+$(this).attr('smaImg')+'_1100h.png');
+		linkUrlArr.push($(this).attr('linkUrl'));
+//		seqArr.push($(this).attr('seq'));
+	})
+//		$('.left_dl_div a').click(function(){
+//			tgbPvnum(seqArr[0])
+//	    })
+    
+	var random = Math.floor(Math.random() * (bigImgArr.length));
+	$('.left_dl_div a').attr('href',linkUrlArr[random]);
+	if(document.body.clientWidth<1280){
+		$('.left_dl_div img').attr('src',smaImgArr[random]).css({'width':'25px','height':'310px'});
+	}else{
+		$('.left_dl_div img').attr('src',bigImgArr[random]).css({'width':'120px','height':'270px'});
+	}
+	if(bigImgArr.length>0 && smaImgArr.length>0 && linkUrlArr.length>0){
+		$('.tgbdl_bigdiv').show();
+	}
+	
+	function hidead(obj){
+		$(obj).parent().hide();
+	}
+    window.onresize=changeWin;
+    function changeWin(){
+    	if(document.body.clientWidth<1280){
+    		$('.left_dl_div img').attr('src',smaImgArr[random]).css({'width':'25px','height':'310px'});
+    	}else{
+    		$('.left_dl_div img').attr('src',bigImgArr[random]).css({'width':'120px','height':'270px'});
+    	}
+    }
+    $(window).scroll(function () {
+        if ($(window).scrollTop() > 115) {
+           $('.tgbdl_bigdiv').css({'position':'fixed','top':'50px'})
+        } else {
+           $('.tgbdl_bigdiv').css({'position':'absolute','top':'160px'})
+        }
+    })
+	
+})()

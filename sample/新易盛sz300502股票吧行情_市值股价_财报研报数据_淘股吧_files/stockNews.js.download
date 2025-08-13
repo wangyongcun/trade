@@ -1,0 +1,1444 @@
+
+var shuoDomainPath,wwwDomainPath;
+
+if(document.domain.indexOf("shuo") > -1){
+	shuoDomainPath = "https://"+document.domain+"/";
+	wwwDomainPath = shuoDomainPath.replace("shuo","www");
+}else if(document.domain.indexOf("www") > -1){
+	wwwDomainPath = "https://"+document.domain+"/";
+	shuoDomainPath = wwwDomainPath.replace("www","shuo");
+}
+var baseDomain = wwwDomainPath;
+
+ function ubbStockCon(strContent){
+	 strContent = strContent.replace(/\r\n/g,"<br>&nbsp;&nbsp;");//换行转换！！
+	 strContent = strContent.replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;");
+	 strContent = strContent.replace(/\"/g, "\\"+"\"");
+	 strContent = strContent.replace(/\ /g,"&nbsp;");
+	 return strContent;
+ }
+//个股研究
+function  getStockRearch(stockCode,realm,actionDate,perPageNum,stockType,isAppend){
+	$("#coolBody").parent().find(".content_more").show();
+	$("#coolBody").parent().find(".status_div").hide();
+	var resultMsg="";
+	$.ajax({
+		type: "get",
+		url: "/quotes/getStockRearch",
+		cache: false,
+		dataType: "json",
+		data: {
+			stockCode: stockCode,
+			actionDate: actionDate,
+			urlType: stockType },
+		success: function (json) {
+			if (!json.status) {
+				resultMsg = '<span  class="center moreInfo" >数据连接异常</span>';
+				$("#coolBody").parent().find(".content_more").hide();
+				$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				return;
+			}
+			var record = json.dto.record;
+			//研股
+			if (stockType === '1') {
+				var str = researchStockBuilder(record);
+			} else {
+				var str = forumBuilder(record);
+			}
+			if (!isAppend && str == '') {//第一次加载并且没有数据时,展示无数据的信息
+				str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+				// resultMsg = '<a href="#back_Top" onclick="gotoChoosingMethod();"  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多内容，进入<span style="color:#4793F1">“最新”</span>查看全部讨论</a>';
+				resultMsg = '<span  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多内容 </span>';
+				$("#stockContent").html(str);
+				$("#coolBody").parent().find(".content_more").hide();
+				$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				return;
+			}
+			if (isAppend) {//追加页面元素
+				$("#stockContent").append(str);
+			} else {//第一次加载页面元素
+				$("#stockContent").html(str);
+			}
+			if (record.length > 0) {
+				var actionDateTime = record[record.length - 1].actionDate;
+				// console.log(json.dto.actionDate.getTime());
+				var d = new Date(actionDateTime);
+
+				resultMsg = '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockRearch(\'' + stockCode + '\',\'' + realm + '\',\'' + d.getTime() + '\',\'' + perPageNum + '\',\'' + stockType + '\',\'' + isAppend + '\')">点击查看更多内容</a>';
+			} else {
+				// resultMsg ='<a href="#back_Top" onclick="gotoChoosingMethod();"  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多内容，进入<span style="color:#4793F1">“最新”</span>查看全部讨论</a>';
+				resultMsg = '<span  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多内容 </span>';
+			}
+			$("#coolBody").parent().find(".content_more").hide();
+			$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+		}
+	});
+}
+
+ //最热
+ function  getStockHeat(stockCode,realm,actionDate,perPageNum,isOpen,isAppend){
+	 $("#coolBody").parent().find(".content_more").show();
+	 $("#coolBody").parent().find(".status_div").hide();
+	 var resultMsg="";
+	 var url =realm + "/quotes/getStockHeat";
+	 $.ajax({
+		 type: "get",
+		 url: url,
+		 cache: false,
+		 dataType: "json",
+		 data: {
+			 stockCode: stockCode,
+			 actionDate: actionDate,
+			 perPageNum: perPageNum,
+			 isOpen: isOpen },
+		 success: function (json) {
+
+			 if(!json.status){
+				 resultMsg = '<span  class="center moreInfo" >数据连接异常</span>';
+				 $("#coolBody").parent().find(".content_more").hide();
+				 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				 return;
+			 }
+			 var record = json.dto.record;
+			 var str = forumBuilder(record);
+			 if(!isAppend && str == ''){//第一次加载并且没有数据时,展示无数据的信息
+				 str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+				 resultMsg = '<a href="#back_Top" onclick="gotoChoosingMethod();"  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多热门讨论，进入<span style="color:#4793F1">“最新”</span>查看全部讨论</a>';
+				 $("#stockContent").html(str);
+				 $("#coolBody").parent().find(".content_more").hide();
+				 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				 return;
+			 }
+			 if(isAppend){//追加页面元素
+				 $("#stockContent").append(str);
+			 }else{//第一次加载页面元素
+				 $("#stockContent").html(str);
+			 }
+			 if(record.length>0){
+				 var dt = record[record.length-1].actionDate;
+				 var date = new Date(dt);
+				 var actionDateTime = date.getTime();
+				 resultMsg =  '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockHeat(\''+stockCode+'\',\''+realm+'\',\''+actionDateTime+'\',\''+perPageNum+'\',\''+isOpen+'\',\''+isAppend+'\')">点击查看更多讨论</a>';
+			 }else{
+				 resultMsg ='<a href="#back_Top" onclick="gotoChoosingMethod();"  class="moreInfo" style="color:#999999;cursor: pointer;">暂无更多热门讨论，进入<span style="color:#4793F1">“最新”</span>查看全部讨论</a>';
+			 }
+			 $("#coolBody").parent().find(".content_more").hide();
+			 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+		 }
+	 });
+ }
+
+var loadCnt = 0;
+
+ //最新
+ function  getStockUpToDate(stockCode,realm,actionDate,perPageNum,isOpen,isAppend,retryCount=0){
+	 if (loadCnt == 0) { //未登录的情况下只允许加载一次
+		 loadCnt++;
+		 $("#coolBody").parent().find(".content_more").show();
+		 $("#coolBody").parent().find(".status_div").hide();
+		 var data={
+			 stockCode: stockCode,
+			 actionDate: actionDate,
+			 perPageNum: perPageNum,
+			 isOpen: isOpen
+		 }
+		 var url=realm + "/quotes/getStockUpToDate";
+		 $.ajax({
+			 type: "get",
+			 url: url,
+			 dataType: "json",
+			 data: data,
+			 success: function (json) {
+
+				 var resultMsg = "";
+				 if (!json.status) {
+					 resultMsg = '<span  class="center moreInfo" >数据连接异常</span>';
+					 $("#coolBody").parent().find(".content_more").hide();
+					 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+					 return;
+				 }
+				 var record = json.dto.record;
+				 var str = forumBuilder(record);
+				 //拉黑屏蔽
+				 var block = localStorage.getItem("listBadFriend"+userID)
+				 if (null != block && ""!=block){
+					 var list = block.split(",");
+					 for (var i = 0; i < list.length; i++) {
+						 $("."+list[i]).hide();
+					 }
+				 }
+
+				 if (!isAppend && str == '') {//第一次加载并且没有数据时,展示无数据的信息
+					 str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+					 resultMsg = '<span  class="moreInfo" style="color:#ccc;display:inline-block;margin:20px 0 100px 0;">暂无讨论</span>';
+					 $("#stockContent").html(str);
+					 $("#coolBody").parent().find(".content_more").hide();
+					 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+					 return;
+				 }
+				 if (isAppend) {
+					 $("#stockContent").append(str);
+				 } else {
+					 $("#stockContent").html(str);
+				 }
+				 if (json.dto.size >0) {
+					 var dt = record[record.length - 1].actionDate;
+					 // dt = dt.replace(".000+00:00", "");
+					 // dt = dt.replace("T", " ");
+					 var date = new Date(dt);
+					 var actionDateTime = date.getTime();
+
+					 resultMsg = '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockUpToDate(\'' + stockCode + '\',\'' + realm + '\',\'' + actionDateTime + '\',\'' + perPageNum + '\',\'' + isOpen + '\',\'' + isAppend + '\')">点击查看更多讨论</a>';
+				 } else {
+					 resultMsg = '<span  class="moreInfo">没有更多讨论了</span>';
+				 }
+				 $("#coolBody").parent().find(".content_more").hide();
+				 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				 loadCnt = 0;
+			 },
+			 error: function () {
+				 if (retryCount < 3) {
+					 // 休眠2秒   重试请求
+					 setTimeout(() => {
+						 loadCnt = 0;
+						 getStockUpToDate(stockCode, realm, actionDate, perPageNum, isOpen, isAppend, retryCount + 1);
+					 }, 2000);
+
+				 } else {
+					 var resultMsg = '<span  class="center moreInfo" >多次请求失败，请稍后重试</span>';
+					 $("#coolBody").parent().find(".content_more").hide();
+					 $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+				 }
+			 }
+		 });
+
+		 // $.getJSON(realm + "/quotes/getStockUpToDate", {
+			//  stockCode: stockCode,
+			//  actionDate: actionDate,
+			//  perPageNum: perPageNum,
+			//  isOpen: isOpen
+		 // }, function (json) {
+			//  // var resultMsg = "";
+			//  // if (!json.status) {
+			// 	//  resultMsg = '<span  class="center moreInfo" >数据连接异常</span>';
+			// 	//  $("#coolBody").parent().find(".content_more").hide();
+			// 	//  $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+			// 	//  return;
+			//  // }
+			//  // var record = json.dto.record;
+			//  // var str = forumBuilder(record);
+			//  // //拉黑屏蔽
+			//  // var block = localStorage.getItem("listBadFriend"+userID)
+			//  // if (null != block && ""!=block){
+			// 	//  var list = block.split(",");
+			// 	//  for (var i = 0; i < list.length; i++) {
+			// 	// 	 $("."+list[i]).hide();
+			// 	//  }
+			//  // }
+			//  //
+			//  // if (!isAppend && str == '') {//第一次加载并且没有数据时,展示无数据的信息
+			// 	//  str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+			// 	//  resultMsg = '<span  class="moreInfo" style="color:#ccc;display:inline-block;margin:20px 0 100px 0;">暂无讨论</span>';
+			// 	//  $("#stockContent").html(str);
+			// 	//  $("#coolBody").parent().find(".content_more").hide();
+			// 	//  $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+			// 	//  return;
+			//  // }
+			//  // if (isAppend) {
+			// 	//  $("#stockContent").append(str);
+			//  // } else {
+			// 	//  $("#stockContent").html(str);
+			//  // }
+			//  // if (json.dto.size >0) {
+			// 	//  var dt = record[record.length - 1].actionDate;
+			// 	//  // dt = dt.replace(".000+00:00", "");
+			// 	//  // dt = dt.replace("T", " ");
+			// 	//  var date = new Date(dt);
+			// 	//  var actionDateTime = date.getTime();
+			//  //
+			// 	//  resultMsg = '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockUpToDate(\'' + stockCode + '\',\'' + realm + '\',\'' + actionDateTime + '\',\'' + perPageNum + '\',\'' + isOpen + '\',\'' + isAppend + '\')">点击查看更多讨论</a>';
+			//  // } else {
+			// 	//  resultMsg = '<span  class="moreInfo">没有更多讨论了</span>';
+			//  // }
+			//  // $("#coolBody").parent().find(".content_more").hide();
+			//  // $("#coolBody").parent().find(".status_div").html(resultMsg).show();
+			//  // loadCnt = 0;
+		 // });
+	 }
+}
+
+// //精确
+// function  getStockAccurate(stockCode,realm,actionDate,perPageNum,isOpen,isAppend){
+// 	$("#coolBody").parent().find(".content_more").show();
+// 	$("#coolBody").parent().find(".status_div").hide();
+// 	$.getJSON(realm + "/quotes/getStockAccurate",{stockCode:stockCode,actionDate:actionDate,perPageNum:perPageNum,isOpen:isOpen}, function(json){
+// 		var resultMsg = "";
+// 		if(!json.status){
+// 			resultMsg = '<span  class="center moreInfo" >数据连接异常</span>';
+// 			$("#coolBody").parent().find(".content_more").hide();
+// 			$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+// 			return;
+// 		}
+// 		var record = json.dto.record;
+// 		var str = forumBuilder(record);
+// 		if(!isAppend && str == ''){//第一次加载并且没有数据时,展示无数据的信息
+// 			str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+// 			resultMsg = '<a href="#back_Top" onclick="gotoChoosingMethod();" class="moreInfo" style="color:#999999;cursor: pointer;">暂无数据，到<span style="color:#4793F1">最新</span>查看更多</a>';
+// 			$("#stockContent").html(str);
+// 			$("#coolBody").parent().find(".content_more").hide();
+// 			$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+// 			return;
+// 		}
+// 		if(isAppend){
+// 			$("#stockContent").append(str);
+// 		}else{
+// 			$("#stockContent").html(str);
+// 		}
+// 		if(json.dto.size == json.dto.perPageNum){
+// 			resultMsg =  '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockAccurate(\''+stockCode+'\',\''+realm+'\',\''+json.dto.actionDate+'\',\''+perPageNum+'\',\''+isOpen+'\',\''+isAppend+'\')">点击查看更多讨论</a>';
+// 		}else{
+// 			resultMsg ='<a href="#back_Top" onclick="gotoChoosingMethod();" class="moreInfo" style="color:#999999;cursor: pointer;">暂无数据，到<span style="color:#4793F1">最新</span>查看更多</a>';
+// 		}
+// 		$("#coolBody").parent().find(".content_more").hide();
+// 		$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+// 	});
+// }
+
+ //复盘
+ function  getStockComeBack(stockCode,realm,actionDate,perPageNum,isAppend){
+	//  $("#coolBody").parent().find(".content_more").show();
+	//  $("#coolBody").parent().find(".status_div").hide();
+	// $.getJSON(realm + "/quotes/getStockComeBack",{stockCode:stockCode,actionDate:actionDate,perPageNum:perPageNum}, function(json){
+	// 	var resultMsg = "";
+	// 	if(!json.status){
+	// 		resultMsg = '<span  class="moreInfo" >数据连接异常</span>';
+	// 		 $("#coolBody").parent().find(".content_more").hide();
+	// 		$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// 		return;
+	// 	}
+	// 	var record = json.dto.record;
+	// 	var str = forumBuilder(record);
+	// 	if(!isAppend && str == ''){//第一次加载并且没有数据时,展示无数据的信息
+	// 		str = '<img class="undefinedData"  style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+	// 		resultMsg = '<span  class="moreInfo" style="color:#ccc;display:inline-block;margin:20px 0 100px 0;">暂无讨论</span>';
+	// 		$("#stockContent").html(str);
+	// 		$("#coolBody").parent().find(".content_more").hide();
+	// 		$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// 		return;
+	// 	}
+	// 	if(isAppend){
+	// 		$("#stockContent").append(str);
+	// 	}else{
+	// 	    $("#stockContent").html(str);
+	// 	}
+	// 	if(json.dto.size == json.dto.perPageNum){
+	//     	resultMsg =  '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockComeBack(\''+stockCode+'\',\''+realm+'\',\''+json.dto.actionDate+'\',\''+perPageNum+'\',\''+isAppend+'\')">点击查看更多讨论</a>';
+	// 	}else{
+	// 		resultMsg ='<span  class="moreInfo">没有更多讨论了</span>';
+	// 	}
+	//     $("#coolBody").parent().find(".content_more").hide();
+	// 	$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// });
+}
+ 
+//内参
+ function  getStockInternal(stockCode,realm,actionDate,perPageNum,isAppend){
+	//  $("#coolBody").parent().find(".content_more").show();
+	//  $("#coolBody").parent().find(".status_div").hide();
+	//  var resultMsg = "";
+	// $.getJSON(realm + "/quotes/getStockInternal",{stockCode:stockCode,actionDate:actionDate,perPageNum:perPageNum}, function(json){
+	// 	if(!json.status){
+	// 		resultMsg = '<span  class="moreInfo" >数据连接异常</span>';
+	// 		$("#coolBody").parent().find(".content_more").hide();
+	// 		$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// 		return;
+	// 	}
+	// 	var record = json.dto.record;
+	// 	var str = forumBuilder(record);
+	// 	if(!isAppend && str == ''){//第一次加载并且没有数据时,展示无数据的信息
+	// 		str = '<img class="undefinedData" style="margin-top:50px;" src="https://css.tgb.cn/images/quotes/unContent.png"/>';
+	// 		resultMsg = '<span  class="moreInfo" style="color:#ccc;display:inline-block;margin:20px 0 100px 0;">暂无讨论</span>';
+	// 		$("#stockContent").html(str);
+	// 		$("#coolBody").parent().find(".content_more").hide();
+	// 		$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// 		return;
+	// 	}
+	// 	if(isAppend){
+	// 		$("#stockContent").append(str);
+	// 	}else{
+	// 		$("#stockContent").html(str);
+	// 	}
+	// 	if(json.dto.size == json.dto.perPageNum){
+	//     	resultMsg =  '<a  class="moreInfo" href="javascript:void(0);" onclick="getStockInternal(\''+stockCode+'\',\''+realm+'\',\''+json.dto.actionDate+'\',\''+perPageNum+'\',\''+isAppend+'\')">点击查看更多讨论</a>';
+	// 	}else{
+	// 		resultMsg ='<span  class="moreInfo">没有更多讨论了</span>';
+	// 	}
+	//     $("#coolBody").parent().find(".content_more").hide();
+	// 	$("#coolBody").parent().find(".status_div").html(resultMsg).show();
+	// });
+}
+
+	// //获取个股讨论
+	// function getStockForum(stockCode,realm,actionDate){
+	// 	var url = realm + "/stockForum?stockCode="+stockCode;
+	// 	if(typeof(actionDate) != "undefined"){
+	// 		var s = actionDate;
+	// 		s = s.substring(0,16);
+	// 		var d = new Date(Date.parse(s.replace(/-/g, "/")));
+	// 		var longTime = Math.round(d);
+	// 		url += "&actionDate="+longTime;
+	// 	}
+	// 	url+="&callback=?";
+	// 	$.getJSON(url, function(json){
+	// 		if(json.status){
+	// 			var record = json.dto.record;
+	// 			if(record && record.length != 0){
+	// 				var str = forumBuilder(record);
+	// 				$("#stockInfo").append(str);
+	// 				var pagedom="";
+	// 			    if(json.dto.size == json.dto.perPageNum){
+	// 					pagedom +=  '<a  class="center moreInfo" href="javascript:void(0);" onclick="getStockForum(\''+stockCode+'\',\''+realm+'\',\''+record[record.length-1].actionDate+'\')">点击查看更多讨论</a>';
+	// 				}else{
+	// 					pagedom +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多自选股讨论了</span>';
+	// 				}
+	// 			    document.getElementById("status_div").innerHTML = pagedom;
+	// 			}else{
+	// 				document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">暂无自选股讨论</span>';
+	// 			}
+	// 		}else{
+	// 				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >数据连接异常</span>';
+	// 		}
+	// 	});
+	// }
+
+
+
+//获取新闻
+	function getNewsAjax(domain,groupID){
+		document.getElementById("content_more").style.display="block";
+		document.getElementById("status_div").innerHTML = "";
+		var url = domain+"/newsAjax?groupID="+groupID+"&seq=0&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "";
+				$.each(newsList ,function(index,item){
+					
+					str += '<div id = \"newsRow_'+item.seq+'\" class = "stockNews"  style="width: 630px">';
+					str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+					str += '<div class=\"right\" style=\"text-align: left;width:90%\">';
+					str += '<div class="stockTitle left"><a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+					if(item.tSeq >0 ){
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+					}else if(item.tSeq < 0 ){ 
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'"><a href="'+item.subInfo+'" target="_blank" style="color:#4793F1">'+item.subInfo+'(下载)</a><br/>';
+					}
+					str += '<div class="newsDate">'+item.bookDate.substring(5,16)+'&nbsp;来自资讯</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+					str += '<div class="clear"></div>';
+					str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+					str += '</div></div><div class="clear"></div></div>';	
+					if(index == (newsList.length-1)){
+						document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0);" onclick="getMoreNews(\''+domain+'\','+item.seq+','+groupID+')">点击继续查看更多自选股资讯</a>';
+					}
+				});
+				str +='<input type="hidden" value="N" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("stockInfo").innerHTML = str;
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股资讯</span>';
+			}
+		});
+	}
+	//获取新闻_更多
+	function getMoreNews(domain,seq,groupID){
+		document.getElementById("content_more").style.display="block";
+			document.getElementById("status_div").innerHTML = "";
+		var url = domain+"/newsAjax?groupID="+groupID+"&seq="+seq+"&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record; 
+				var str = "";
+				$.each(newsList ,function(index,item){
+					str += '<div id = \"newsRow_'+item.seq+'\" class = "stockNews" style="width: 630px" >';
+					str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+					str += '<div class=\"right\" style=\"text-align: left;width:90%\">';
+					str += '<div class="stockTitle left"><a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+					if(item.tSeq >0 ){
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+					}else if(item.tSeq < 0 ){
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'"><a href="'+item.subInfo+'" target="_blank" style="color:#4793F1">'+item.subInfo+'(下载)</a><br/>';
+					}
+					str += '<div class="newsDate">'+item.bookDate.substring(5,16)+'&nbsp;来自资讯</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+					str += '<div class="clear"></div>';
+					str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+					str += '</div></div><div class="clear"></div></div>';					
+					if(index == newsList.length-1){
+						document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0)" onclick="getMoreNews(\''+domain+'\','+item.seq+','+groupID+')">点击继续查看更多自选股资讯</a>';
+					}
+				});
+				str +='<input type="hidden" value="N" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("stockInfo").innerHTML += str;
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >没有更多的自选股资讯了</span>';
+			}
+		});
+	}
+	
+	//获取新闻_BY_StockCode
+	function getNewsAjaxByCode(domain,stockCode,pageNo){
+		document.getElementById("content_more").style.display="block";
+//		document.getElementById("status_div").innerHTML = "";
+		var url = domain+"/newsAjaxByCode?stockCode="+stockCode+"&pageNo="+pageNo+"&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "";
+				$.each(newsList ,function(index,item){
+					str += '<div id = \"newsRow_'+item.seq+'\" class = "stockNews"  style="width: 630px">';
+					str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+					str += '<div class=\"right\" style=\"text-align: left;width:90%\">';
+					str += '<div class="stockTitle left"><a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+					if(item.tSeq >0 ){
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/news/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+					}else if(item.tSeq < 0 ){ 
+						str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'"><a href="'+item.subInfo+'" target="_blank" style="color:#4793F1">'+item.subInfo+'(下载)</a><br/>';
+					}
+					str += '<div class="newsDate">'+item.bookDate.substring(5,16)+'&nbsp;来自资讯</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+					str += '<div class="clear"></div>';
+					str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+					str += '</div></div><div class="clear"></div></div>';	
+					if(index == (newsList.length-1)){
+						document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0);" onclick="getNewsAjaxByCode(\''+domain+'\','+stockCode+','+(Number(pageNo)+1)+')">点击继续查看更多自选股资讯</a>';
+					}
+				});
+				str +='<input type="hidden" value="N" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				if(pageNo == 1){
+					document.getElementById("stockInfo").innerHTML = str;
+				}else{
+					document.getElementById("stockInfo").innerHTML += str;
+				}
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股资讯</span>';
+			}
+		});
+	}
+	
+	/**
+	 * 淘说说行情里面的新闻列表
+	 * @param {Object} divName
+	 * @param {Object} domain
+	 * @param {Object} stockCode
+	 * @param {Object} pageNo
+	 */
+	function getNewsAjaxByCodeHq(divObj,domain,stockCode){
+		var url = domain+"/newsAjaxByCodeHq?stockCode="+stockCode+"&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "<ul>";
+				$.each(newsList ,function(index,item){					
+					str += '<li><a href="'+wwwDomainPath+'news/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></li>'; 
+					if(index == (newsList.length-1)){
+						str += '<li><span class="right"><a href="'+wwwDomainPath+'stockBar?stockBarType=6&stockCode='+stockCode+'" target="_blank">查看更多资讯</a></span></li></ul>';
+					}
+				});
+				$('#right_news_bulletin2').html(str);
+			}else{
+				$('#right_news_bulletin2').html('<span  class="center moreInfo" >暂无自选股资讯</span>');
+			}
+		});
+	}
+
+function asyncFunGet(url, data, fun) {
+	$.ajax({
+		url : url, // 请求的url地址
+		dataType : "json", // 返回格式为json
+		async : true, // 请求是否异步，默认为异步，这也是ajax重要特性
+		data : data, // 参数值
+		type : "GET", // 请求方式
+		beforeSend : function() {
+			// 请求前的处理
+		},
+		success : fun,
+		complete : function() {
+			// 请求完成的处理
+		},
+		error : function() {
+			// 请求出错处理
+		}
+	});
+}
+	//获取公告
+	function getBulletinAjax(domain,groupID){
+		document.getElementById("content_more").style.display="block";
+		document.getElementById("status_div").innerHTML = "";
+		var url = domain+"/bulletinAjax?groupID="+groupID+"&seq=0&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "";
+				$.each(newsList ,function(index,item){
+					str += '<div id = \"bulletinRow_'+item.seq+'\" class = "stockNews"  style="width: 630px" >';
+					str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+					str += '<div class=\"right\" style=\"text-align: left;width:570px\">';
+					str += '<div class=\"stockTitle left\" style="width: 570px"  ><a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+					str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+					str += '<div class="newsDate">'+item.declareDate.substring(5,16)+'&nbsp;来自公告</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+					str += '<div class="clear"></div>';
+					str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+					str += '</div></div><div class="clear"></div></div>';
+					if(index == newsList.length-1){
+						document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0)" onclick="getMoreBulletin(\''+domain+'\','+item.seq+','+groupID+')">点击继续查看更多自选股公告</a>';
+					}
+				});
+				str +='<input type="hidden" value="B" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("stockInfo").innerHTML = str;
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股公告</span>';
+			}
+		});	
+	}
+	//获取公告
+	function getBulletinAjaxByCode(domain,stockCode,pageNo){
+		document.getElementById("content_more").style.display="block";
+		var url = domain+"/bulletinAjaxByCode?stockCode="+stockCode+"&pageNo="+pageNo+"&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "";
+				$.each(newsList ,function(index,item){
+					str += '<div id = \"bulletinRow_'+item.seq+'\" class = "stockNews"  style="width: 630px" >';
+					str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+					str += '<div class=\"right\" style=\"text-align: left;width:570px\">';
+					str += '<div class=\"stockTitle left\" style="width: 570px"  ><a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+					str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+					str += '<div class="newsDate">'+item.declareDate.substring(5,16)+'&nbsp;来自公告</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+					str += '<div class="clear"></div>';
+					str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+					str += '</div></div><div class="clear"></div></div>';
+					if(index == newsList.length-1){
+						document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0)" onclick="getBulletinAjaxByCode(\''+domain+'\','+stockCode+','+(Number(pageNo)+1)+')">点击继续查看更多自选股公告</a>';
+					}
+				});
+				str +='<input type="hidden" value="B" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				if(pageNo == 1){
+					document.getElementById("stockInfo").innerHTML = str;
+				}else{
+					document.getElementById("stockInfo").innerHTML += str;
+				}
+			
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股公告</span>';
+			}
+		});	
+	}
+	
+	//获取公告 淘说说行情里面的新闻列表
+	function getBulletinAjaxByCodeHq(divObj,domain,stockCode){
+		var url = domain+"/bulletinAjaxByCodeHq?stockCode="+stockCode+"&callback=?";
+		$.getJSON(url, function(json){
+			var size = json.size;
+			if(size > 0){
+				var newsList = json.record;
+				var str = "<ul>";
+				$.each(newsList ,function(index,item){
+					str += '<li><a href="'+wwwDomainPath+'bulletin/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></li>'; 
+					if(index == newsList.length-1){
+						str += '<li><span class="right"><a href="'+wwwDomainPath+'stockBar?stockBarType=5&stockCode='+stockCode+'" target="_blank">查看更多公告</a></span></li></li>'
+					}
+				});
+				$('#right_news_bulletin1').html(str);
+			}else{
+				$('#right_news_bulletin1').html('<span  class="center moreInfo" >暂无自选股公告</span>');
+			}
+		});	
+	}
+	
+	//获取公告_更多
+	function getMoreBulletin(domain,seq,groupID){
+		document.getElementById("content_more").style.display="block";
+		document.getElementById("status_div").innerHTML = "";
+		var url = domain+"/bulletinAjax?groupID="+groupID+"&seq="+seq+"&callback=?";
+		$.getJSON(url, function(json){
+		var size = json.size;
+		if(size > 0){
+			var newsList = json.record;
+			var str = "";
+			$.each(newsList ,function(index,item){
+				str += '<div id = \"bulletinRow_'+item.seq+'\" class = "stockNews"  style="width: 630px" >';
+				str += '<div  class=\"left stockImage\" style="width: 50px" >'+item.stockCode+'</div>';
+				str += '<div class=\"right\" style=\"text-align: left;width:570px\">';
+				str += '<div class=\"stockTitle left\" style="width: 570px"  ><a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#0055A2;">'+item.title+'</a></div>'; 
+				str += '<div class=\"subInfo left\" style="width: 570px" id="innerId_'+item.seq+'">'+item.subInfo+'&nbsp;&nbsp;&nbsp;&nbsp;<a href="'+domain+'/bulletin/'+item.seqSource+'" target="_blank" style="color:#4793F1" rel="nofollow">(全文)</a><br/>';
+				str += '<div class="newsDate">'+item.declareDate.substring(5,16)+'&nbsp;来自公告</div>'+'<a id="'+item.seq+'" href="javascript:void(0);" class="right pinglun"  onclick="showComment(\''+item.seq+'\',\''+item.seqSource+'\',\''+domain+'\')">评论</a>';
+				str += '<div class="clear"></div>';
+				str += '<div id="showComent_'+item.seq+'" class="showComent"></div>';
+				str += '</div></div><div class="clear"></div></div>';
+				if(index == newsList.length-1){
+					document.getElementById("status_div").innerHTML = '<a  class="center moreInfo" href="javascript:void(0)" onclick="getMoreBulletin(\''+domain+'\','+item.seq+','+groupID+')">点击继续查看更多自选股公告</a>';
+				}
+			});
+				str +='<input type="hidden" value="B" id="typeFlag">';
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("stockInfo").innerHTML += str;
+			}else{
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >没有更多的自选股公告了</span>';
+			}
+		});	
+	}
+	
+	function showEdit_callback(clickObj,commentStr){
+		document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+		document.getElementById(clickObj).innerHTML="收起";
+		$("#comment_"+clickObj).fadeIn("slow");
+	}
+	
+	//显示评论
+	function showComment(clickObj,topicID,domain){
+		var commentStr = '<div id="comment_'+clickObj+'" class="comment"><textarea class="commentTextarea" id = "edit_'+clickObj+'" row="3" cols="73" style="color:#666;" onfocus="if(this.innerHTML==\'写点什么吧...\'){this.innerHTML=\'\'};this.style.color=\'#000\';">写点什么吧...</textarea><a href="javascript:upComment(\''+clickObj+'\',\''+topicID+'\',\''+domain+'\');" class="upButton">提交</a></div>';
+		if(document.getElementById("edit_"+clickObj)==null){
+				if(isDelete(clickObj,commentStr)){
+					document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+					document.getElementById(clickObj).innerHTML="收起";
+					$("#comment_"+clickObj).fadeIn("slow");
+				}
+		}else{
+			var obj = document.getElementById("comment_"+clickObj);	//div
+			var commentObj = document.getElementById("edit_"+clickObj);//textarea
+			var commentValue = commentObj.value;
+			if(commentValue!=''){
+				if(commentObj.style.color=='rgb(0, 0, 0)'||commentObj.style.color=='#000'){
+					confirm("是否放弃正在编辑的内容?",function(r){
+						if(r){
+							obj.parentNode.removeChild(obj);
+							$("#comment_"+clickObj).fadeOut("normal");
+							document.getElementById(clickObj).innerHTML="评论";
+							return;
+						}
+					});	
+				}else{
+					obj.parentNode.removeChild(obj);
+					$("#comment_"+clickObj).fadeOut("normal");
+					document.getElementById(clickObj).innerHTML="评论";
+					return;
+				}
+			}else{
+				obj.parentNode.removeChild(obj);
+				$("#comment_"+clickObj).fadeOut("normal");
+				document.getElementById(clickObj).innerHTML="评论";
+				return;
+			}
+		}
+	}
+	
+	function upComment(seq,seqSource,domain){
+		var type=document.getElementById("typeFlag").value;
+		var editObj = document.getElementById("edit_"+seq);
+		if(editObj.value=='写点什么吧...'&& editObj.style.color=='rgb(102, 102, 102)'){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value==''){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value.length>500){
+			showAlert("您评论的字数已经超过我们规定的最大字数：500!请重新评论，谢谢!");
+			return;
+		}
+		var url = '';
+		if(type=="N"){
+			url = domain+"/newsComment";
+		}
+		if(type=="B"){
+			url = domain+"/bulletinComment";
+		}
+		var param = "topicID="+seqSource+"&commentValue="+encodeURIComponent(editObj.value);
+		XMLHttp.sendReq("post", url, param,function(data){
+			var result = data.dto;
+			if(result.length!=1){
+				showAlert(result);
+				return;
+			}else{
+				if(result=="1"){
+					showAlert("发送异常,请联系股天乐");
+					return;
+				}
+				if(result=="2"){
+					window.location.href= domain+"/shuoLogin";
+					return;
+				}
+				if(result=="3"){
+					showAlert("对不起,您的评论可能存在违反社区规则的言行，暂时不能评论，我们将进行相应的核实，若无问题将在24小时内予以解封，谢谢。");
+					return;
+				}
+				if(result=="4"){
+					showAlert("您的内容为空或是您评论的字数已经超过我们规定的最大字数：500！请返回原先页面，谢谢!");
+					return;
+				}
+				if(result=="5"){
+					if(type=="N"){
+						showAlert("您要评论的资讯已被删除或者不存在！谢谢您对这条资讯的关心!");
+						return;
+					}
+					if(type=="B"){
+						showAlert("您要评论的公告已被删除或者不存在！谢谢您对这条公告的关心!");
+						return;
+					}
+				}
+				if(result=="6"){
+					var value=editObj.value;
+					var userName = "";
+					if(document.getElementById("userName")!=null){
+						userName = document.getElementById("userName").value;
+					}
+					if(document.getElementById("pinglun_"+seq)==null){
+						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" style="width:570px"  id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content" style="width:570px " >'+regContent(value)+'</li></ul>';
+						$('#pinglun_'+seq).slideDown('slow');
+					}else{
+						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content" style="width:570px " >'+regContent(value)+'</li>';
+					}
+					if($(".box li").length>1){
+						$(".content").css('border-bottom','1px dotted #CCCCCC');
+						$(".box li:last-child").css('border-bottom','1px solid #CCCCCC');
+						$(".content").css('border-bottom-style','dashed');
+						$(".box li:last-child").css('border-bottom-style','solid');
+					}
+					document.getElementById("edit_"+seq).value="";
+				}
+			}
+		});
+	}
+	
+	function isDelete(clickObj,commentStr){
+		var textareaArray = document.getElementsByClassName("commentTextarea");
+		if(textareaArray.length!=0){//有打开其他编辑框
+			for(i=0;i<textareaArray.length;i++){
+				if(clickObj!=textareaArray[i].id.substring(5)){//当前的编辑框还没有收起就点击别的评论
+					if(textareaArray[i].value==""){
+					//	showAlert('ww='+textareaArray[i].id);
+						var commentId = textareaArray[i].id.substring(textareaArray[i].id.lastIndexOf("_")+1);
+					//	showAlert('commentId='+commentId);
+						document.getElementById(commentId).innerHTML="评论";
+						textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+						return true;//可以直接关闭，不需要询问
+					}else{
+						if(textareaArray[i].style.color=='rgb(0, 0, 0)'||textareaArray[i].style.color=='#000'){
+							//var tmpID = i;
+							confirm("是否放弃正在编辑的内容?",function(r){
+								if(r){
+									var commentId = textareaArray[i].id.substring(5);
+									document.getElementById(commentId).innerHTML="评论";
+									textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+									showEdit_callback(clickObj,commentStr);
+								}
+							});		
+							return;
+						}else{
+							var commentId = textareaArray[i].id.substring(5);
+							document.getElementById(commentId).innerHTML="评论";
+							textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+							return true;
+						}
+					}
+				}else{//只是操作当前的编辑框
+					return true;
+				}
+			}
+		}else{	//第一次打开编辑框
+			return true;
+		}
+	}
+	function regContent(str){
+		return str.replace( /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/,'<font color="red">不支持脚本</font>');
+	}
+	//加载部分股票数据
+	function getGroupStock(domain,groupid){
+		var groupid = groupid;
+		var url = domain+"getGroupStock?groupID="+groupid;
+		size = -1;
+		$.ajax({
+			type:'get',
+			url:url,
+			success:function(obj){
+				var xmlObj = obj.dto;	
+				var key = xmlObj.root.key;
+				var docXml = xmlObj.root;	
+				var str ='';					
+				if(key ==1){
+					keywordList = docXml.record;
+					size = keywordList.length;
+					str +=getStock(keywordList,groupid,domain);
+					if(keywordList.length == 5){
+						str += '<a id="moreStock" href="javascript:void(0)" class="right" onclick="getMoreStock(\''+domain+'\','+groupid+')"><img alt="" src="https://css.tgb.cn/images/morestock.png">&nbsp;查看更多</a>';
+					}
+					document.getElementById("stockLab").innerHTML = str;						
+				}else{
+					str +='<div class=\"center\">该组内还没有个股，请添加后查看</div>';
+					str +='<div class="clear" ></div>';
+					document.getElementById("stockLab").innerHTML = str;
+					size = 0;
+				}
+			}
+		})
+
+	}
+	   //加载股票数据
+   function getMoreStock(domain,groupid){
+		var url = domain+"/getMoreStock?groupID="+groupid;
+		XMLHttp.sendReq("get", url, "", function(obj){
+			var xmlObj = obj.dto;
+			var docXml = xmlObj.root;	
+			var str ='';					
+			keywordList = docXml.record;						
+			str +=getStock(keywordList,groupid,domain);
+			str +='<a id="moreStock" href="javascript:void(0)" class="right" onclick="getGroupStock(\''+domain+'\','+groupid+')"><img alt="" src="https://css.tgb.cn/images/shouqi.gif">&nbsp;收&nbsp;起&nbsp;&nbsp;</a>';
+			str +='<div class="clear" ></div>';
+			document.getElementById("stockLab").innerHTML = str;	
+		});
+	}
+   
+    var sinaTimer;
+	function getStock(keywordList,groupID,domain){
+		var str = "";
+		var stockList = "";
+		if(sinaTimer!=null){
+			clearInterval(sinaTimer);
+		}
+		for(i = 0;i<keywordList.length;i++){
+			var fullCode = fullStockCode(keywordList[i].stockCode);
+			stockList += fullCode;
+			if(i != keywordList.length -1){
+				stockList += ",";
+			}
+			
+			str += '<div id=\"groupstock_'+keywordList[i].stockCode+'\" class=\"stockTableTr'
+//			if(i%2 != 0){
+//				str +=  " bak"
+//			}
+//			str += '\" ><a class="spanName" href="'+domainPath+'guba_'+keywordList[i].getAttribute("stockCode")+'" target="_blank" style="color:#4793F1;" >'+keywordList[i].getAttribute("stockName")+'</a>';
+			str += '\" ><a class="spanName" href = "'+wwwDomainPath+'quotes/'+keywordList[i].stockCode+'/" target="_blank" style="color:#4793F1;" >'+keywordList[i].stockName+'</a>';
+			str += '<span class="spanData" id="xj_'+fullCode+'">--</span>';
+			str += '<span class="spanData" id="zd_'+fullCode+'">--</span>';
+			str += '<a href="javascript:delStock(\''+keywordList[i].stockCode+'\','+groupID+',\''+domain+'\');" class="spanTool"  >删除</a>';
+			str +='</div>';
+		}
+		
+		
+//		str += '</table>';
+		loadJS({ src : 'https://hq.sinajs.cn/list='+stockList, charset : 'gb2312', callback : xj_change,listCode: stockList});
+		sinaTimer = setInterval(function(){
+			loadJS({ src : 'https://hq.sinajs.cn/list='+stockList, charset : 'gb2312', callback : xj_change,listCode: stockList});
+		},10000);
+		return str;
+	}
+	function addStockDiv(domain,groupID){
+		var str ="";
+		str +='<div style="background: url(https://css.tgb.cn/images/check_btn.png);width:45px;height:20px;float:right;margin-left:5px;text-align:center;color:#fff;line-height: 20px;margin-top: 1px;">';
+		str +='<span onclick="addStock(\''+domain+'\','+groupID+')" style="cursor:pointer;">确定</span>';
+		str +='</div>';
+		str +='<div style="float:right;">';
+		str +='<span id="searchTitle" style="font-size:14px">添加自选股</span> ';
+		str +='<span style="position:relative;" id="addStockSpan" >';
+		str +='<input name="searchContent" value="个股代码"  type="text" onClick="startSearch(\''+domain+'\');" id="stockCode" size="15" maxlength="8" style="width:126px;">';
+		str +='<div id="stockResult" style="z-index: 500;"></div>';
+		str +='<input type="hidden" id="trangeInput" >';
+		str +='</span>';
+		str +='</div>';
+		str +='<div class="clear"></div>';
+		return str;
+	}
+	var getDomain ="";
+	function startSearch(domain){
+		getDomain = domain;
+		var str = document.getElementById("stockCode").value;
+		if(str=='个股代码'){
+			document.getElementById("stockCode").value='';
+		}
+		if (window.attachEvent)
+		{
+			if(!js_comment_isBind_second){
+				document.getElementById("stockCode").attachEvent("onkeyup",searchResult);
+				js_comment_isBind_second=true;
+			}
+		}
+		else
+		{
+			document.getElementById("stockCode").addEventListener("keyup", searchResult, false);
+		}
+		
+	}
+	
+	function searchResult(e){
+		var e  = window.event || e;
+		var keyCode = e.keyCode || e.which;
+		if(keyCode!=40&&keyCode!=38&&keyCode!=13){
+			var str = document.getElementById("stockCode").value;
+			if(str==''){
+				document.getElementById("stockResult").style.display="none";
+				return;
+			}
+			var exec = false;
+			if(/^\d+$/.test(str)){
+				if(str.length>3){	//个股代码四位以上才进行查询
+					exec = true;
+				}else{
+					document.getElementById("stockResult").style.display="none";
+					return;
+				}
+			}else{
+				exec = true;
+			}
+			if(exec){
+				var url = getDomain+"/search/searchResult?s="+str;
+				XMLHttp.sendReq("get", url, "", function(data){
+					var result = data.dto;
+					var htmlStr ='<div id="result_0" style="background:#DCDBED;" class="stockInfo">个股代码&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;个股名称</div>';
+					if(result!='[null]'){
+						var objArray = result;
+						for(i=0;i<objArray.length;i++){
+							var Obj = objArray[i];
+							if(i<10){
+							for(key in Obj){
+								htmlStr=htmlStr+'<a id="result_'+(i+1)+'" href="javascript:chose(\''+key+'\',\''+Obj[key]+'\')" class="stockInfo"><span id="code_'+(i+1)+'">'+changeColor(key,str)+'</span>&nbsp;<span id="name_'+(i+1)+'">'+changeColor(Obj[key],str)+'</span></a>';
+							}
+						}
+						}
+						htmlStr = htmlStr + '<input type="hidden" id="resultNum" value='+objArray.length+'>';
+						document.getElementById("stockResult").style.display="block";
+						document.getElementById("stockResult").innerHTML=htmlStr;
+						if (window.attachEvent)
+						{
+							if(!js_comment_isBind_first){
+								document.getElementById("addStockSpan").attachEvent("onkeyup",select);
+								js_comment_isBind_first = true;
+							}
+						}
+						else
+						{
+							document.getElementById("addStockSpan").addEventListener("keyup", select, false);
+						}
+						js_comment_seqNum = 1;
+						document.getElementById("result_"+js_comment_seqNum).style.background="#0055A2";
+						document.getElementById("result_"+js_comment_seqNum).style.color="#FFF";
+						document.getElementById("trangeInput").value= clearFont(document.getElementById("code_"+js_comment_seqNum).innerHTML);
+					}else{
+						document.getElementById("stockResult").style.display="none";
+					}
+				});
+				js_comment_seqNum=0;
+			}
+			if(window.event){
+				e.cancelBubble=true;
+			}
+		}
+	}
+	/**
+	 * 上下选择
+	 * @return
+	 */
+	function select(e){
+		var e = window.event || e; 
+        var key = e.keyCode || e.which; 
+        if(key==40){//向下
+        	var resultNum = document.getElementById("resultNum").value;
+        	if(js_comment_seqNum<resultNum-1){  
+	    		document.getElementById("result_"+(js_comment_seqNum)).style.background="#FFF";
+	    		document.getElementById("result_"+js_comment_seqNum).style.color="#666666";
+	    		js_comment_seqNum = js_comment_seqNum+1;
+	        	document.getElementById("result_"+js_comment_seqNum).style.background="#0055A2";
+	        	document.getElementById("result_"+js_comment_seqNum).style.color="#FFF";
+        	}
+        	document.getElementById("trangeInput").value=clearFont(document.getElementById("code_"+js_comment_seqNum).innerHTML);
+        }else if(key==38){//向上
+        	if(js_comment_seqNum>1){
+        		document.getElementById("result_"+js_comment_seqNum).style.background="#FFF";
+        		document.getElementById("result_"+js_comment_seqNum).style.color="#666666";        		
+        		js_comment_seqNum = js_comment_seqNum -1;
+        		document.getElementById("result_"+js_comment_seqNum).onFocus=true;
+        		document.getElementById("result_"+js_comment_seqNum).style.background="#0055A2";
+        		document.getElementById("result_"+js_comment_seqNum).style.color="#FFF";
+        		document.getElementById("trangeInput").value=clearFont(document.getElementById("code_"+js_comment_seqNum).innerHTML);
+        	}else{
+        		document.getElementById("trangeInput").value='';
+        		document.getElementById("stockResult").style.display="none";
+        	}
+        	
+        }else if(key==13){//enter健
+        	var content = document.getElementById("trangeInput").value;
+        	if(content!=''){
+        		js_comment_seqNum=0;
+        		document.getElementById("stockCode").value=content;
+        		document.getElementById("stockResult").style.display="none";
+        		addStock();
+        	}
+        } 
+       if(window.event){
+    	   e.cancelBubble=true;
+       }
+	}
+	function chose(key,name){
+		document.getElementById("stockCode").value = key;
+		document.getElementById("stockResult").style.display="none";
+		return;
+	}
+	/**
+	 * 清楚之中的span标签
+	 * @param str
+	 * @return
+	 */
+	function clearFont(str){
+		if(/(.*)<font color="*red"*>(.*)<\/font>(\d*)/gi.test(str)){
+			return RegExp.$1+RegExp.$2+RegExp.$3;
+		}else{
+			return str;
+		}
+	}
+	/**
+	 * 将搜索关键字变红
+	 * @param source
+	 * @param replaceStr
+	 * @return
+	 */
+	function changeColor(source,replaceStr){
+		return source.toString().replace(replaceStr,'<font color="red">'+replaceStr+'</font>');
+	}
+	//添加自选股
+	function addStock(domain,groupID){
+		var content = document.getElementById("trangeInput").value;
+		document.getElementById("stockCode").value = content;
+		str = content;
+		if(str==""){
+			showAlert("请输入个股代码");
+			return;
+		}
+		if(str=="个股代码"){
+			showAlert("请输入个股代码");
+			return;
+		}
+		if(!groupID){
+			return;
+		}
+		var url= domain+"/stock/addCoolStock?groupID="+groupID+"&code="+str;
+        XMLHttp.sendReq("get",url,"",function(obj){
+			var str = obj.dto;
+			if(str == "3"){
+				showAlert("分组不存在或已经删除，请刷新页面后重试");
+			}else if(str =="4"){
+				showAlert("当前分组已满100支，请新建分组");
+			}else if(str == "1"){
+				showAlert("添加成功");
+				getGroupStock(domain,groupID);
+			}else if(str == "6"){
+				showAlert("该组已存在此股票");
+			}else if(str == "5"){
+				showAlert("错误的股票代码");
+			}else if(str == "7"){
+				showAlert("尊敬的VIP用户，您当前分组已满150支，请新建分组");
+			}else{
+				showAlert("添加失败，请刷新后再试");
+			}
+				document.getElementById("stockResult").style.display = 'none';
+	        });
+		}
+	//关注个股
+	function addStockFouce(domain,groupID,stockCode){
+		var url= domain+"/stock/addCoolStock?groupID="+groupID+"&code="+stockCode;
+        XMLHttp.sendReq("get",url,"",function(obj){
+			var str = obj.dto;
+			if(str == "3"){
+				showAlert("分组不存在或已经删除，请刷新页面后重试");
+			}else if(str =="4"){
+				showAlert("当前分组已满100支，请新建分组");
+			}else if(str == "1"){
+//				showAlert("添加成功");
+				
+				var str ="";
+				str += '<span onclick="delStockFouce(\''+stockCode+'\',\''+groupID+'\',\''+domain+'\')" style="cursor: pointer;padding: 5px 10px;background: #ccc;font-size: 13px;color: #fff;border-radius: 5px;display: block;">已关注</span>';
+				document.getElementById("isStockFouceDiv").innerHTML = str ;
+				
+			}else if(str == "6"){
+				showAlert("该个股已添加");
+			}else if(str == "5"){
+				showAlert("错误的股票代码");
+			}else if(str == "7"){
+				showAlert("尊敬的VIP用户，您当前分组已满150支，请新建分组");
+			}else{
+				showAlert("添加失败，请刷新后再试");
+			}
+	    });
+	}
+	//删除个股
+	function delStockFouce(stockCode,groupID,domain){
+		confirm("确认要取消吗？",function(r){
+			if(r){
+				var url = domain+'/stock/delGroupStock?groupID='+groupID+'&stockCode='+stockCode;
+				XMLHttp.sendReq("get", url, "", function(obj){
+					var str = obj.dto;
+					if(str=="1"){
+						var str ="";
+						str += '<span onclick="addStockFouce(\''+domain+'\',\''+groupID+'\',\''+stockCode+'\')" style="cursor: pointer;padding: 5px 10px;background: linear-gradient(30deg,#4793f1,#7fb8ff);font-size: 13px;color: #fff;border-radius: 5px;display: block;">加关注</span>';
+						document.getElementById("isStockFouceDiv").innerHTML = str ;
+						showAlert("取消关注成功.");
+					}else{
+						showAlert("删除失败，请刷新后再试");
+						return;
+					}
+				});
+			}
+		});
+	}
+
+	//删除个股
+	function delStock(stockCode,groupID,domain){
+		confirm("确认要删除吗？",function(r){
+			if(r){
+				var url =  domain+'/stock/delGroupStock?groupID='+groupID+'&stockCode='+stockCode;
+				XMLHttp.sendReq("get", url, "", function(obj){
+					var str = obj.dto;
+					if(str=="1"){
+						getGroupStock(domain,groupID);
+						return;
+					}else{
+						showAlert("删除失败，请刷新后再试");
+						return;
+					}
+				});
+			}
+		});
+	}
+	
+    function xj_change(listCode){
+		var arr = listCode.split(",");
+		for(var i = 0;i<arr.length; i++){
+			var code = arr[i];
+			var hq_obj = window["hq_str_"+code].split(",");
+			var zd_Rate = (hq_obj[3]-hq_obj[2])/hq_obj[2]*100;
+			var zd_Rate_str = zd_Rate.toFixed(2)+"%";
+			if(document.getElementById("xj_"+code) != null && document.getElementById("zd_"+code) != null){
+//				if(code.charAt(0)!='g'){
+//					if(Number(hq_obj[3]) > Number(hq_obj[2])){
+//						document.getElementById("xj_"+code).innerHTML="<span style='color:red'>￥"+hq_obj[3]+"</span>";
+//						document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+//					}else if(Number(hq_obj[3]) < Number(hq_obj[2])){
+//						if(Number(hq_obj[3]) == 0){
+//							document.getElementById("xj_"+code).innerHTML="--";
+//							document.getElementById("zd_"+code).innerHTML="--";
+//						}else{
+//							document.getElementById("xj_"+code).innerHTML="<span style='color:green'>￥"+hq_obj[3]+"</span>";
+//						document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+//						}
+//					}else{
+//						document.getElementById("xj_"+code).innerHTML=hq_obj[3];
+//						document.getElementById("zd_"+code).innerHTML="0.00%";
+//					}
+//				}else{
+//					if(Number(hq_obj[2])>0){
+//						document.getElementById("xj_"+code).innerHTML="<span style='color:red'>$"+hq_obj[1]+"</span>";
+//						document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+hq_obj[2]+"%</span>";
+//					}else if(Number(hq_obj[2])<0){
+//						document.getElementById("xj_"+code).innerHTML="<span style='color:green'>$"+hq_obj[1]+"</span>";
+//						document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+hq_obj[2]+"%</span>";;
+//					}else{
+//						document.getElementById("xj_"+code).innerHTML="--";
+//						document.getElementById("zd_"+code).innerHTML="--";
+//						}
+//				}
+				if(hq_obj.length>1){
+					if(code.substring(0,2)=='sz'||code.substring(0,2)=='sh'){
+						if(Number(hq_obj[3]) > Number(hq_obj[2])){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[3]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[3]) < Number(hq_obj[2])){
+							if(Number(hq_obj[3]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[3]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[3];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='hk'){
+						if(Number(hq_obj[5]) > Number(hq_obj[2])){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[5]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[5]) < Number(hq_obj[2])){
+							if(Number(hq_obj[5]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[5]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[5];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='gb'){
+						if(Number(hq_obj[2])>0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+hq_obj[2]+"%</span>";
+						}else if(Number(hq_obj[2])<0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+hq_obj[2]+"%</span>";;
+						}else{
+							document.getElementById("xj_"+code).innerHTML="--";
+							document.getElementById("zd_"+code).innerHTML="--";
+						}
+					}else if(code.substring(0,2)=='r_'){
+						if(Number(hq_obj[2]) > 0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[2]) < 0){
+							if(Number(hq_obj[1]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[1];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}
+				}else{
+					document.getElementById("xj_"+code).innerHTML="--";
+					document.getElementById("zd_"+code).innerHTML="--";
+				}
+				
+			}
+		}
+	}
+    
+    function hotStock_change(listCode){
+		var arr = listCode.split(",");
+		for(var i = 0;i<arr.length; i++){
+			var code = arr[i];
+			var hq_obj = window["hq_str_"+code].split(",");
+			var zd_Rate = (hq_obj[3]-hq_obj[2])/hq_obj[2]*100;
+			var zd_Rate_str = zd_Rate.toFixed(2)+"%";
+			if(document.getElementById("sxj_"+code) != null && document.getElementById("szd_"+code) != null){
+//				if(code.charAt(0)!='g'){
+//					if(Number(hq_obj[3]) > Number(hq_obj[2])){
+//						document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>￥"+hq_obj[3]+"</span>";
+//						document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+//					}else if(Number(hq_obj[3]) < Number(hq_obj[2])){
+//						if(Number(hq_obj[3]) == 0){
+//							document.getElementById("sxj_"+code).innerHTML="--";
+//							document.getElementById("szd_"+code).innerHTML="--";
+//						}else{
+//							document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>￥"+hq_obj[3]+"</span>";
+//						document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+//						}
+//					}else{
+//						document.getElementById("sxj_"+code).innerHTML=hq_obj[3];
+//						document.getElementById("szd_"+code).innerHTML="0.00%";
+//					}
+//				}else{
+//					if(Number(hq_obj[2])>0){
+//						document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>$"+hq_obj[1]+"</span>";
+//						document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+hq_obj[2]+"%</span>";
+//					}else if(Number(hq_obj[2])<0){
+//						document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>$"+hq_obj[1]+"</span>";
+//						document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+hq_obj[2]+"%</span>";;
+//					}else{
+//						document.getElementById("sxj_"+code).innerHTML="--";
+//						document.getElementById("szd_"+code).innerHTML="--";
+//						}
+//				}
+				if(hq_obj.length>1){
+					if(code.substring(0,2)=='sz'||code.substring(0,2)=='sh'){
+						if(Number(hq_obj[3]) > Number(hq_obj[2])){
+							document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>"+hq_obj[3]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[3]) < Number(hq_obj[2])){
+							if(Number(hq_obj[3]) == 0){
+								document.getElementById("sxj_"+code).innerHTML="--";
+								document.getElementById("szd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>"+hq_obj[3]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("sxj_"+code).innerHTML=hq_obj[3];
+							document.getElementById("szd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='shk'){
+						if(Number(hq_obj[5]) > Number(hq_obj[2])){
+							document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>"+hq_obj[5]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[5]) < Number(hq_obj[2])){
+							if(Number(hq_obj[5]) == 0){
+								document.getElementById("sxj_"+code).innerHTML="--";
+								document.getElementById("szd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>"+hq_obj[5]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("sxj_"+code).innerHTML=hq_obj[5];
+							document.getElementById("szd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='gb'){
+						if(Number(hq_obj[2])>0){
+							document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+hq_obj[2]+"%</span>";
+						}else if(Number(hq_obj[2])<0){
+							document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+hq_obj[2]+"%</span>";;
+						}else{
+							document.getElementById("sxj_"+code).innerHTML="--";
+							document.getElementById("szd_"+code).innerHTML="--";
+						}
+					}else if(code.substring(0,2)=='r_'){
+						if(Number(hq_obj[2]) > 0){
+							document.getElementById("sxj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[2]) < 0){
+							if(Number(hq_obj[1]) == 0){
+								document.getElementById("sxj_"+code).innerHTML="--";
+								document.getElementById("szd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("sxj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("szd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("sxj_"+code).innerHTML=hq_obj[1];
+							document.getElementById("szd_"+code).innerHTML="0.00%";
+						}
+					}
+				}else{
+					document.getElementById("sxj_"+code).innerHTML="--";
+					document.getElementById("szd_"+code).innerHTML="--";
+				}
+				if(hq_obj[0]!=null && hq_obj[0]!=""){
+					document.getElementById("sname_"+code).innerHTML=hq_obj[0];
+				}
+				
+				
+			}
+		}
+	}
+    
+    
+    

@@ -1,0 +1,236 @@
+/**
+ * 多少行情统一在这个js中。
+ * 行情展示：自选股我的股票/
+ * @param listCode
+ */
+function tgb_hq_change(listCode){
+
+    if(realHq!=null && realHq!=undefined){
+        var rise_fall_amount = (realHq.pxChange == null) ? "--" : realHq.pxChange;//涨跌额
+        var current_price = (realHq.price == null) ? "--" : realHq.price;//当前价
+        var zd_Rate_str = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2) + "%"; //涨跌比%
+        var code = realHq.fullCode
+        if (document.getElementById("a" + code) != null && document.getElementById("c" + code) != null && document.getElementById("b" + code) != null) {
+            //涨的情况
+            if (rise_fall_amount > 0) {
+                document.getElementById("a" + code).innerHTML = "<span style='color:#ed3713'>" + current_price + "</span>";
+                document.getElementById("c" + code).innerHTML = "<span style='color:#ed3713'>" + zd_Rate_str + "</span>";
+                document.getElementById("b" + code).innerHTML = "<span style='color:#ed3713'>" + rise_fall_amount + "</span>";
+            } else if (rise_fall_amount < 0) {//跌的情况
+                document.getElementById("a" + code).innerHTML = "<span style='color:#0bb60b'>" + current_price + "</span>";
+                document.getElementById("c" + code).innerHTML = "<span style='color:#0bb60b'>" + zd_Rate_str + "</span>";
+                document.getElementById("b" + code).innerHTML = "<span style='color:#0bb60b'>" + rise_fall_amount + "</span>";
+            } else if (rise_fall_amount == 0 && current_price != 0) {//不涨不跌
+                document.getElementById("a" + code).innerHTML = current_price;
+                document.getElementById("c" + code).innerHTML = "0.00%";
+                document.getElementById("b" + code).innerHTML = "0.00";
+            } else {
+                document.getElementById("a" + code).innerHTML = "--";
+                document.getElementById("c" + code).innerHTML = "--";
+                document.getElementById("b" + code).innerHTML = "--";
+            }
+        }
+    }
+
+}
+
+
+
+
+
+/**
+ * 淘股论坛---热门股吧沪深，港股（热门股吧独立页）
+ * outType 输出样式。 不同的页面输出的样式是不同的。
+ * listCode->一种是代码数组/一种是为空直接通过页面元素获取。
+ */
+function loadTGBHq(listCode, outType) {
+    var stockListElements = [];
+    var patrn = /^[0-9]*$/;
+    var stockList = [];
+
+    //根据listcode参数类型进行转换
+    if (typeof listCode === 'string') {
+        stockListElements = listCode.split(",");
+    } else if (Array.isArray(listCode)) {
+        stockListElements = listCode;
+    } else {
+        // stockListElements = document.getElementsByName("code_input");
+         stockListElements = $("[name='code_input']");
+
+    }
+
+    for (var i = 0; i < stockListElements.length; i++) {
+        var stockCode = typeof stockListElements[i] === 'string' ? stockListElements[i] : stockListElements[i].value.toLowerCase();
+        if (!patrn.test(stockCode)) {
+            stockList.push(stockCode);
+        }
+    }
+
+    if (stockList.length > 0) {
+        getHqList(stockList, outType);
+    }
+    if (isStockTradingTime()) {
+        var intervalId = setInterval(function () {
+            if (stockList.length > 0) {
+                getHqList(stockList,  outType);
+            }
+        }, 60000);
+
+        return intervalId;
+    }
+}
+
+/**
+ * 实时热搜回调函数
+ **/
+function hotSearchStock(stocklist,hotStockList) {
+    var objectList = new Array();
+    var stringList = new Array();
+    for(var i = 0;i<stocklist.length; i++) {
+        var str = stocklist[i].fullCode;
+        stringList.push(str);
+    }
+    for(var j = 0;j < hotStockList.length; j++){
+        if(!stringList.includes(hotStockList[j])) {
+            objectList.push(new Persion("--", "--", j, 'groupstock_' + hotStockList[j]));
+        }
+    }
+    for(var i = 0;i<stocklist.length; i++){
+        var realHq = stocklist[i];
+        if(realHq!=null && realHq!=undefined){
+            var rise_fall_amount = (realHq.pxChange == null) ? "--" : realHq.pxChange;//涨跌额
+            var current_price = (realHq.price == null) ? "--" : realHq.price;//当前价
+            var zd_Rate = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2);
+            var zd_Rate_str = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2) + "%"; //涨跌比%
+            var code = realHq.fullCode
+            if (document.getElementById("xj_"+code) != null && document.getElementById("zd_"+code) != null) {
+                //涨的情况
+                if (rise_fall_amount > 0) {
+                    document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+current_price+"</span>";
+                    document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+                } else if (rise_fall_amount < 0) {//跌的情况
+                    document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+current_price+"</span>";
+                    document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+                } else {
+                    document.getElementById("xj_"+code).innerHTML=current_price;
+                    document.getElementById("zd_"+code).innerHTML="0.00%";
+                }
+            }
+            objectList.push(new Persion(current_price,zd_Rate,i,'groupstock_'+realHq.fullCode));
+        }
+    }
+    store.set("_objectList", objectList);
+}
+
+//defaultContainerRight-stock-Rate使用的样式渲染
+function hotDefaultStocl(stocklist) {
+    for(var i = 0;i<stocklist.length; i++){
+        var realHq = stocklist[i];
+        if(realHq!=null && realHq!=undefined){
+            var rise_fall_amount = (realHq.pxChange == null) ? "--" : realHq.pxChange;//涨跌额
+            var current_price = (realHq.price == null) ? "--" : realHq.price;//当前价
+            var zd_Rate_str = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2) ; //涨跌比%
+            var code = realHq.fullCode
+            //涨的情况
+            if(zd_Rate_str>0){
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="rise">'+current_price+'&nbsp;/&nbsp;+'+zd_Rate_str+'%</span>');
+            }else if(zd_Rate_str<0){
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="fall">'+current_price+'&nbsp;/&nbsp;'+zd_Rate_str+'%</span>');
+            }else{
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="c999">'+current_price+'&nbsp;/&nbsp;'+zd_Rate_str+'%</span>');
+            }
+        }
+    }
+
+}
+//淘股论坛的只展示涨跌幅
+function hotDefaultStocl2(stocklist) {
+    for(var i = 0;i<stocklist.length; i++){
+        var realHq = stocklist[i];
+        if(realHq!=null && realHq!=undefined){
+            var rise_fall_amount = (realHq.pxChange == null) ? "--" : realHq.pxChange;//涨跌额
+            var current_price = (realHq.price == null) ? "--" : realHq.price;//当前价
+            var zd_Rate_str = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2) ; //涨跌比%
+            var code = realHq.fullCode
+            //涨的情况
+            if(zd_Rate_str>0){
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="rise">'+current_price+'&nbsp;/&nbsp;+'+zd_Rate_str+'%</span>');
+            }else if(zd_Rate_str<0){
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="fall">'+current_price+'&nbsp;/&nbsp;'+zd_Rate_str+'%</span>');
+            }else{
+                $('#' + code).find('.defaultContainerRight-stock-Rate').html('<span class="c999">'+current_price+'&nbsp;/&nbsp;'+zd_Rate_str+'%</span>');
+            }
+        }
+    }
+
+}
+
+/**
+ * 搜索落地页的24小时搜索排行
+ * @param stocklist
+ */
+function twentyFourhourRanking(stocklist) {
+    for(var i = 0;i<stocklist.length; i++){
+        var realHq = stocklist[i];
+        if(realHq!=null && realHq!=undefined){
+            var rise_fall_amount = (realHq.pxChange == null) ? "--" : realHq.pxChange;//涨跌额
+            var current_price = (realHq.price == null) ? "--" : realHq.price;//当前价
+            var zd_Rate_str = (realHq.pxChangeRate == null) ? "--" : parseFloat(realHq.pxChangeRate).toFixed(2) ; //涨跌比%
+            var code = realHq.fullCode
+            //涨的情况
+            if(zd_Rate_str!=0 || current_price!=0){
+                $('#xianjia_'+code).css('color',zd_Rate_str<0?"#0bb60b":"#ed3713").html(Number(current_price).toFixed(2));
+                $('#zhangfurate_'+code).css('color',zd_Rate_str<0?"#0bb60b":"#ed3713").html(zd_Rate_str+"%");
+            }
+        }
+    }
+
+}
+
+
+function getHqList(hotStockList,outType) {
+    $.ajax({
+        url: hqDomain,
+        method: 'GET',
+        data: {stockCodeList: JSON.stringify(hotStockList)},
+        dataType: 'json',
+        xhrFields: {withCredentials: true},
+        success: function(response) {
+            if(response.status){
+                if(outType==='xj'){
+                    hotSearchStock(response.dto,hotStockList);
+                }else if(outType==='default'){
+                    hotDefaultStocl(response.dto);
+                }else if(outType==='zhandie'){
+                    twentyFourhourRanking(response.dto)
+                }else if(outType==='default2'){
+                    hotDefaultStocl2(response.dto);
+                }
+
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('请求失败. 状态码: ' + xhr.status);
+        }
+    });
+}
+function isStockTradingTime() {
+    var now = new Date();
+    var dayOfWeek = now.getDay();
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+
+    // 判断当前时间是否在股票交易时间范围内
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) { // 周一至周五为交易日
+        if (hours > 9 && hours < 15) { // 交易时间为上午 9 点到下午 3 点
+            return true;
+        } else if (hours === 9 && minutes >= 15) { // 交易时间开始于上午 9:15
+            return true;
+        } else if (hours === 15 && minutes === 0) { // 交易时间结束于下午 3 点
+            return true;
+        }
+    }
+    return false;
+}
+
+

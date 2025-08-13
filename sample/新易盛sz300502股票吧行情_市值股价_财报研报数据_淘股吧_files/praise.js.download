@@ -1,0 +1,47 @@
+/**
+ * 点赞的js
+ **/
+
+var basePathShuo=basePath.replace("www","shuo");
+/**
+ * 说说类型的点赞 ，19位的都调用这个
+ * @param shuoreplyID
+ * @param flag  类型
+ * @param shuoID
+ * @param obj
+ * @param usefulNum
+ */
+function shuoAddPraise(shuoreplyID,flag,shuoID,obj,usefulNum){
+    var params = {
+        'shuoReplyID':shuoreplyID,
+        'flag':flag,
+        'shuoID':shuoID
+    };
+    $.ajax({
+        url: basePathShuo+'/shuo/addUseful',
+        type: "get",
+        cache: false,
+        xhrFields: {withCredentials: true},
+        dataType: "json",
+        data: params,
+        success: function (data) {
+            var str = data.dto.result;
+            if(str == "999999"){
+                showAlert("您投票速度太快了，请休息30秒以后再投票吧！");
+            }else if(str == "999998"){
+                showAlert("您不能投自己的票，让其他用户帮您投吧！");
+            }else if(str == "10000086"){
+                showAlert("由于您违反了点赞规则而被禁止发起赞！");
+            }else if(str == "10000087"){
+                showAlert("内容正在审核中，请稍后再试。");
+            }else if(str != "0" && str!='-1'){
+                $(obj).find('.zanNums').text(str>99?99:str);
+                gioLikeSuccess(shuoID,"S","L")
+                showAlert('点赞成功！')
+            }else{
+                showAlert("您已经投过票了，一个ID对同个回帖或者主帖只允许投一票");
+                return;
+            }
+        }
+    });
+}

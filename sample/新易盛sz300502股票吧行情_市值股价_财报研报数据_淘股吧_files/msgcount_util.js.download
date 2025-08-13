@@ -1,0 +1,1342 @@
+String.prototype.startWith=function(str){
+	var reg=new RegExp("^"+str);
+	return reg.test(this);
+}
+var domainUrl = document.domain;
+var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"))
+var shuoDomain = "shuo."+rootDomain;
+var wwwDomain = "www."+rootDomain;
+var ssoDomain = "sso."+rootDomain;
+var wwwDomainPath = "https://"+wwwDomain+"/";
+var shuoDomainPath = "https://"+shuoDomain+"/";
+
+function loadJs(file){
+	var oHead = document.getElementsByTagName('HEAD').item(0);
+	var oScript= document.createElement("script");
+	oScript.type = "text/javascript";
+	oScript.src=file;
+	oHead.appendChild(oScript);
+}
+loadJs("https://js.tgb.cn/js/jquery/jquery.alerts.js");
+var iframe = null;
+if(document.domain.indexOf("tgb") > -1 && !document.domain.startWith("www")){
+	var jsIframe = document.createElement("iframe");
+	jsIframe.style.display = "none";//none iframe
+	jsIframe.id = "iframeProxy";
+	jsIframe.name = "iframeProxy";
+	jsIframe.src="https://"+wwwDomain+"/domainProxy.html";
+	document.body.appendChild(jsIframe);
+	document.domain = rootDomain;
+	iframe = window.frames['iframeProxy'];
+}
+var currentKeyWords = [];
+var radioAlt = ["请输入个股代码或个股名称","请输入帖子标题或报告标题","请输作者或研究员","请输入感兴趣的话题,如:“房地产”"];
+function attachRadioEvent(doI){
+	if(!doI)var doI = 0;
+	var objs = document.getElementsByName("type");
+	var keywords = document.getElementById("keywords");
+	for(var i = 0 ; i < radioAlt.length ;i++){
+		if(keywords.value == radioAlt[i]){
+			keywords.value = radioAlt[doI];
+		}else if(keywords.value =="") {
+			keywords.value = radioAlt[doI];
+		}
+	}
+}
+function attachSearch(obj){
+	if(!obj)return;
+	try{
+		for(var i = 0 ; i < radioAlt.length;i++){
+			if(obj.value == radioAlt[i]){
+				obj.value ="";
+			}
+		}
+	}catch(e){}
+}
+function attachInputEvent(evt,obj){
+	if(!evt)evt=window.event;
+	if(evt.keyCode == 13){
+		tosub();
+	}
+}
+function tgbPvnum(ID){
+	var url= "tgbPvnum?adID="+ID+"&randnum="+Math.random();
+	if(document.domain.indexOf("tgb") > -1 && !document.domain.startWith("www")){
+		XMLHttp.sendReq("get",url,"",function(){});
+	}else{
+		XMLHttp.sendReq("get",url,"",function(){});
+	}
+}
+
+
+
+
+var domainUrl = document.domain;
+var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"))
+var shuoDomain = "https://shuo."+rootDomain;
+//获取当前时间下分（格式化 fmt ）
+function getDt(minu) {
+	var dd = new Date();
+	var fmt = "yyyyMMddhhmmss";
+	var dd = new Date();
+	var o = {
+		"M+" : dd.getMonth() + 1, // 月份
+		"d+" : dd.getDate(), // 日
+		"h+" : dd.getHours(), // 小时
+		"m+" : dd.getMinutes() + minu, // 分
+		"s+" : dd.getSeconds(), // 秒
+		"q+" : Math.floor((dd.getMonth() + 3) / 3), // 季度
+		"S" : dd.getMilliseconds()
+		// 毫秒
+	};
+	if (/(y+)/.test(fmt))
+		fmt = fmt.replace(RegExp.$1, (dd.getFullYear() + "")
+			.substr(4 - RegExp.$1.length));
+	for ( var k in o)
+		if (new RegExp("(" + k + ")").test(fmt))
+			fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k])
+				: (("00" + o[k]).substr(("" + o[k]).length)));
+	return fmt;
+}
+//只能一分钟请求一次  同一个浏览器不能重复请求
+var _keybMsgDt = "_keyTgbMsgDt1";
+//存储 msg json 数据
+var _keyMsgJson = "_keyMsgJson";
+var url = shuoDomain+"/getMsgCount?jsoncallback=?";
+//var url = "/getMsgCount?jsoncallback=?";
+
+
+
+//
+////弹出大V观点推荐一个
+//function davDialogOne(num){
+//	 _czc.push(﻿['_trackEvent','大V','弹出大V观点']);
+//	var topHei=$(document).scrollTop()+150;
+//	var left=(document.documentElement.clientWidth-500)/2;
+//	var dom="";
+//	var dvurl='https://www.'+rootDomain+'/new/dav/davViewPushMessage?num='+num
+//	$.getJSON(dvurl,function(json) {
+//			$('#mybg').css('height',document.body.scrollHeight);
+//			 var time="";
+//
+//			 //大VDOM
+//			 var contentDav="";
+//			 //淘股吧DOM
+//			 var contentTgb="";
+//			 if(json.dto.davlist.length>0){
+//
+//				 var nowTime=new Date(json.dto.davlist[0].createdt);
+//				 var year=nowTime.getFullYear();
+//				 var month=nowTime.getMonth()+1<10?('0'+(nowTime.getMonth()+1)) : nowTime.getMonth()+1;
+//				 var day=nowTime.getDate()<10?('0'+nowTime.getDate()) : nowTime.getDate();
+//				 var hour=nowTime.getHours()<10?('0'+nowTime.getHours()):nowTime.getHours();
+//				 var minutes=nowTime.getMinutes()<10?('0'+nowTime.getMinutes()):nowTime.getMinutes();
+//				 time=year+'-'+month+'-'+day+' '+hour+':'+minutes;
+//				 var cancel='<span class="dvcolseone" style=" padding: 8px 20px; background-color: #8a8a8a;color: #fff;margin-right: 30px;cursor: pointer;display: inline-block;">取消</span>';
+//				 if(json.dto.dpList.length>0)cancel="";
+//				 contentDav+='<div style="text-align:center;font-size:14px;padding:10px 0;background-color:#fff;margin-top: -7px;">'+
+//				 				 '<div style="color:#4793F1;margin:10px;text-align:left">大V观点提示</div>'+
+//				                 '<div style="line-height:20px;padding:0 20px;"><strong><a  target="_blank" href="https://www.'+rootDomain+'/blog/'+json.dto.davlist[0].userID+'">'+json.dto.davlist[0].userName+'</a><a target="_blank" type="dav1" href="https://www.'+rootDomain+'/new/dav/getDvViewPointNew?seq='+json.dto.davlist[0].seq+'">《'+json.dto.davlist[0].subject+'》</a></strong></div>'+
+//				                 '<div style="color:#999;margin-top:5px">发布时间  '+time+'</div>'+
+//				                 '<div style="color: #666;margin-top: 10px;text-align: left;padding: 0 40px;line-height: 20px;word-break: break-all;">【摘要】'+json.dto.davlist[0].subInfo+'</div>'+
+//				    		'</div>'+
+//				    		'<div style="padding:15px;text-align:center;background-color:#fff;">'+cancel+
+//				    		    '<a type="dav" target="_blank" href="https://www.'+rootDomain+'/new/dav/getDvViewPointNew?seq='+json.dto.davlist[0].seq+'"  style="padding: 8px 20px;background-color: #f13c1d;color: #fff;cursor: pointer;display: inline-block;">查看原文</a>'+
+//				    		'</div>';
+//					_czc.push(﻿['_trackEvent','大V',' 弹出大V观点',json.dto.davlist[0].subject.substring(0,15)]);
+//			 }
+//			 if(json.dto.dpList.length==1){
+//				 if(json.dto.davlist.length>0){contentTgb+="<div style='margin-bottom:7px ;border-bottom:1px solid #666;background-color:#fff'></div>";}
+//				 contentTgb+=tgbOne(json.dto.dpList[0])
+//			 }else	if(json.dto.dpList.length>1){
+//				 var cancel1='';
+//				 if(json.dto.davlist.length>0)cancel1='<span class="dvcolseone" style=" padding: 8px 20px; background-color: #8a8a8a;color: #fff;margin-right: 30px;cursor: pointer;display: inline-block;">取消</span>';
+//				 if(json.dto.davlist.length>0){contentTgb+="<div style='margin-bottom:7px ;border-bottom:1px solid #666;background-color:#fff'></div>";}
+//				 contentTgb+=tgbMore(json.dto.dpList,cancel1)
+//			 }
+//			dom+='<div class="davDig" style="width:500px;padding:15px;position: absolute;z-index:1001;">'+
+//		    		'<div style="background-image: url(https://css.tgb.cn/res/images/dav/kuang.png);background-repeat: no-repeat;height: 60px;line-height: 60px;text-align: center;color: #fff;font-size:16px;">关注提示'+
+//			           '<img class="dvcolseone" style="float:right;margin-right:15px;margin-top: 15px;cursor:pointer;" src="https://css.tgb.cn/res/images/dav/x .png">'+
+//					'</div>'+contentDav+contentTgb+
+//		    	 '</div>';
+//
+//			var dom1=$(dom)
+//		    dom1.css('top',topHei);
+//			dom1.css('left',left);
+//
+//			scrollTo('0','0');
+//			if(json.dto.davlist.length>=1 ||json.dto.dpList.length>=1){
+//				openDialog();
+//			    $(document.body).append(dom1);
+//			}
+//
+//		    dom1.find('.dvcolseone').click(function(){
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav(this);
+//		    })
+//		    dom1.find('a[type="dav"]').click(function(){
+//		    	dom1.remove();
+//		    	_czc.push(﻿['_trackEvent','大V','查看大V观点', dom1.find('a[type="dav1"]').html().replace('《','').replace('》','').substring(0,15)]);
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		    })
+//		   dom1.find('a[type="dav1"]').click(function(){
+//		    	dom1.remove();
+//		    	_czc.push(﻿['_trackEvent','大V','查看大V观点', dom1.find('a[type="dav1"]').html().replace('《','').replace('》','').substring(0,15)]);
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		    })
+//
+//		    dom1.find('a[type="tgb"],a[type="dav1"]').click(function(){
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		   })
+//	})
+//}
+////弹出大V观点多个
+//function davDialogMore(num){
+//	 _czc.push(﻿['_trackEvent','大V','弹出大V观点']);
+//	var topHei=$(document).scrollTop()+150;
+//	var left=(document.documentElement.clientWidth-500)/2;
+//	var dom="";
+//	var dvurl='https://www.'+rootDomain+'/new/dav/davViewPushMessage?num='+num
+//	$.getJSON(dvurl,function(json) {
+//		 //大VDOM
+//		 var contentDav="";
+//		 //淘股吧DOM
+//		 var contentTgb="";
+//			$('#mybg').css('height',document.body.scrollHeight);
+//			//循环多条大V 的DOM
+//			if(json.dto.davlist.length>0){
+//				var content="";
+//				for(var i=0;i<json.dto.davlist.length;i++){
+//					 var time="";
+//					 var nowTime=new Date(json.dto.davlist[i].createdt);
+//					 var year=nowTime.getFullYear();
+//					 var month=nowTime.getMonth()+1<10?('0'+(nowTime.getMonth()+1)) : nowTime.getMonth()+1;
+//					 var day=nowTime.getDate()<10?('0'+nowTime.getDate()) : nowTime.getDate();
+//					 var hour=nowTime.getHours()<10?('0'+nowTime.getHours()):nowTime.getHours();
+//					 var minutes=nowTime.getMinutes()<10?('0'+nowTime.getMinutes()):nowTime.getMinutes();
+//					 time=month+'-'+day+' '+hour+':'+minutes;
+//					 _czc.push(﻿['_trackEvent','大V',' 弹出大V观点',json.dto.davlist[i].subject]);
+//					 content+='<div  class="davDig"  style="margin-bottom:10px;margin-left:30px"><a href="https://www.'+rootDomain+'/blog/'+json.dto.davlist[i].userID+'" style="font-weight:600;display:inline-block;width:100px">'+json.dto.davlist[i].userName+'</a>'+
+//		            		 '<a type="dav1" target="_blank" href="https://www.'+rootDomain+'/new/dav/getDvViewPointNew?seq='+json.dto.davlist[i].seq+'" style="display: inline-block;width: 250px;color: #3385ff;">《'+json.dto.davlist[i].subject.substring(0,15)+'》</a>'+
+//		            		 '<span style="color:#999;display:inline-block;">'+time+'</span></div>';
+//				}
+//				contentDav+='<div style="text-align:left;font-size:14px;padding:10px 0;background-color:#fff;margin-top: -7px;">'+
+//							'<div style="color:#4793F1;margin:10px;text-align:left">大V观点提示</div>'+content+
+//				    		'</div>'+
+//				    		'<div style="padding:15px;text-align:right;background-color:#fff;">'+
+//				    			'<a type="dav" target="_blank" href="https://www.'+rootDomain+'/new/dav/getNewDavViewPoint?pageNo=1&seq=0" style="color: #3385ff;margin-right: 30px;cursor: pointer;display: inline-block;">查看更多</a>'+
+//				    		'</div>';
+//			}
+//			//根据情况获取淘股宝DOM
+//			 if(json.dto.dpList.length==1){
+//				 if(json.dto.davlist.length>0){contentTgb+="<div style='margin-bottom:7px ;border-bottom:1px solid #666;background-color:#fff'></div>";}
+//				 contentTgb+=tgbOne(json.dto.dpList[0])
+//			 }else	if(json.dto.dpList.length>1){
+//				 var cancel1='';
+//				 if(json.dto.davlist.length>0)cancel1='<span class="dvcolseone" style=" padding: 8px 20px; background-color: #8a8a8a;color: #fff;margin-right: 30px;cursor: pointer;display: inline-block;">取消</span>';
+//				 if(json.dto.davlist.length>0){contentTgb+="<div style='margin-bottom:7px ;border-bottom:1px solid #666;background-color:#fff'></div>";}
+//				 contentTgb+=tgbMore(json.dto.dpList,cancel1)
+//			 }
+//
+//			dom+='<div style="width:500px;padding:15px;position: absolute;z-index:1001;">'+
+//		    		'<div style="background-image: url(https://css.tgb.cn/res/images/dav/kuang.png);background-repeat: no-repeat;height: 60px;line-height: 60px;text-align: center;color: #fff;font-size:16px;">关注提示'+
+//			           '<img class="dvcolsemore" style="float:right;margin-right:15px;margin-top: 15px;cursor:pointer;" src="https://css.tgb.cn/res/images/dav/x .png">'+
+//					'</div>'+contentDav+contentTgb+
+//		    	 '</div>';
+//			var dom1=$(dom)
+//		    dom1.css('top',topHei);
+//			dom1.css('left',left);
+//			scrollTo('0','0')
+//			if(json.dto.davlist.length>=1 ||json.dto.dpList.length>=1){
+//				openDialog();
+//			    $(document.body).append(dom1);
+//			}
+//		    dom1.find('.dvcolsemore,.dvcolseone').click(function(){
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		    })
+//		    dom1.find('a[type="dav"]').click(function(){
+//		    	dom1.find('a[type="dav1"]').each(function(){
+//		    		if($(this).html().indexOf('查看更多')<=0){
+//		    			_czc.push(﻿['_trackEvent','大V','查看大V观点',$(this).html().replace('《','').replace('》','')]);
+//		    		}
+//		    	})
+//
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		    })
+//		   dom1.find('a[type="tgb"],a[type="dav1"]').click(function(){
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		   })
+//		   dom1.find('a[type="dav1"]').click(function(){
+//		    	_czc.push(﻿['_trackEvent','大V','查看大V观点',$(this).html().replace('《','').replace('》','')]);
+//		    	dom1.remove();
+//		    	$('#mybg').remove();
+//		    	clearDav();
+//		    })
+//
+//	})
+//}
+// 一个淘股吧DOM
+function tgbOne(tgb){
+	var time="";
+	var nowTime=new Date(tgb.postDate);
+	var year=nowTime.getFullYear();
+	var month=nowTime.getMonth()+1<10?('0'+(nowTime.getMonth()+1)) : nowTime.getMonth()+1;
+	var day=nowTime.getDate()<10?('0'+nowTime.getDate()) : nowTime.getDate();
+	var hour=nowTime.getHours()<10?('0'+nowTime.getHours()):nowTime.getHours();
+	var minutes=nowTime.getMinutes()<10?('0'+nowTime.getMinutes()):nowTime.getMinutes();
+	time=year+'-'+month+'-'+day+' '+hour+':'+minutes;
+	var tgbDom="";
+	tgbDom+='<div style="text-align:center;font-size:14px;padding:10px 0;background-color:#fff;margin-top: -7px;">'+
+		'<div style="color:#4793F1;margin:10px;text-align:left">淘股宝提示</div>'+
+		'<div style="line-height:20px;padding:0 20px;"><strong><a  target="_blank" href="https://www.'+rootDomain+'/blog/'+tgb.userID+'">'+tgb.userName+'</a><a target="_blank" type="dav1" href="https://www.'+rootDomain+'/viewNewBo?dpID='+tgb.dealPlanID+'">《'+tgb.dpName.substring(0,15)+'》</a></strong></div>'+
+		'<div style="color:#999;margin-top:5px">发布时间  '+time+'</div>'+
+		'<div style="color: #666;margin-top: 10px;text-align: left;padding: 0 40px;line-height: 20px;word-break: break-all;">淘股宝：'+tgb.planBD+'</div>'+
+		'</div>'+
+		'<div style="padding:15px;text-align:center;background-color:#fff;">'+
+		'<span class="dvcolseone" style=" padding: 8px 20px; background-color: #8a8a8a;color: #fff;margin-right: 30px;cursor: pointer;display: inline-block;">取消</span>'+
+		'<a type="tgb" target="_blank" href="https://www.'+rootDomain+'/viewNewBo?dpID='+tgb.dealPlanID+'"  style="padding: 8px 20px;background-color: #f13c1d;color: #fff;cursor: pointer;display: inline-block;">查看原文</a>'+
+		'</div>';
+	return tgbDom;
+}
+//多个淘股宝DOM
+function tgbMore(tgb,cancelBtn){
+	var content="";
+	var tgbDom="";
+	for(var i=0;i<tgb.length;i++){
+		var time="";
+		var nowTime=new Date(tgb[i].postDate);
+		var year=nowTime.getFullYear();
+		var month=nowTime.getMonth()+1<10?('0'+(nowTime.getMonth()+1)) : nowTime.getMonth()+1;
+		var day=nowTime.getDate()<10?('0'+nowTime.getDate()) : nowTime.getDate();
+		var hour=nowTime.getHours()<10?('0'+nowTime.getHours()):nowTime.getHours();
+		var minutes=nowTime.getMinutes()<10?('0'+nowTime.getMinutes()):nowTime.getMinutes();
+		time=month+'-'+day+' '+hour+':'+minutes;
+		content+='<div  class="davDig"  style="margin-bottom:10px;margin-left:30px"><a href="https://www.'+rootDomain+'/blog/'+tgb[i].userID+'" style="font-weight:600;display:inline-block;width:100px">'+tgb[i].userName+'</a>'+
+			'<a type="tgb1" target="_blank" href="https://www.'+rootDomain+'/viewNewBo?dpID='+tgb[i].dealPlanID+'" style="display: inline-block;width: 250px;color: #3385ff;">《'+tgb[i].dpName.substring(0,15)+'》</a>'+
+			'<span style="color:#999;display:inline-block;">'+time+'</span></div>';
+	}
+	tgbDom+='<div style="text-align:left;font-size:14px;padding:10px 0;background-color:#fff;margin-top: -7px;">'+
+		'<div style="color:#4793F1;margin:10px;text-align:left">淘股宝提示</div>'+content+
+		'</div>'+
+		'<div style="padding:15px;text-align:right;background-color:#fff;">'+cancelBtn+
+		'<a type="tgb" target="_blank" href="https://www.'+rootDomain+'/myAttentUsers" style="color: #3385ff;margin-right: 30px;cursor: pointer;display: inline-block;">查看更多</a>'+
+		'</div>';
+	return tgbDom;
+}
+//博客头部
+function getBlogMsg() {
+	var storeTime = store.get(_keybMsgDt);
+	var nowTime = getDt(1);
+	// 当前时间
+	var nTime = getDt(0);
+	// 非空
+	if (typeof (storeTime) == "undefined"
+		|| parseInt(nTime) >= parseInt(storeTime)) {
+		// 设置下一分钟的获取时间
+//		setCrossBorder(nowTime);
+		store.set(_keybMsgDt, nowTime);
+		$.getJSON(url,function(json) {
+			// 调用小黄标签显示
+			createTip(json);
+			store.set(_keyMsgJson, json); // 将JSON 数据存储缓存 保证一分钟内的数据 只能从缓存中获取
+		});
+	} else {
+		var key = store.get(_keyMsgJson);
+		createTip(key);
+	}
+}
+/*
+ * 跨域设值
+ */
+function  setCrossBorder(dName){
+	if (typeof window.postMessage != 'undefined'){// 检查浏览器是否支持postMessage
+		var ifr = document.getElementById('crossDomainIfr');
+		var targetOrigin = shuoDomain;  // 若写成'http://b.com/c/proxy.html'效果一样
+//		  ifr.contentWindow.postMessage(dName, targetOrigin);
+		ifr.contentWindow.postMessage(dName,targetOrigin);
+	}
+}
+/**
+ * 加载初始化设置页面数据
+ */
+function initSetIfr(){
+	if (typeof window.postMessage != 'undefined'){// 检查浏览器是否支持postMessage
+		//设置
+		$("#crossDomainIfr").attr("src",shuoDomain+"/shuoProxy.html");
+	}
+}
+
+var getUserUrl1="https://www."+rootDomain+"/user/getIsLogin";
+function setCookie(name,value){
+	var Days = 30;
+	var exp = new Date();
+	exp.setTime(exp.getTime() + Days*24*60*60*1000);
+	document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString()+";path=/;domain=."+rootDomain;
+}
+
+//获取滑动验证
+//function getslidecheck(num){
+//	$('#embed-captcha'+num).html('');
+//	requirejs([minConfig.wwwssoGeeTest_sso],function(geeTest){
+//		 geeTest.startGee(num);
+//			})
+//}
+
+//获取cookie
+function getCookie(name){
+	var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+	if(arr=document.cookie.match(reg))
+		return unescape(arr[2]);
+	else
+		return null;
+}
+// function tc() {
+// 	if(	typeof(sessionUserID)=="undefined" ||sessionUserID==0 ||""==sessionUserID){//未登陆
+//
+// 		var div=document.getElementById("giftBag");
+// 		var div2=document.getElementById("giftBagmb");
+// 		div.style.display="block";
+// 		div2.style.display="block";
+// 	}
+//
+// }
+// function getCookie(name) {//获取指定名称的cookie的值
+// 	if (document.cookie.indexOf(name) != -1) {
+// 		return
+// 	}
+// 	setCookie('newActivity', '1', 1);
+// 	//弹窗
+// 	setTimeout("tc()",1000);
+// };
+function deleteCookie(name){
+	var date=new Date();
+	date.setTime(date.getTime()-10000);
+	document.cookie=name+"=v; expires="+date.toGMTString();
+}
+function getNextday(){
+	var date = new Date();
+	var year = date.getFullYear();
+	var month = date.getMonth() + 1;
+	var day = date.getDate() + 1;
+	var H = date.getHours();
+	var timeStr = 	year + '-' + month + '-' + day + ' ' + '00:00:00';
+	return Date.parse(new Date(timeStr));
+}
+// function chooseagree(obj){
+// if($(obj).attr('data-type')=='true'){
+// 	$(obj).attr('data-type','false');
+// 	$(obj).attr('src','https://css.tgb.cn/images/MSGcenter/XTcheck1.png');
+// }else{
+// 	$(obj).attr('data-type','true');
+// 	$(obj).attr('src','https://css.tgb.cn/images/2022/new/XTcheck2.png');
+// }
+// }
+// function doAgree(){
+// 	var html = '';
+// 	html += '<div id="tgbagreebg2" style="width:100%;height:100%;z-index:2000;position:absolute;background-image:url(https://css.tgb.cn/images/zhuanti/ztOpacity.png)"></div>'
+// 	html += '<div id="tgbagree" style="width: 620px;margin: 20px auto 0px auto;z-index:2100;position:relative;">'
+// 	html += '<div class="tgbagree-content" style="width: 560px;background: #fff;padding: 20px 30px;">'
+// 	html += '<div class="tgbagree-title" style="height: 40px;line-height: 40px;text-align: center;font-size: 22px;font-weight: 700;">隐私政策</div>'
+// 	html += '<div class="tgbagree-text" style="font-size:16px;line-height:24px;height:80px;margin:10px 0px 20px 0px; word-break: break-all;">'
+// 	html += '<p>感谢您信任并使用淘股吧，在您使用淘股吧服务前，请认真阅读<a href="js.tgb.cn/yonghuyinsi.html" target="_blank" style=\'color:#2894FF;display:inline-block;\'>《淘股吧隐私协议》</a>的全部内容，以了解用户权利义务和个人信息处理规则。点击“同意”即表示您已阅读并同意全部条款。 </p>'
+// 	html += '</div>'
+// 	//html += '<div class="tgbagree-btn" style="font-size: 12px;color: #2894FF;height: 20px;line-height: 20px;">'
+// 	// html += '<img src="https://css.tgb.cn/images/2022/new/XTcheck2.png" onclick="chooseagree(this)" style="position: relative;top: 3px;cursor: pointer;margin-right: 5px;" data-type="true" id="tgbagreeIcon" />'
+// 	html += '<div id="tgbagree_ido" onclick="agreeprivacy()" style="width: 100px;height: 36px;line-height: 40px;font-size: -webkit-xxx-large;font-size: 18px;color: #fff;cursor: pointer;background: #2894FF;margin: 10px auto;border-radius: 20px;text-align: center;">同意</div>'
+// 	// html += '</div>'
+// 	html += '<div id="tgbagree_idont" onclick="dontAgree()" style="width: 100px;height: 36px;line-height: 76px;font-size: -webkit-xxx-large;font-size: 18px;color: #999;cursor: pointer;margin: 10px auto;border-radius: 20px;text-align: center;">暂不使用</div>'
+// 	// html += '</div>'
+// 	var blackDiv = document.createElement('div1');
+// 	blackDiv.style.width = '100%';
+// 	blackDiv.style.height = '100%';
+// 	blackDiv.style.position = 'fixed';
+// 	blackDiv.style.top = '0px';
+// 	blackDiv.style.zIndex = 2000;
+// 	//  blackDiv.style.backgroundImage = 'url(https://css.tgb.cn/images/zhuanti/ztOpacity.png)';
+// 	blackDiv.setAttribute('id','tgbagreebg2');
+// 	document.body.appendChild(blackDiv);
+// 	blackDiv.innerHTML = html;
+// 	$(blackDiv).find('#tgbagreebg2').click(function(){
+// 		$(blackDiv).remove();
+// 	})
+//
+// }
+// function dontAgree(){
+// 	$('#tgbagreebg2').remove();
+// 	var html = '';
+// 	html += '<div id="tgbagreebg3" style="width:100%;height:100%;z-index:1800;position:absolute;background-image:url(https://css.tgb.cn/images/zhuanti/ztOpacity.png)"></div>'
+// 	html += '<div id="tgbdontagree" style="width: 620px;margin: 20px auto 0px auto;z-index:2100;position:relative;"><div>'
+// 	html += '<div class="tgbagree-content3" style="width: 560px;background: #fff;padding: 20px 30px;">'
+// 	html += '<div class="tgbagree-title3" style="height: 60px;line-height: 40px;text-align: center;font-size: 22px;font-weight: 700;">我们将充分尊重并保护您的隐私，请您放心。</div>'
+// 	html += '<div class="tgbagree-text" style="font-size:16px;line-height:24px;height:100px;margin:10px 0px 20px 0px; word-break: break-all;">'
+// 	html += '<p>您需要同意本隐私政策，才能继续使用淘股吧。您可再次查看<a href="js.tgb.cn/yonghuyinsi.html" target="_blank" style=\'color:#2894FF;display:inline-block;\'>《淘股吧隐私协议》</a>全文。如果您同意我们的政策后，您可以继续使用淘股吧</p>'
+// 	html += '</div>'
+// 	html += '<div id="tgbagree_ido2" onclick="agreeprivacy2()" style="display: inlinecenter;width: 100px;height: 36px;line-height: 40px;font-size: -webkit-xxx-large;font-size: 18px;color: #fff;cursor: pointer;background: #2894FF;margin: 10px auto;border-radius: 20px;text-align: center;">同意并继续使用</div>'
+// 	html += '<div id="tgbagree_idont2"  onclick="iDontagreeprivacy()" style="display: inlinecenter;width: 100px;height: 36px;line-height: 40px;font-size: -webkit-xxx-large;font-size: 18px;color:#2894FF;cursor: pointer;background: #fff;margin: 10px auto;border-radius: 20px;text-align: center;">退出页面</div>'
+// 	var blackDiv = document.createElement('div2');
+// 	blackDiv.style.width = '100%';
+// 	blackDiv.style.height = '100%';
+// 	blackDiv.style.position = 'fixed';
+// 	blackDiv.style.top = '0px';
+// 	blackDiv.style.zIndex = 2000;
+// 	//  blackDiv.style.backgroundImage = 'url(https://css.tgb.cn/images/zhuanti/ztOpacity.png)';
+// 	blackDiv.setAttribute('id','tgbagreebg3');
+// 	document.body.appendChild(blackDiv);
+// 	blackDiv.innerHTML = html;
+// 	$(blackDiv).find('#tgbagreebg3').click(function(){
+// 		$(blackDiv).remove();
+// 	})
+// }
+// function agreeprivacy(){
+// 	$('#tgbagreebg2').remove();
+// 		// $.getJSON("https://www." + rootDomain + "/user/insertUserSecrets", function (json) {
+// 		// })
+// 	setCookie('agree','enter');
+// 	// deleteCookie('onedayyszc');
+// }
+// function agreeprivacy2(){
+// 	$('#tgbagreebg3').remove();
+// 	$('#tgbagreebg2').remove();
+// 	// $.getJSON("https://www." + rootDomain + "/user/insertUserSecrets", function (json) {
+// 	// })
+// 	// deleteCookie('onedayyszc');
+// 	setCookie('agree','enter');
+// }
+// function iDontagreeprivacy() {
+// 	window.history.back();
+// }
+// //为首次浏览网站的用户进行隐私政策弹窗
+// //登陆弹窗
+// $.ajax({
+// 	type:"get",
+// 	url:getUserUrl1,
+// 	dataType:"jsonp",
+// 	jsonp:"callback",
+// 	success:function(json) {
+// 		//用户为登录状态
+// 		if (!json.status) {
+// 			// var time = new Date().getFullYear() + "" + new Date().getMonth() + "" + new Date().getDate();
+// 			// var loadTime = store.get("loadTime") ? store.get("loadTime") : 0;
+// 			// if (loadTime != time) {
+// 			// 	loadNumber = 0;
+// 			// 	store.set("loadTime", time);
+// 			// }
+// 			// loadNumber = loadNumber + 1;
+// 			// store.set("loadNumber", loadNumber);
+// 			var Number = store.get("loadNumber") ? store.get("loadNumber") : 0;
+// 			var onedayyszc =  getCookie('onedayyszc') || 'false';
+// 			var agree = getCookie('agree');
+// 		    // if(agree =='enter'){
+// 			// 	return;
+// 			// }
+// 			// else{
+// 			if(agree!='enter'){
+// 				if(onedayyszc=='false'){
+// 				doAgree();
+// 				setCookie('onedayyszc',Number(getNextday()));
+// 			}
+// 				else {
+// 				if (Number(Date.parse(new Date())) > Number(onedayyszc)) {
+// 					doAgree();
+// 					setCookie('onedayyszc', Number(getNextday()));
+// 				}
+// 				else {
+// 					return;
+// 				}
+// 			}}}
+// 			/*if(loadNumber==5){
+//                 loginPanel();
+//             }*/
+// 		else {
+// 			// var img = 'https://image.tgb.cn/img/'+json.dto.portrait+'_80wh.png'
+// 			//
+// 			//  $('.NewH_Info_head_img').attr('src',img);
+// 			// 	 $.getJSON("https://www."+rootDomain+"/user/getSecretsExsit",function(json){
+// 			// 		 if(json.status){
+// 			// 			 if(json.dto==1){
+// 			// 				 return;
+// 			// 			 }else{
+// 			// 				 var onedayyszc =  getCookie('onedayyszc') || 'false';
+// 			// 					if(onedayyszc=='false'){
+// 			// 						doAgree();
+// 			// 			  		    setCookie('onedayyszc',Number(getNextday()));
+// 			// 			  	  }else{
+// 			// 			  		  if(Number(Date.parse(new Date())) > Number(onedayyszc)){
+// 			// 			  			doAgree();
+// 			// 			    		setCookie('onedayyszc',Number(getNextday()));
+// 			// 			  		  }else{
+// 			// 			  			  return;
+// 			// 			  		  }
+// 			// 			  	  }
+// 			// 			 }
+// 			// 		 }else{
+// 			return;
+// 		}
+// 	}
+// });
+function loadXdomain(){
+	if(typeof(xdomain)=="undefined"){
+		var domaintag = document.createElement('script');
+		domaintag.type = 'text/javascript';
+		domaintag.async = true;
+		domaintag.charset = "utf-8";
+		domaintag.src = "//js.tgb.cn/js/xdomain.min.js";
+		var root_s = document.getElementsByTagName('script')[0];
+		root_s.parentNode.insertBefore(domaintag, root_s);
+		//$('#xdomainS').attr('slaves',ssoUrl+'/xdomainProxy.html');
+	}
+	if(typeof(requirejs)=="undefined"){
+		var domaintag = document.createElement('script');
+		domaintag.type = 'text/javascript';
+		domaintag.async = true;
+		domaintag.charset = "utf-8";
+		domaintag.src = "//js.tgb.cn/res/libs/require.min.js";
+		var root_s = document.getElementsByTagName('script')[0];
+		root_s.parentNode.insertBefore(domaintag, root_s);
+	}
+	if(typeof(minConfig)=="undefined"){
+		var domaintag = document.createElement('script');
+		domaintag.type = 'text/javascript';
+		domaintag.async = true;
+		domaintag.charset = "utf-8";
+		domaintag.src = "//js.tgb.cn/res/config.js";
+		var root_s = document.getElementsByTagName('script')[0];
+		root_s.parentNode.insertBefore(domaintag, root_s);
+	}
+}
+var renderToId = '#loginErrorMsg';
+var loginType = "A";
+window.NVC_Opt = {
+	//无痕配置 && 滑动验证、刮刮卡、问答验证码通用配置
+	appkey:'FFFF0N00000000008F3B',
+	scene:'nvc_register',
+	isH5:false,
+	popUp:false,
+	renderTo:renderToId,
+	nvcCallback:function(data){
+		// data为getNVCVal()的值，此函数为二次验证滑动或者刮刮卡通过后的回调函数
+		// data跟业务请求一起上传，由后端请求AnalyzeNvc接口，接口会返回100或者900
+		$('#getPhoneCode').attr('data-checkCode',data);
+		// $('#getPhoneCode').click();
+		$('#getPhoneCode').removeAttr('disabled');
+
+	},
+	language: "cn",
+	//滑动验证长度配置
+	customWidth: 300,
+}
+
+var loginStatus = getCookie("loginStatus");
+//获取cookie
+function getCookie(name){
+	var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+	if(arr=document.cookie.match(reg)){
+		return unescape(arr[2]);
+	}else{
+		return null;
+	}
+}
+//登录窗口
+function loginPanel(){
+	$("#closeLogin").click(); //先关闭
+	$("#userPanelName2").val("");
+	$("#userID").val(""); //进来先初始化
+	var data = [{"city":"中国大陆","code":"86"},{"city":"中国香港","code":"852"},{"city":"中国澳门","code":"853"},{"city":"中国台湾","code":"886"},{"city":"新加坡","code":"65"},{"city":"美国","code":"1"},{"city":"加拿大","code":"1"},{"city":"英国","code":"44"},{"city":"阿富汗","code":"93"},{"city":"阿尔巴尼亚","code":"355"},{"city":"阿尔格拉","code":"213"},{"city":"安道尔","code":"376"},{"city":"安哥拉","code":"244"},{"city":"安圭拉","code":"1264"},{"city":"阿森松岛","code":"247"},{"city":"安提瓜和巴布达","code":"1268"},{"city":"阿根廷","code":"54"},{"city":"亚美尼亚","code":"374"},{"city":"阿鲁巴","code":"297"},{"city":"澳大利亚","code":"61"},{"city":"奥地利","code":"43"},{"city":"阿塞拜疆","code":"994"},{"city":"巴哈马","code":"1242"},{"city":"巴林","code":"973"},{"city":"孟加拉国","code":"880"},{"city":"巴巴多斯","code":"1246"},{"city":"白俄罗斯","code":"375"},{"city":"比利时","code":"32"},{"city":"伯利兹","code":"501"},{"city":"贝宁","code":"229"},{"city":"百慕大","code":"1441"},{"city":"不丹","code":"975"},{"city":"玻利维亚","code":"591"},{"city":"波斯尼亚和黑塞哥维那","code":"387"},{"city":"博茨瓦纳","code":"267"},{"city":"巴西","code":"55"},{"city":"文莱","code":"673"},{"city":"保加利亚","code":"359"},{"city":"布基纳法索","code":"226"},{"city":"布隆迪","code":"257"},{"city":"柬埔寨","code":"855"},{"city":"喀麦隆","code":"237"},{"city":"佛得角","code":"238"},{"city":"开曼群岛","code":"1345"},{"city":"中非共和国","code":"236"},{"city":"乍得","code":"235"},{"city":"智利","code":"56"},{"city":"哥伦比亚","code":"57"},{"city":"科摩罗","code":"269"},{"city":"刚果共和国","code":"242"},{"city":"刚果民主共和国","code":"243"},{"city":"库克群岛","code":"682"},{"city":"哥斯达黎加","code":"506"},{"city":"科特迪沃","code":"225"},{"city":"克罗地亚","code":"385"},{"city":"古巴","code":"53"},{"city":"塞浦路斯","code":"357"},{"city":"捷克共和国","code":"420"},{"city":"丹麦","code":"45"},{"city":"吉布提","code":"253"},{"city":"多米尼加","code":"1767"},{"city":"多米尼加共和国","code":"1809"},{"city":"厄瓜多尔","code":"593"},{"city":"埃及","code":"20"},{"city":"艾萨尔瓦多","code":"503"},{"city":"爱沙尼亚","code":"372"},{"city":"埃塞俄比亚","code":"251"},{"city":"法罗群岛","code":"298"},{"city":"斐济","code":"679"},{"city":"芬兰","code":"358"},{"city":"法国","code":"33"},{"city":"法属圭亚那","code":"594"},{"city":"法属波利尼西亚","code":"689"},{"city":"加蓬","code":"241"},{"city":"冈比亚","code":"220"},{"city":"格鲁吉亚","code":"995"},{"city":"德国","code":"94"},{"city":"加纳","code":"233"},{"city":"直布罗陀","code":"350"},{"city":"希腊","code":"30"},{"city":"格陵兰","code":"299"},{"city":"格林纳达","code":"1473"},{"city":"瓜德罗普","code":"590"},{"city":"关岛","code":"1671"},{"city":"危地马拉","code":"502"},{"city":"几内亚","code":"240"},{"city":"根西","code":"44"},{"city":"几内亚","code":"224"},{"city":"圭亚那","code":"592"},{"city":"海地","code":"509"},{"city":"洪都拉斯","code":"504"},{"city":"缅甸","code":"95"},{"city":"匈牙利","code":"36"},{"city":"冰岛","code":"354"},{"city":"印度","code":"91"},{"city":"印度尼西亚","code":"62"},{"city":"伊朗","code":"98"},{"city":"伊拉克","code":"964"},{"city":"爱尔兰","code":"353"},{"city":"马恩岛","code":"44"},{"city":"以色列","code":"972"},{"city":"意大利","code":"93"},{"city":"牙买加","code":"1876"},{"city":"日本","code":"81"},{"city":"泽西岛","code":"44"},{"city":"约旦","code":"962"},{"city":"哈萨克斯坦","code":"7"},{"city":"肯尼亚","code":"254"},{"city":"科索沃","code":"383"},{"city":"科威特","code":"965"},{"city":"吉尔吉斯斯坦","code":"996"},{"city":"老挝","code":"856"},{"city":"拉脱维亚","code":"371"},{"city":"黎巴嫩","code":"961"},{"city":"莱索托","code":"266"},{"city":"利比里亚","code":"231"},{"city":"利比亚","code":"218"},{"city":"列支敦士登","code":"423"},{"city":"立陶宛","code":"370"},{"city":"卢森堡","code":"352"},{"city":"马其顿","code":"389"},{"city":"马达加斯加","code":"261"},{"city":"马拉维","code":"265"},{"city":"马来西亚","code":"60"},{"city":"马尔代夫","code":"960"},{"city":"马里","code":"223"},{"city":"马耳他","code":"356"},{"city":"马提尼克","code":"596"},{"city":"毛里塔尼亚","code":"222"},{"city":"毛里求斯","code":"230"},{"city":"马约特","code":"262"},{"city":"墨西哥","code":"52"},{"city":"摩尔多瓦","code":"373"},{"city":"摩纳哥","code":"377"},{"city":"蒙古","code":"976"},{"city":"黑山","code":"382"},{"city":"蒙特塞拉特","code":"1664"},{"city":"摩洛哥","code":"212"},{"city":"莫桑比克","code":"258"},{"city":"纳米比亚","code":"264"},{"city":"尼泊尔","code":"977"},{"city":"荷兰","code":"31"},{"city":"荷属安的列斯","code":"599"},{"city":"新喀里多尼亚","code":"687"},{"city":"新西兰","code":"64"},{"city":"尼加拉瓜","code":"505"},{"city":"尼日尔","code":"227"},{"city":"尼日利亚","code":"234"},{"city":"挪威","code":"47"},{"city":"阿曼","code":"968"},{"city":"巴基斯坦","code":"92"},{"city":"巴勒斯坦","code":"970"},{"city":"巴拿马","code":"507"},{"city":"巴布亚新几内亚","code":"675"},{"city":"巴拉圭","code":"595"},{"city":"秘鲁","code":"51"},{"city":"菲律宾","code":"63"},{"city":"波兰","code":"48"},{"city":"葡萄牙","code":"351"},{"city":"波多黎各","code":"1"},{"city":"库塔","code":"974"},{"city":"留尼汪","code":"262"},{"city":"罗马尼亚","code":"40"},{"city":"俄罗斯","code":"7"},{"city":"卢旺达","code":"250"},{"city":"萨摩亚东部","code":"684"},{"city":"萨摩亚西部","code":"685"},{"city":"圣马力诺","code":"378"},{"city":"圣多美和普林西比","code":"239"},{"city":"沙特阿拉伯","code":"966"},{"city":"塞内加尔","code":"221"},{"city":"塞尔维亚","code":"381"},{"city":"塞舌尔","code":"248"},{"city":"塞拉利昂","code":"232"},{"city":"斯洛伐克","code":"421"},{"city":"斯洛文尼亚","code":"386"},{"city":"南非","code":"27"},{"city":"韩国","code":"82"},{"city":"西班牙","code":"34"},{"city":"斯里兰卡","code":"94"},{"city":"圣基茨和尼维斯","code":"1869"},{"city":"圣卢西亚","code":"1758"},{"city":"圣文森特","code":"1784"},{"city":"苏丹","code":"249"},{"city":"苏里南","code":"597"},{"city":"斯威士兰","code":"268"},{"city":"瑞典","code":"46"},{"city":"瑞士","code":"41"},{"city":"叙利亚","code":"963"},{"city":"塔吉克斯坦","code":"992"},{"city":"坦桑尼亚","code":"255"},{"city":"泰国","code":"66"},{"city":"东帝汶","code":"670"},{"city":"多哥","code":"228"},{"city":"汤加","code":"676"},{"city":"特立尼达和多巴哥","code":"1868"},{"city":"突尼斯","code":"216"},{"city":"土耳其","code":"90"},{"city":"土库曼斯坦","code":"993"},{"city":"特克斯和凯科斯群岛","code":"1649"},{"city":"乌干达","code":"256"},{"city":"乌克兰","code":"380"},{"city":"阿拉伯联合酋长国","code":"971"},{"city":"乌拉圭","code":"598"},{"city":"乌兹别克斯坦","code":"998"},{"city":"瓦努阿图","code":"678"},{"city":"委内瑞拉","code":"58"},{"city":"越南","code":"84"},{"city":"维尔京群岛","code":"1340"},{"city":"也门","code":"967"},{"city":"赞比亚","code":"260"},{"city":"津巴布韦","code":"263"}];
+	var deom="";
+	//登录面板
+	deom += '<div class="login-popup">' +
+		' <div class="login-popup-left left">' +
+		' <div class="login-popup-tittle">极速登录';
+	if(!loginStatus || loginStatus != "qrcode"){
+		deom+='<img src="https://css.tgb.cn/images/2022/new/dlgfb.png" style="margin: 0 0 -4px 5px;">';
+	}
+	deom+='</div>' +
+		' <div style="width:240px;height: 240px;position: relative;">' +
+		<!-- 刷新验证 -->
+		' <div class="popup-ewmsx" onclick="loginPanel()"> ' +
+		' <input type="hidden" id="xcxFlag"/> ' +
+		' <img src="https://css.tgb.cn/images/2022/newpc/wsx.png" style="margin-top: 80px;">' +
+		' <span style="display:block;margin-top: 20px;font-size: 14px;">二维码已过期，点击刷新</span>' +
+		' <div class="clear"></div>' +
+		' </div>' +
+		' <div id="xcxImg" onclick="xcx();kaiqi();"><img width="240px" height="240px"></div>' +
+		' </div>' +
+		' <div class="login-popup-text">' +
+		' <span>打开&nbsp;</span>' +
+		' <img src="https://css.tgb.cn/images/2022/newpc/wximg.png" style="width: 25px;float: left;margin-right: 2px;">' +
+		' <span>微信&nbsp;扫一扫，快速<b>登录/注册</b></span>' +
+		' <div class="clear"></div>' +
+		' </div>' +
+		' </div>' +
+		' <div class="login-popup-right right">' +
+		' <div class="login-popup-tittle">' +
+		' <span id="getPhoneCode"></span>' +
+		' <span style="padding-right: 16px;cursor: pointer;border-right: 1px solid #999;" id="tgbAppBtn">免密登录注册</span>' +
+		' <span style="margin-left:10px;cursor: pointer;" class="popup-tittle-noact" id="userLoginBtn">账号登录</span>' +
+		' </div>' +
+		<!-- 账号登录 -->
+		' <div id="loginPanel" style="display: none;">' +
+		' <div class="login-popup-input">' +
+		' 笔名' +
+		' <input type="text" id="userPanelName" placeholder="输入手机号/笔名" autocomplete="new-password">' +
+		' </div>' +
+		' <div class="login-popup-input">' +
+		' 密码' +
+		' <input type="password" id="userPanelPwd" placeholder="请输入6~18位英文或者数字密码" autocomplete="new-password">' +
+		' </div>' +
+		' <div id="loginBtn" class="login-button">登录</div>' +
+		' </div>' +
+		<!-- 手机号登录 -->
+		' <div id="appPanel">' +
+		' <div>' +
+		' <select class="countryCodes">';
+	for(var i = 0; i < data.length; i++){
+		deom+="<option value='" + data[i].code + "'>" + data[i].city + " +" + data[i].code + "</option>";
+	}
+	deom+=' </select>' +
+		' <input id="userPanelName2" class="login-popup-iphone" type="text" placeholder="输入手机号">' +
+		' <div class="clear"></div>' +
+		' </div>' +
+		' <div class="login-popup-vnumber">' +
+		' <input class="left" type="text" maxlength="6" id="yzmnumber" placeholder="请输入6位验证码">' +
+		' <div class="login-yzm right" id="loginyzmcode">获取验证码</div>' +
+		' <div class="clear"></div>' +
+		' </div>' +
+		' <div id="loginBtn2" class="login-button">登录/注册</div>' +
+		' </div>' +
+		' <div class="login-popup-verify" id="loginErrorMsg">' +
+		<!-- 错误信息 -->
+		' </div>' +
+		<!-- 第三方登录/忘记密码 -->
+		' <div>' +
+		' <a href="https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=100267484&redirect_uri=https://www.tgb.cn/thirdQQGetToken&state='+Math.random()+'"><img class="left" src="https://css.tgb.cn/images/register/QQ.png" style="margin-right: 20px;"></a>' +
+		' <a href="https://api.weibo.com/oauth2/authorize?response_type=code&client_id=3342123381&redirect_uri=http://www.tgb.cn/thirdGetSinaToken&state='+Math.random()+'"><img class="left" src="https://css.tgb.cn/images/register/xinlang.png"></a>' +
+		' <a class="right" href="https://'+ssoDomain+'/web/password/find" style="font-size: 14px;color: #666;cursor: pointer;">忘记密码</a>' +
+		' <div class="clear"></div>' +
+		' </div>' +
+		' </div>' +
+		' <div class="clear"></div>';
+	<!-- 上次登录  账号登录left 357   手机登录left 467   快捷登录left 38-->
+	if(loginStatus){
+		if(loginStatus == "qrcode"){
+			deom+=' <img src="https://css.tgb.cn/images/2022/newpc/scdl.png" style="position: absolute;top: 13px;left: 38px;">';
+		}else if(loginStatus == "account"){
+			deom+=' <img src="https://css.tgb.cn/images/2022/newpc/scdl.png" style="position: absolute;top: 13px;left: 495px;">';
+		}else if(loginStatus == "phone"){
+			deom+=' <img src="https://css.tgb.cn/images/2022/newpc/scdl.png" style="position: absolute;top: 13px;left: 357px;">';
+		}
+	}
+	<!-- 关闭 -->
+	deom+=' <img id="closeLogin" class="login-popup-close" src="https://css.tgb.cn/images/2022/newpc/close70black.png">' +
+		'</div>' +
+		'<div class="loginOpacity"></div>' +
+		'</div>';
+	var yzmstatus = 'false';
+	var deom1=$(deom);
+	//getslidecheck(100);
+	$(document.body).append(deom1);
+
+	//设置跨域
+	var domainUrl = document.domain;
+	var rootDomain = domainUrl.substring(domainUrl.indexOf("tgb"));
+	var ssoUrl='https://sso.'+rootDomain;
+	var ssoX={};
+	ssoX[ssoUrl+'']="/xdomainProxy.html";
+	var yzmTimer = null;
+	var yzmlasttime = 60;
+	function checkyzmtime(){
+		if(yzmlasttime>0){
+			return true;
+		}else{
+			return false;
+//    		$('#loginyzmcode').text("获取验证码").css({"color":"#333","cursor":"pointer"});
+//    		clearInterval(yzmTimer);
+//    		yzmstatus = "false";
+//    		yzmlasttime = 60 ;
+		}
+
+	}
+	// 点击获取验证码的方法
+	var flag = false;
+	deom1.find('#loginyzmcode').click(function(){
+		loadXdomain();
+		xdomain.slaves(ssoX);
+		var countrycode = $(".countryCodes").find("option:selected").val();
+		if(yzmlasttime==0){return}
+		var phone = $('#userPanelName2').val();
+		if(phone==""){showAlert("请输入手机号");return;}
+
+		var code ="";
+		if(flag || $('#getPhoneCode').attr('data-checkcode')==undefined){
+			code = getNVCVal();
+		}else{
+			code = $('#getPhoneCode').attr('data-checkcode');
+		}
+		flag =false;
+		$('#loginyzmcode').attr('disabled','disabled');
+		var userID =  $("#userID").val();
+		if(yzmstatus=='true'){return}
+		$.ajax({
+			type: 'POST',
+			url: "https://sso."+rootDomain+'/web/code/getPhoneCodeByloginAli',
+			data:{
+				countryCode:countrycode,
+				phoneNum:phone,
+				checkCode:code,
+				userID:userID
+			},
+			success: function(data){
+				$('#loginyzmcode').removeAttr('disabled');
+				if(data.errorCode==0){
+					deom1.find('#loginErrorMsg').text('');
+					yzmstatus = "true";
+					$('#getPhoneCode').attr('data-checkCode',data.errorMessage);
+					yzmTimer = setInterval(function(){
+						if(yzmlasttime>0){
+							yzmlasttime -= 1;
+							$('#loginyzmcode').text(yzmlasttime+"秒后重新获取").css({"color":"#fff","background":"#ccc","cursor":"auto"});
+						}else{
+							$('#loginyzmcode').text("获取验证码").css({"color":"#fff","background":"#ff9900","cursor":"pointer"});
+							clearInterval(yzmTimer);
+							flag =true;
+							nvcReset();
+							yzmstatus = "false";
+							yzmlasttime = 60 ;
+							yzmstatus = 'false';
+						}
+
+					},1000);
+					//pc端验证码确认成功 gio 埋点 mantoo
+					var body = {
+						"entryPage_var":getReferrerName(),
+						"entryFunction_var":"pc端验证码确认成功",
+						"registerType_var": "登录页",
+					};
+					gioMessage("pcCodeSuccess" , body);
+
+
+				}else if(data.errorCode == 400) {
+					//唤醒滑动验证
+					getNC().then(function(){
+						_nvc_nc.upLang('cn', {
+							_startTEXT: "请按住滑块，拖动到最右边",
+							_yesTEXT: "验证通过",
+							_error300: "哎呀，出错了，点击<a href=\"javascript:__nc.reset()\">刷新</a>再来一次",
+							_errorNetwork: "网络不给力，请<a href=\"javascript:__nc.reset()\">点击刷新</a>",
+						})
+						nvcReset();
+					})
+					$(".registerHd").show();
+					showAlert('请滑动验证条验证通过后再操作');
+					return;
+				}else if (data.errorCode == 800 || data.errorCode == 900) {
+					//直接拦截
+					$("#getPhoneCode").removeAttr("data-checkCode");
+					nvcReset();
+					return;
+				}else{
+					$("#getPhoneCode").removeAttr("data-checkCode");
+					deom1.find('#loginErrorMsg').text(data.errorMessage)
+					nvcReset();
+				}
+
+			}
+		})
+
+
+	})
+
+	//点击关闭方法
+	deom1.find('#closeLogin').click(function(){
+		if(statusTime!=null){
+			clearInterval(statusTime);
+			statusTime=null;
+		}
+		deom1.remove();
+		$('#mybg').remove();
+		if(window.showGs=="1"){
+			setGsTime("9999","5");
+			_czc.push(['_trackEvent','股市高手','帐号登录关闭']);
+		}
+
+	})
+
+
+	//点击帐号登录
+	deom1.find('#userLoginBtn').click(function(){
+		$(this).removeClass("popup-tittle-noact");
+		deom1.find('#tgbAppBtn').addClass("popup-tittle-noact");
+		deom1.find('#appPanel').hide();
+		deom1.find('#loginPanel').show();
+		loginType = "A";
+		var body = {
+			"entryPage_var": getReferrerName(),
+			"entryFunction_var": "-",
+			"registerType_var":"账号密码登录"
+		};
+		gioMessage("registerView", body);
+	});
+
+	//点击淘股吧APP
+	deom1.find('#tgbAppBtn').click(function(){
+		$(this).removeClass("popup-tittle-noact");
+		deom1.find('#userLoginBtn').addClass("popup-tittle-noact");
+		deom1.find('#loginPanel').hide();
+		deom1.find('#appPanel').show();
+		loginType = "B";
+		var body = {
+			"entryPage_var": getReferrerName(),
+			"entryFunction_var": "-",
+			"registerType_var":"免密登录"
+		};
+		gioMessage("registerView", body);
+	});
+	if(loginStatus && loginStatus == "account"){ //如果上次是账号登录，本次自动切换到账号登录
+		$("#userLoginBtn").click();
+	}
+
+	//点击扫码登录
+	// deom1.find('#xcxBtn').click(function(){
+	// 	deom1.find('#loginPanel').hide();
+	// 	deom1.find('#appPanel').hide();
+	// 	deom1.find('.xcxPanel').show();
+	// 	$(this).css('color','#6ebdf6').css('border-bottom-color','#6ebdf6').css('border-bottom-width',2);
+	// 	deom1.find('#userLoginBtn').css('color','#000').css('border-bottom-color','#aaa').css('border-bottom-width',1);
+	// 	deom1.find('#tgbAppBtn').css('color','#000').css('border-bottom-color','#aaa').css('border-bottom-width',1);
+	// 	xcx();
+	// 	kaiqi();
+	// 	var body = {
+	// 		"entryPage_var": getReferrerName(),
+	// 		"entryFunction_var": "-",
+	// 		"registerType_var":"扫码登录"
+	// 	};
+	// 	gioMessage("registerView", body);
+	// });
+
+	//注册
+	deom1.find('#registerBtn').click(function(){
+		if(window.showGs=="1"){
+			setGsTime("9999","4");
+			_czc.push(['_trackEvent','股市高手','帐号注册']);
+		}
+	});
+
+	$(document).keypress(function(e) {
+		// 回车键事件
+		if(e.which == 13) {
+			if(loginType == "A"){
+				deom1.find('#loginBtn').trigger('click');
+			}else if(loginType == "B"){
+				deom1.find('#loginBtn2').trigger('click');
+			}
+		}
+	});
+	//登录方法
+	deom1.find('#loginBtn').click(function(){
+		loadXdomain();
+		xdomain.slaves(ssoX);
+		var userName=deom1.find('#userPanelName').val();
+		var pwd=deom1.find('#userPanelPwd').val();
+		var checkcode="";
+		if($('#getPhoneCode').attr('data-checkcode')==undefined){
+			checkcode = getNVCVal();
+		}else{
+			checkcode = $('#getPhoneCode').attr('data-checkcode');
+		}
+		var userID =  $("#userID").val();
+		if(userName=="" ){
+			deom1.find('#loginErrorMsg').html('用户名不能为空')
+		}else if(pwd==""){
+			deom1.find('#loginErrorMsg').html('密码不能为空')
+		}else{
+			$.ajax({
+				type: 'POST',
+				url: "https://sso."+rootDomain+'/web/login/submitAli',
+				data:{
+					userName:userName,
+					password:pwd,
+					userID:userID,
+					checkCode:checkcode,
+					save:"Y",
+					url:window.location.href
+				},
+				success: function(data){
+					if(data.status){
+						if(data.errorCode == 0){
+							$.ajax({
+								type: "get",
+								url: "https://sso."+rootDomain+'/web/login/getUserIpAndCity',
+								dataType: "json",
+								success: function (json1) {
+									if (json1.status) {
+										gdp('setUserId', json1.dto.userID);
+										var body = {
+											"IP_var": json1.dto.userIp,
+										};
+										gioMessage("userInfo", body);
+									}
+
+								}
+							});
+							if(window.showGs=="1"){
+								_czc.push(['_trackEvent','股市高手','帐号登录']);
+								setGsTime("9999","3");
+								window.location.href="https://www.tgb.cn/dongxingLink?type=1";
+							}else{
+								if(window.location.href.indexOf('toMoreListAction')>-1){
+									_czc.push(['_trackEvent','我的关注','ToLoginSuccess']);
+									window.location.reload();
+								}else{
+									window.location.reload();
+								}
+
+							}
+						}else if(data.errorCode == 400) {
+							//唤醒滑动验证
+							getNC().then(function(){
+								_nvc_nc.upLang('cn', {
+									_startTEXT: "请按住滑块，拖动到最右边",
+									_yesTEXT: "验证通过",
+									_error300: "哎呀，出错了，点击<a href=\"javascript:__nc.reset()\">刷新</a>再来一次",
+									_errorNetwork: "网络不给力，请<a href=\"javascript:__nc.reset()\">点击刷新</a>",
+								})
+								nvcReset();
+							})
+							$(".registerHd").show();
+							showAlert('请滑动验证条验证通过后再操作');
+							return;
+						}else if (data.errorCode == 800 || data.errorCode == 900) {
+							//直接拦截
+							$("#getPhoneCode").removeAttr("data-checkCode");
+							nvcReset();
+							return;
+						}else if(data.errorCode==1){
+							window.location.href = data.dto;
+						}else if(data.errorCode == 22){
+							showAlert('启用双向验证');
+							$("#loginPanel").hide();
+							$("#appPanel").show();
+							//新版加的 -- start
+							$("#tgbAppBtn").removeClass("popup-tittle-noact");
+							$("#userLoginBtn").addClass("popup-tittle-noact");
+							$("#userLoginBtn").unbind("click");
+							$("#userLoginBtn").removeAttr("id");
+							//新版加的 -- end
+							var da = data.errorMessage.toString().split("_");
+							$("#userPanelName2").val(da[0])
+							$("#userID").val(da[1]);
+							$("#userPanelName2").attr("disabled",true);
+							nvcReset();
+							return;
+						}else{
+							$("#getPhoneCode").removeAttr("data-checkCode");
+							deom1.find('#loginErrorMsg').html(data.errorMessage);
+							nvcReset();
+							if (data.errorCode === 15){
+								window.location.href = data.dto;
+							}
+						}
+						setCookie("loginStatus","account");
+						gio("账号密码登录");
+					}else{
+						showAlert(data.errorMessage);
+					}
+
+				}
+			});
+		}
+	})
+	//登录方法-短信
+	deom1.find('#loginBtn2').click(function(){
+		loadXdomain();
+		xdomain.slaves(ssoX);
+		var userName=deom1.find('#userPanelName2').val();
+		var pwd=deom1.find('#yzmnumber').val();
+		var checkcode="";
+		if($('#getPhoneCode').attr('data-checkcode')!=undefined){
+			checkcode=$('#getPhoneCode').attr('data-checkcode');
+		}else {
+			deom1.find('#loginErrorMsg').html('请先获取短信')
+			return;
+		}
+		var userID =  $("#userID").val();
+		if(userName=="" ){
+			deom1.find('#loginErrorMsg').html('手机号不能为空')
+		}else if(pwd==""){
+			deom1.find('#loginErrorMs').html('验证码不能为空')
+		}else{
+			var countrycode = $(".countryCodes").find("option:selected").val();
+			$.ajax({
+				type: 'POST',
+				url: "https://sso."+rootDomain+'/web/login/codesubmitAli',
+				data:{
+					countryCode:countrycode,
+					phoneNum:userName,
+					mobileCode:pwd,
+					checkCode:checkcode,
+					save:"N",
+					userID:userID,
+					url:window.location.href
+				},
+				success: function(data){
+					if(data.status){
+						msg = data.errorMessage;
+						if(data.errorCode == 0){
+							$.ajax({
+								type: "get",
+								url: "https://sso."+rootDomain+'/web/login/getUserIpAndCity',
+								dataType: "json",
+								success: function (json1) {
+									if (json1.status) {
+										gdp('setUserId', json1.dto.userID);
+										var body = {
+											"IP_var": json1.dto.userIp,
+										};
+										gioMessage("userInfo", body);
+									}
+								}
+							});
+							if(window.showGs=="1"){
+								_czc.push(['_trackEvent','股市高手','帐号登录']);
+								setGsTime("9999","3");
+								window.location.href="https://www.tgb.cn/dongxingLink?type=1";
+							}else{
+								if(window.location.href.indexOf('toMoreListAction')>-1){
+									_czc.push(['_trackEvent','我的关注','ToLoginSuccess']);
+									window.location.reload();
+								}else{
+									window.location.reload();
+								}
+
+							}
+						}else if(data.errorCode=="14"){
+							showAlert(data.errorMessage)
+							setTimeout("window.location.href=\""+data.dto+"\"",2000);
+							return;
+						}else if(data.errorCode == 23){
+							showAlert('启用双向验证');
+							$("#appPanel").hide();
+							$("#loginPanel").show();
+							//新版加的 -- start
+							$("#userLoginBtn").removeClass("popup-tittle-noact");
+							$("#tgbAppBtn").addClass("popup-tittle-noact");
+							$("#tgbAppBtn").unbind("click");
+							$("#tgbAppBtn").removeAttr("id");
+							//新版加的 -- end
+							var da = data.errorMessage.toString().split("_");
+							$("#userPanelName").val(da[0])
+							$("#userID").val(da[1]);
+							$("#userPanelName").attr("disabled",true);
+							nvcReset();
+							return;
+						}else if(data.errorCode==10){	//需要刷新滑动验证
+							deom1.find('#loginErrorMsg').html("请先获取短信");
+						}else if(data.errorCode==1){
+							window.location.href = data.dto;
+						}else{
+							deom1.find('#loginErrorMsg').html(data.errorMessage);
+						}
+						setCookie("loginStatus","phone");
+						gio("短信登录");
+					}else{
+						showAlert(data.errorMessage);
+					}
+				}
+			});
+		}
+	})
+	setTimeout(function(){
+		xcx();
+	},500);
+	setTimeout(function(){
+		kaiqi();
+	},1500);
+}
+
+//活跃度统计
+// var summaryUrl="https://bi."+rootDomain+"/register/summaryUserActive";
+// $.ajax({
+// 	type: "GET",
+// 	url: summaryUrl,
+// 	dataType: 'jsonp',
+// 	xhrFields: {withCredentials: true},
+// 	crossDomain: true,
+// 	success:function(){},
+// 	error:function(){}});
+
+
+//弹出黑色背景
+function openDialog(){
+	var browser=navigator.appName
+	var b_version=navigator.appVersion
+	var version=b_version.split(";");
+	var trim_Version;
+	if(version.length>=2){
+		trim_Version=version[1].replace(/[ ]/g,"");
+	}
+	var scrollLeft;
+	if (typeof window.pageYOffset != 'undefined') {
+		scrollLeft=window.pageXOffset;
+	}
+	else if (typeof document.compatMode != 'undefined' &&
+		document.compatMode != 'BackCompat') {
+		scrollLeft=document.documentElement.scrollLeft;
+	}
+	else if (typeof document.body != 'undefined') {
+		scrollLeft=document.body.scrollLeft;
+	}
+	var	mybg = document.createElement("div");
+	mybg.setAttribute("id","mybg");
+	mybg.style.background = "black";
+	mybg.style.width = "100%";
+	mybg.style.height = document.body.scrollHeight+'px';
+	mybg.style.position = "absolute";
+	mybg.style.top = '0';
+	mybg.style.left = "0";
+	mybg.style.zIndex = "1000";
+	mybg.style.opacity = "0.5";
+	mybg.style.filter = "Alpha(opacity=50)";
+	if (!!window.ActiveXObject || "ActiveXObject" in window ||navigator.userAgent.indexOf("Firefox")>0){
+		$(document.body).css("overflow","auto");
+		mybg.style.height = "600%";
+
+	}
+	if($('#mybg').length==0){
+		document.body.appendChild(mybg);
+	}
+
+}
+function gio (registerType){
+	var body = {
+		"entryPage_var":getCurrentName(),
+		"entryFunction_var": "登录成功",
+		"registerType_var":registerType,
+		//入口功能
+		"ifFirstLogin_var":"否",
+	}
+	gioMessage("loginSuccess",body);
+}
+function gioButtonClick(type){
+	if (1 == type) {
+		type = "QQ"
+	}else if (2 == type) {
+		type = "微信"
+	}else if (3 == type) {
+		type = "微博"
+	}
+	var body = {
+		"entryPage_var":getCurrentName(),
+		"entryFunction_var": "点击第三方登录",
+		"registerType_var":type
+	};
+	gioMessage("pcButtonClick",body);
+}
+var statusTime;
+if(statusTime!=null){
+	clearInterval(statusTime);
+	statusTime=null;
+}
+function kaiqi() {
+	var body = {
+		"entryPage_var": getReferrerName(),
+		"entryFunction_var": "-",
+		"registerType_var": "扫码登录"
+	};
+	gioMessage("registerView", body);
+	if(statusTime!=null){
+		clearInterval(statusTime);
+		statusTime=null;
+	}
+	var ssoUrl='https://sso.'+rootDomain;
+	var ssoX={};
+	ssoX[ssoUrl+'']="/xdomainProxy.html";
+	statusTime = setInterval(function(){
+		var xcxFlag = $("#xcxFlag").val();
+		loadXdomain();
+		xdomain.slaves(ssoX);
+		$.ajax({
+			type:"get",
+			url:"https://sso."+rootDomain+"/web/login/queryXcXStatus",
+			data:{"flag":xcxFlag},
+			dataType:"json",
+			success:function(json1){
+				if(json1.status){
+					//关闭定时器
+					if(statusTime!=null){
+						clearInterval(statusTime);
+						statusTime=null;
+					}
+					setCookie("loginStatus","qrcode");
+					gio("扫码登录");
+					$.ajax({
+						type: "get",
+						url: "https://sso."+rootDomain+'/web/login/getUserIpAndCity',
+						dataType: "json",
+						success: function (json1) {
+							if (json1.status) {
+								gdp('setUserId', json1.dto.userID);
+								var body = {
+									"IP_var": json1.dto.userIp,
+								};
+								gioMessage("userInfo", body);
+							}
+
+						}
+					});
+					// if(json1.errorCode==1){
+					// 	window.location.href=json1.dto;
+					// }else{
+					setTimeout(function(){
+						window.location.reload();
+					},1000);
+					// }
+				}else {
+					if(json1.errorCode==0 || json1.errorCode==2){
+						if(json1.errorCode==0){
+							$("#xcxImg").hide();
+							$(".popup-ewmsx").show();
+						}
+						if(statusTime!=null){
+							clearInterval(statusTime);
+							statusTime=null;
+						}
+					}
+
+				}
+			}
+		});
+	},5000);
+}
+function xcx() {
+	var ssoUrl='https://sso.'+rootDomain;
+	var ssoX={};
+	ssoX[ssoUrl+'']="/xdomainProxy.html";
+	loadXdomain();
+	xdomain.slaves(ssoX);
+	$.ajax({
+		type:"get",
+		url:"https://sso."+rootDomain+"/web/login/getXcxImg",
+		cache:false,
+		dataType:"json",
+		success:function(json1){
+			if(json1.status){
+				$("#xcxFlag").val(json1.dto.flag);
+				$("#xcxImg").html('<img style="width: 240px;" src="' + json1.dto.img + '" />');
+				//新版
+				$(".popup-ewmsx").hide();
+			}
+		}
+	});
+}
+

@@ -1,0 +1,773 @@
+var wwwDomainPath,shuoDomainPath;
+   if(document.domain.indexOf("shuo") > -1){
+		shuoDomainPath = "https://"+document.domain+"/";
+		wwwDomainPath = wwwDomainPath.replace("shuo","www");
+	}else if(document.domain.indexOf("www") > -1){
+		wwwDomainPath = "https://"+document.domain+"/";
+		shuoDomainPath = wwwDomainPath.replace("www","shuo");
+	}   
+//获取说说个股新闻
+function weiboNews(groupID,feedID,selfID) {
+	 document.getElementById("content_more").style.display="block";
+	 document.getElementById("status_div").style.display="none";
+ 	 var url = "getNewsList?seq="+feedID+"&groupID="+groupID;
+ 	 XMLHttp.sendReq("get",url,"",function(data){
+ 		var p = data.dto;
+		var feedList = p.record;
+		var str = '';
+		var getfeedID = p.feedID;
+		var successFlag = p.size;
+		var getPageNo = p.pageNo;
+		var perPageNum = p.perPageNum;
+		var stockList = p.stockCode;
+		totalPage = p.totalPage;
+		if(successFlag=='error'){
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+			return;
+		}else if(successFlag == '0'){
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股资讯</span>';
+			return;
+		}else{
+			str += Json_HTML_WBNEWS(feedList,selfID,stockList);
+			document.getElementById("stockInfo").innerHTML += str;
+			var pageStr="";
+			if(successFlag < perPageNum){
+				pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了</span>';
+			}else{
+				getfeedID = feedList[feedList.length-1].mainCon.feedID;
+				pageStr +=  '<a  class="center moreInfo" href="javascript:void(0);" onclick="weiboNews('+groupID+','+getfeedID+','+selfID+')">点击继续查看更多自选股资讯</a>';
+			}  
+			document.getElementById("status_div").innerHTML = pageStr;
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").style.display="block";
+		}
+ 	  });
+}
+function shuoNocontent(str,type){
+	var nostr = '';
+	nostr = '<div id="shuoNocontent" style="margin:0;padding:50px 0;"><img src="https://css.tgb.cn/images/quotes/unContent.png" alt="" /><p>'+str+'</p>';
+	nostr += '</div>';
+	return nostr;
+}
+//获取说说个股公告
+function weiboBulletin(groupID,feedID,selfID) {
+	 document.getElementById("content_more").style.display="block";
+	 document.getElementById("status_div").style.display="none";
+ 	 var url = "getBulletinList?seq="+feedID+"&groupID="+groupID;
+ 	 XMLHttp.sendReq("get",url,"",function(data){
+ 		var p = data.dto;
+		var feedList = p.record;
+		var str = '';
+		var getfeedID = p.feedID;
+		var successFlag = p.size;
+		var getPageNo = p.pageNo;
+		var perPageNum = p.perPageNum;
+		var stockList = p.stockCode;
+		totalPage = p.totalPage;
+		if(successFlag=='error'){
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+			return;
+		}else if(successFlag == '0'){
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股公告</span>';
+			return;
+		}else{
+			str += Json_HTML_WBNEWS(feedList,selfID,stockList);
+			document.getElementById("stockInfo").innerHTML += str;
+			var pageStr="";
+			if(successFlag < perPageNum){
+				pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了</span>';
+			}else{
+				getfeedID = feedList[feedList.length-1].mainCon.feedID;
+				pageStr +=  '<a  class="center moreInfo" href="javascript:void(0);" onclick="weiboBulletin('+groupID+','+getfeedID+','+selfID+')">点击继续查看更多自选股公告</a>';
+			}  
+			document.getElementById("status_div").innerHTML = pageStr;
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").style.display="block";
+		}
+ 	  });
+}
+//获取说说个股新闻
+function weiboNewsByCode(stockCode,pageNo,selfID,realm) {
+	$("#stockBody").parent().find(".content_more").show();
+	$("#stockBody").parent().find(".status_div").hide();
+	 var url = realm+"/quotes/getNewsByCodeNew?pageNo="+pageNo+"&stockCode="+stockCode;
+	 $.getJSON(url,function(data){
+		if(data.status){
+			var p = data.dto;
+			if(p=="0"){
+				showAlert("未登录");
+			}
+			var feedList =p.record || [];
+			var str = '';
+			var getPageNo = feedList.pageNo;
+			var perPageNum = feedList.perPageNum;
+			if(feedList.length==0){
+				if(pageNo==1){
+					$("#stockBody").parent().find(".status_div").html(shuoNocontent('暂无个股资讯')).show();
+				}else{
+					$("#stockBody").parent().find(".status_div").html('<div class="hqnomoreData">没有更多内容了</div>').show();
+				}
+				$("#stockBody").parent().find(".content_more").hide();
+				return;
+			}else{
+				str += Json_HTML_WBNEWS1(feedList,selfID,'news');
+				if(getPageNo == 1){
+					$("#stockBody").html(str);
+				}else{
+					$("#stockBody").append(str);
+				}
+					
+				var pageStr="";
+				if(feedList.length < perPageNum){
+					pageStr ='<div class="hqnomoreData">没有更多内容了</div>';
+				}else{
+					pageStr =  '<a  class="moreInfo" href="javascript:void(0);" onclick="weiboNewsByCode(\''+stockCode+'\',\''+(Number(pageNo)+1)+'\',\''+selfID+'\',\''+realm+'\')">点击继续查看更多个股资讯</a>';
+						
+				}  
+				$("#stockBody").parent().find(".status_div").html(pageStr).show();
+				$("#stockBody").parent().find(".content_more").hide();
+			}
+		}else{
+			$("#stockBody").parent().find(".status_div").html('<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>').show();
+			return;
+		}
+		
+ 	  });
+}
+//获取说说个股公告
+function weiboBulletinByCode(stockCode,pageNo,selfID,realm) {
+	$("#bulletinBody").parent().find(".content_more").show();
+	$("#bulletinBody").parent().find(".status_div").hide();
+ 	 var url  = realm + "/quotes/getBulletinByCodeNew?pageNo="+pageNo+"&stockCode="+stockCode;
+ 	 
+ 	$.getJSON(url,function(data){
+		if(data.status){
+			var p = data.dto;
+			if (p == 5001){
+				$("#bulletinBody").parent().find(".status_div").html(shuoNocontent('登录后查看更多内容<a style="color: #4793F1;cursor: pointer" onclick="loginPanel()">&nbsp;去登录</a>')).show();
+				$("#bulletinBody").parent().find(".content_more").hide();
+				return;
+			}
+			// if(p=="0"){
+			// 	showAlert("未登录");
+			// }
+			var feedList =p.record || [];
+			var str = '';
+			var getfeedID ;
+			var getPageNo = data.dto.pageNo;
+			var perPageNum = data.dto.perPageNum;
+
+			if(feedList.length==0){
+				if(pageNo==1){
+					$("#bulletinBody").parent().find(".status_div").html(shuoNocontent('暂无个股公告')).show();
+				}else{
+					$("#bulletinBody").parent().find(".status_div").html('<div class="hqnomoreData">没有更多内容了</div>').show();
+				}
+				$("#bulletinBody").parent().find(".content_more").hide();
+				return;
+			}
+			str += Json_HTML_WBNEWS1(feedList,selfID,'stock');
+			if(getPageNo == 1){
+				$("#bulletinBody").html(str);
+			}else{
+				$("#bulletinBody").append(str);
+			}
+			var pageStr="";
+			if(feedList.length < perPageNum){
+				pageStr +='<div class="hqnomoreData">没有更多内容了</div>';
+			}else{
+				getfeedID = feedList[feedList.length-1].shuoID;
+				pageStr +=  '<a  class="moreInfo" href="javascript:void(0);" onclick="weiboBulletinByCode(\''+stockCode+'\',\''+(Number(pageNo)+1)+'\',\''+selfID+'\',\''+realm+'\')">点击继续查看更多个股公告</a>';
+			}
+			$("#bulletinBody").parent().find(".content_more").hide();
+			$("#bulletinBody").parent().find(".status_div").html(pageStr).show();
+		}else{
+			$("#bulletinBody").parent().find(".status_div").html('<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>').show();
+			return;
+		}
+		
+ 	  });
+}
+//获取说说个股研报
+function weiboReport(groupID,feedID,selfID) {
+	 document.getElementById("content_more").style.display="block";
+	 document.getElementById("status_div").style.display="none";
+ 	 var url = "weiboReport?groupID="+groupID+"&feedID="+feedID+"&callback=?";
+ 	 $.getJSON(url, function(json){
+ 		var p = json.dto;
+		var feedList = p.record || [];
+		var str = '';
+		var getfeedID  ;
+		var getPageNo = p.pageNo;
+		var perPageNum = p.perPageNum;
+		if(json.status){
+			if(feedList.length==0){
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").innerHTML = '<span  class="center moreInfo" >暂无自选股研报</span>';
+				return;
+			}else{
+				str += Json_HTML_WBNEWS(feedList,selfID,stockList,true);
+				document.getElementById("stockInfo").innerHTML += str;
+				var pageStr="";
+				if(feedList.length < perPageNum){
+					pageStr +='<span style="font-size:16px;color:#4793F1;margin-top:5px;">没有更多内容了</span>';
+				}else{
+					getfeedID = feedList[feedList.length-1].shuoID;
+					pageStr +=  '<a  class="center moreInfo" href="javascript:void(0);" onclick="weiboReport('+groupID+','+getfeedID+','+selfID+')">点击继续查看更多自选股研报</a>';
+				}  
+				document.getElementById("status_div").innerHTML = pageStr;
+				document.getElementById("content_more").style.display="none";
+				document.getElementById("status_div").style.display="block";
+			}
+		}else{
+			document.getElementById("content_more").style.display="none";
+			document.getElementById("status_div").innerHTML = '<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>';
+			return;
+		}
+ 	  });
+}
+
+function lazyReportLoad(stockCode,feedID,selfID,realm){
+	var scrollTop = $(document).scrollTop();
+	var checkDivTop = $("#checkDiv").offset().top;
+	var clientHeight = $(window).height();
+	if($(window).height() == 0){
+		clientHeight += document.body.offsetHeight;
+	}
+	if((scrollTop + clientHeight) >= checkDivTop){
+		if(lazyTime <= 3 && startFlag){
+			if( cType =="report"){
+				//说说首页数据
+				if(realm){
+					weiboReportByCode(stockCode,feedID,selfID,realm);
+				}else{
+					weiboReportByCode(stockCode,feedID,selfID);
+				}
+			}
+		}
+	}
+} 
+/**
+* 智能显示页码
+* @param {Object} action 把参数拼好传进来
+* @param {Object} pageNo
+* @param {Object} pageNum
+* @cur_page_li 当前页显示的样式class名称
+*/
+function pagerReportHtml(action,pageNo,pageNum){
+	// if(action.indexOf("?")> -1){
+	// action+="&cPageNo=";
+	// }else{
+	// action+="?cPageNo=";
+	// }
+	if(Number(pageNo) > Number(pageNum)){
+		pageNo = pageNum;
+	}
+	var buf = [];
+	buf.push("<ul>");
+	if(pageNum <= 7){
+		for(var i = 1;i<=pageNum;i++){
+			if(i == pageNo){
+				buf.push('<li id="cur_page_li">'+i+'</a>');
+			}else{
+				buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+			}
+		}
+	}else{
+		if(pageNo < 4){
+			for(var i = 1;i<=6;i++){
+				if(i == pageNo){
+					buf.push('<li id="cur_page_li">'+i+'</a>');
+				}else{
+					buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+				}
+			}
+			buf.push("...");
+			buf.push('<li><a href="'+action+pageNum+'">'+pageNum+'</a>');
+		}else{
+			buf.push('<li><a href="'+action+'1">1</a>');
+			buf.push('...');
+			if(pageNo > (pageNum -4)){
+				for(var i = (pageNum-6) ;i <= pageNum;i++){
+					if(i == pageNo){
+						buf.push('<li id="cur_page_li">'+i+'</a>');
+					}else{
+						buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+					}
+				}
+			}else{
+				for(var i = pageNo-2;i< pageNo+2;i++){
+					if(i == pageNo){
+						buf.push('<li id="cur_page_li">'+i+'</a>');
+					}else{
+						buf.push('<li><a href="'+action+i+'">'+i+'</a>');
+					}
+				}
+				buf.push("...");
+				buf.push('<li><a href="'+action+pageNum+'">'+pageNum+'</a>');
+			}
+		}
+	}
+	buf.push("</ul>");
+	buf.push("<div class=\"clear\" ></div>");
+	return buf.join("");
+} 
+
+//获取说说个股研报
+function weiboReportByCode(stockCode,feedID,selfID,realm,pageNo) {
+	 $("#reportBody").parent().find(".content_more").show();
+	 $("#reportBody").parent().find(".status_div").hide();
+ 	 var url =  realm + "/quotes/getStockReportListNew?stockCode="+stockCode+"&feedID="+feedID+"&pageNo="+pageNo;
+ 	 $.getJSON(url, function(json){
+		if(json.status){
+			var p = json.dto;
+			if(p=="0"){
+				showAlert("未登录");
+			}
+			var feedList =p.record || [];
+			var str = '';
+			var getfeedID ;
+			var getPageNo = feedList.pageNo;
+			var perPageNum = feedList.perPageNum;
+			if(feedList.length==0){
+				if(pageNo==1){
+					$("#reportBody").parent().find(".status_div").html(shuoNocontent('暂无个股研报')).show();
+				}else{
+					$("#reportBody").parent().find(".status_div").html('<div class="hqnomoreData">没有更多内容了</div>').show();
+				}
+				$("#reportBody").parent().find(".content_more").hide();
+				return;
+			}else{
+				str += Json_HTML_WBNEWS1(feedList,selfID,'report');
+				$("#reportBody").append(str);
+				var pageStr="";
+				if(feedList.length < perPageNum){
+					pageStr ='<div class="hqnomoreData">没有更多内容了</div>';
+				}else{
+					getfeedID = feedList[feedList.length-1].shuoID;
+					pageStr =  '<a  class="moreInfo" href="javascript:void(0);" onclick="weiboReportByCode(\''+stockCode+'\',\''+getfeedID+'\',\''+selfID+'\',\''+realm+'\',\''+(Number(pageNo)+1)+'\')">点击继续查看更多自选股研报</a>';
+				}  
+				$("#reportBody").parent().find(".status_div").html(pageStr).show();
+				$("#reportBody").parent().find(".content_more").hide();
+			}
+		}else{
+			$("#reportBody").parent().find(".status_div").html('<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>').show();
+			return;
+		}
+		
+ 	  });
+}
+
+function surveyByCode(stockCode,feedID,selfID,realm,pageNo){
+	$("#surveyBody").parent().find(".content_more").show();
+	$("#surveyBody").parent().find(".status_div").hide();
+	var url =  realm + "/quotes/getStockSurveyListNew?stockCode="+stockCode+"&feedID="+feedID+"&pageNo="+pageNo;
+	$.getJSON(url, function(json){
+		if(json.status){
+			var p = json.dto;
+			if(p=="0"){
+				showAlert("未登录");
+			}
+			var feedList =p.record || [];
+			var str = '';
+			var getfeedID ;
+			var getPageNo = feedList.pageNo;
+			if(feedList.length==0){
+				if(pageNo==1){
+					$("#surveyBody").parent().find(".status_div").html(shuoNocontent('暂无个股调研')).show();
+				}else{
+					$("#surveyBody").parent().find(".status_div").html('<div class="hqnomoreData">没有更多内容了</div>').show();
+				}
+				$("#surveyBody").parent().find(".content_more").hide();
+				return;
+			}else{
+				str += Json_HTML_WBNEWS1(feedList,selfID,'survey');
+				$("#surveyBody").append(str);
+				var pageStr="";
+				if(feedList.length < 20){
+					pageStr ='<div class="hqnomoreData">没有更多内容了</div>';
+				}else{
+					getfeedID = feedList[feedList.length-1].shuoID;
+					pageStr =  '<a  class="moreInfo" href="javascript:void(0);" onclick="surveyByCode(\''+stockCode+'\',\''+getfeedID+'\',\''+selfID+'\',\''+realm+'\',\''+(Number(pageNo)+1)+'\')">点击继续查看更多自选股调研</a>';
+				}
+				$("#surveyBody").parent().find(".status_div").html(pageStr).show();
+				$("#surveyBody").parent().find(".content_more").hide();
+			}
+		}else{
+			$("#reportBody").parent().find(".status_div").html('<span style="font-size:16px;color:#4793F1;margin-top:5px;">出现错误，无法获取，请过一会重试。谢谢!</span>').show();
+			return;
+		}
+
+	});
+}
+//动态数据载入排版
+   function Json_HTML_WBNEWS(recordJSON,selfID,stockList,type){
+	   var str ="";
+	   for(var i = 0 ;i<recordJSON.length; i++){
+		   var mainCon = recordJSON[i].mainCon;
+		   var refCon = recordJSON[i].refCon;
+		   var getStockCode = stockList[i];
+		   if(mainCon && mainCon.feedID != 0 && mainCon.deleteflag == "N"){
+			   // <!-- 不带转发内容(带图片) -->
+			   str += '<div id="feed_'+mainCon.feedID+'" name="feed_'+mainCon.feedID+'" class="divLine">';
+			   str += '<div style="float: left;width: 80px;" >';
+			   if(getStockCode != null && getStockCode!= "0" ){
+				   str += '<div class="stockImage" >'+getStockCode+'</div>';
+			   }else{
+				   str += '<div class="stockImage" >未知</div>';
+			   }
+			  
+//			   str += '<img class="smallPhoto" alt="'+mainCon.userName+'" src="http://img.tgb.cn/img/';
+//			   if(mainCon.portrait == null){
+//				   str += 'user_icon_60.png';
+//			   }else{
+//				   str += mainCon.portrait;
+//			   }
+//			   str += '" />';
+			   str += '</div>';
+			   str += '<div class="contentFont">';
+			   str += '<a href="'+shuoDomainPath+'weiboSelf?selfID='+mainCon.userID+'" onmouseover="userTips(this,'+mainCon.userID+');" onmouseout="offTip()" target="_blank" class="weiboNick" >';
+			   str += mainCon.userName;
+			   str += '</a>';
+//			   mainCon.content = mainCon.content; //+"\r\n以上信息由[link]http://www.xlinfo.cn/|信龙信息[/link]提供";
+			   var arrayImg =getImgUrl(mainCon.content);
+			   var imgLength = arrayImg.length;
+			   var arrayStock =getStockUrl(mainCon.content);
+			   var stockLength = arrayStock.length;
+			   if(mainCon.content.length > 228 || imgLength > 0 || stockLength > 0){
+				  var mCon = ubbAll(mainCon.content);
+				  str += '<div id="showCon_'+mainCon.feedID+'"  class="contentSubStr" style="margin: 5px 5px 10px 0;font-size: 14px;display:block;color:black;">';
+				  var subedCont = ubbClear(mainCon.content)
+				  subedCont = subedCont.substr(0,200);
+				  subedCont = ubbAll(subedCont);
+				  subedCont = ubbHiddenImg(subedCont);
+				  str += subedCont;
+			      str += '</div>';
+			      str += '<div id="showCon_'+mainCon.feedID+'_showImg" class="bodyLineHeight" style="margin: 5px 5px 10px 0;font-size: 14px;display:none;color:black;">';
+				  str += ubbShowImg(mCon);
+			      str += '</div>';
+				  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+'">';  
+				  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">展开<span class="showAllConSpan"></span></a>';  
+				  str += '</div>';  
+				  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+'">';  
+				  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+'\','+mainCon.feedID+',0);">收起<span class="hidenConSpan"></span></a>';  
+				  str += '<div class="clear" ></div>';
+				  str += '</div>';  
+			   }else{
+				  str += '<div id="showCon_'+mainCon.feedID+'"  style="margin: 5px 5px 30px 0;font-size: 14px;color:black;">';
+				  var mCon = ubbAll(mainCon.content);
+				  str += mCon;
+			      str += '<div class="clear" ></div>';
+			      str += '</div>';
+			   }
+			   if(imgLength > 0){
+				   // <!-- 原文图片(缩略) -->
+				   str += '<div style="margin: 5px 5px 5px 0;"  id="content_small_'+mainCon.feedID+'">';
+				   str += '<img alt="" src="'+arrayImg[0]+'" style="max-width: 120px;" onclick="showBigImg(\'content_small_'+mainCon.feedID+'\',\'content_big_'+mainCon.feedID+'\',\''+arrayImg+'\')" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;" class="showSmallImg"/>';
+				   str += '</div>';
+				   //<!-- 原文图片(大图) -->
+			       str += '<div style="margin: 5px 5px 5px 0;" id="content_big_'+mainCon.feedID+'"></div>';
+			   }
+	
+			   //转发内容
+			   if(refCon != 0){
+				   str += '<div class="forwardDiv">';
+				   str += '<div class="WB_arrow">';
+				   str += '<em class="S_line1_c">◆</em>';
+				   str += '<span class="S_bg1_c">◆</span>';
+				   str += '</div>';
+				   str += '<div style="width: 500px">';
+				   var refDeleteFlag = refCon.deleteflag;
+				   if(refDeleteFlag == "Y" || refDeleteFlag == null){
+					   str +='该内容已被删除';
+				   }else{
+					   str += '<a href="'+shuoDomainPath+'weiboSelf?selfID='+refCon.userID+'" onmouseover="userTips(this,'+refCon.userID+');" onmouseout="offTip()"  target="blank" class="weiboNick" >'+refCon.userName+'</a>';
+					   var arrayImgRef =getImgUrl(refCon.content);
+				   	   var imgLengthRef = arrayImgRef.length;
+				   	   var arrayStockRef =getStockUrl(refCon.content);
+			   		   var stockLengthRef = arrayStockRef.length;
+					   if(refCon.content.length > 228 || imgLengthRef > 0 || stockLengthRef > 0){
+						  var rCon = ubbAll(refCon.content);
+						  str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'"  class="contentSubStr" style="display:block;color:black;" >';
+						  var subedRefCont =ubbClear(refCon.content)
+				   		  subedRefCont = subedRefCont.substr(0,200);
+						  subedRefCont = ubbAll(subedRefCont);
+						  subedRefCont = ubbHiddenImg(subedRefCont);
+						  str += subedRefCont;
+				  		  str += '</div>';
+					      str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'_showImg" class="bodyLineHeight" style="display:none;color:black;"  >';
+				  		  str += ubbShowImg(rCon);
+					      str += '</div>';
+						  str += '<div style="width:100%;text-align:left;" id="show_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+						  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">展开<span class="showAllConSpan"></span></a>';  
+						  str += '</div>';  
+						  str += '<div style="width:100%;text-align:left;display: none;" id="hiden_showCon_'+mainCon.feedID+"_"+refCon.feedID+'">';  
+						  str += '<a style="color:#5796C4;" href="javascript:void(0);" onclick="showAllCon(\'showCon_'+mainCon.feedID+"_"+refCon.feedID+'\','+mainCon.feedID+','+refCon.feedID+');">收起<span class="hidenConSpan"></span></a>';  
+						  str += '<div class="clear" ></div>';
+						  str += '</div>';  
+					   }else{
+						   str += '<div id="showCon_'+mainCon.feedID+"_"+refCon.feedID+'" style="color:black;" >';
+					       str += ubbAll(refCon.content);
+					       str += '<div class="clear" ></div>';
+					       str += '</div>';
+					   }
+				   
+					    str += '</div>';
+				   		if(imgLengthRef > 0){
+						   //转发的图片(缩略)
+						   str += '<div style="margin: 5px 5px 5px 0;"  id="forward_small_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '<img alt="" src="'+arrayImgRef[0]+'" onclick="showBigImg(\'forward_small_'+mainCon.feedID+"_"+refCon.feedID+'\',\'forward_big_'+mainCon.feedID+"_"+refCon.feedID+'\',\''+arrayImgRef+'\')" onload="javascript:if(this.width>120)this.width=120;if(this.height>150)this.height=150;" class="showSmallImg"/>';
+						   str += '</div>';
+						   //转发的图片(大图)
+						   str += '<div style="margin: 5px 5px 5px 0;" id="forward_big_'+mainCon.feedID+"_"+refCon.feedID+'">';
+						   str += '</div>';
+					    }
+					   //转发内容操作
+					   str += '<div class="clear"></div>';
+					   str += '<div class="forwardTool">';
+					   str += '<div style="float: left;">';
+					   var unixTimestamp = new Date(refCon.timeLine);
+				       var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+					   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+refCon.userID+','+refCon.feedID+');" >' + commonTime + '</span>';
+					   str += '</div>';
+					   str += '<div style="float: right;">';
+					   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+			  	 															 '});return false;\' >转发('+refCon.transferCount+')</a>';
+					   str += '<span class="seperate2">|</span>';
+					   str += '<a href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+refCon.feedID+'" target="_blank" >评论('+refCon.commentCount+')</a>';
+					   str += '</div>';
+				  }
+				  str += '</div>';
+				  str += '</div>';
+				  
+			   }
+	//		   <!-- 主说说内容操作 -->
+			   str += '<div class="conTool">';
+			   str += '<div style="float: left;">';
+			   var unixTimestamp = new Date(mainCon.timeLine);
+			   var commonTime = unixTimestamp.format("yyyy-MM-dd hh:mm"); 
+			   str += '<span class="optTime" style="cursor: pointer;" onclick="toSingle('+mainCon.userID+','+mainCon.feedID+');"  >' + commonTime + '</span>';
+			   str += '<a href="javascript:void(0);" id="a_useful_'+mainCon.feedID+'" onclick="AddWeiboUseful('+mainCon.feedID+')">赞('+mainCon.usefulNum+')</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" id="goldUseful_'+mainCon.feedID+'" onclick="AddGoldUseful('+mainCon.feedID+','+mainCon.bestNum+',\'W\',\'R\')" >油('+mainCon.bestNum+')</a>';
+			   var toolUrl="";  //工具箱
+			   toolUrl = tool(mainCon.feedID);
+			   if(toolUrl != null && toolUrl !=""){
+				   str += '<span class="seperate2">|</span>';
+				   str += toolUrl;
+			   }
+			   str += '</div><div style="float: right;">';
+			   
+			   if(refCon != 0){ //有转发内容的
+			  	   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+refCon.userID+'","refMsgUserName":"'+refCon.userName+'","refMsgID":"'+refCon.feedID+'","content":"'+mainCon.content+'"}' +
+			  	 															 '});return false;\' >转发('+mainCon.transferCount+')</a>';
+			   }else{  //转发原文的
+				   str += '<a href="javascript:void(0);" onclick=\'$.openDialog({"type":"T","data":{"msgUserID":"'+mainCon.userID+'","feedID":"'+mainCon.feedID+'","userName":"'+mainCon.userName+'","refMsgUserID":"'+mainCon.userID+'","refMsgUserName":"'+mainCon.userName+'","refMsgID":"'+mainCon.feedID+'","content":" "}' +
+			  	 															 '});return false;\'>转发('+mainCon.transferCount+')</a>';
+			   }
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" onclick="AddCollect('+mainCon.feedID+',this)" >收藏</a>';
+			   str += '<span class="seperate2">|</span>';
+			   str += '<a href="javascript:void(0);" id="replyNum_btn_'+mainCon.feedID+'" onclick="showShuoReply('+mainCon.feedID+',\''+mainCon.userName+'\','+mainCon.userID+','+mainCon.userID+',\''+mainCon.userName+'\','+mainCon.feedID+','+mainCon.commentCount+','+selfID+',\''+mainCon.portrait+'\');return false;" >评论('+mainCon.commentCount+')</a>';
+			   str += '</div>';
+			   str += '</div>';
+	//		   <!-- 评论内容及操作 -->
+			   str += '<div class="discussDiv" id="discussDiv_'+mainCon.feedID+'" style="display: none;"></div>';
+			   str += '</div>';
+			   str += '<div class="clear"></div>';
+			   str += '</div>';
+		   }
+	   }	   
+	   str += '<div class="clear"></div>';
+	   return str;
+   }
+   function shuotoolSwitch(obj){
+		var openstatus = $(obj).attr('data-open');
+		if(openstatus=='false'){
+			$(obj).attr('data-open','true');
+			$(obj).parent().css('border-bottom','none');
+			$(obj).parent().parent().find('.shuoleftTools').show();
+		}else{
+			$(obj).attr('data-open','false');
+			$(obj).parent().css('border-bottom','1px solid #e2e2e2');
+			$(obj).parent().parent().find('.shuoleftTools').hide();
+		}
+	}
+	    function showshuoImg(index, obj) {
+	        $(obj).parent().parent().parent().attr('data-index', index);
+	        $(obj).parent().parent().parent().attr('data-status', 'true');
+	        var srcurl = $(obj).parent().find('img').eq(index).attr('src');
+	        $(obj).parent().find('img').removeClass('activeLoopImg');
+	        $(obj).parent().find('img').eq(index).addClass('activeLoopImg');
+	        $(obj).parent().parent().find('.shuoImages_Big img').attr('src', srcurl);
+	    }
+
+	    function changeBigImg(type, obj) {
+	        var index = Number($(obj).parent().parent().parent().attr('data-index'));
+	        var Index;
+	        if (type == 1) {
+	            Index = index == 0 ? 0 : (index - 1);
+	        } else {
+	            var maxL = Number($(obj).parent().attr('data-max'));
+	            Index = index == maxL ? maxL : (index + 1);
+	        }
+	        $(obj).parent().parent().parent().attr('data-index', Index)
+	        var srcurl = $(obj).parent().parent().find('.shuoImages_list2 img').eq(Index).attr('src');
+	        $(obj).parent().parent().find('.shuoImages_list2 img').removeClass('activeLoopImg');
+	        $(obj).parent().parent().find('.shuoImages_list2 img').eq(Index).addClass('activeLoopImg');
+	        $(obj).parent().parent().find('.shuoImages_Big img').attr('src', srcurl);
+	    }
+
+	    function closeshuoImg(obj) {
+	        $(obj).parent().parent().attr('data-satus', 'false');
+	        $(obj).parent().parent().hide();
+	        $(obj).parent().parent().parent().find('.shuoImages_list1').show();
+	    }
+
+	    function newTargetimg(obj) {
+	        var url = $(obj).parent().parent().find('.activeLoopImg').attr('src');
+	        var newblank = window.open();
+	        newblank.location.href = url;
+	    }
+	  //计算时间差
+	    function madeTime(date) {
+	        var now = new Date().getTime();
+	        var time = (now - Number(date)) / (1000 * 60);
+	        if (time < 11) {
+	            return '<span  style="color:#999;font-size:12px;">刚刚</span>'
+	        } else if (time > 10 && time < 61) {
+	            return '<span  style="color:#999;font-size:12px;">' + Math.floor((time).toFixed(0)) +'分钟前</span>'
+	        } else if (time > 60 && time < 1441) {
+	            return '<span  style="color:#999;font-size:12px;">' + Math.floor((time / 60).toFixed(0)) +'小时前</span>'
+	        } else {
+	            return '<span  style="color:#999;font-size:12px;">' + getTime2(date) + ' </span>'
+	        }
+	    }
+	    function getfilterNums(str,nums){
+	    	num = Number(nums);
+	    	if(num>0){
+	    		return num>99?99:num;
+	    	}else{
+	    		return str;
+	    	}
+	    }
+function ReplaceAll(str, sptr, sptr1){
+	while (str.indexOf(sptr) >= 0){
+		str = str.replace(sptr, sptr1);
+	}
+	return str;
+}
+	    function getTime2(time) {
+	    	var date = new Date(time);
+	    	var year = date.getFullYear();
+	    	var month = date.getMonth() + 1;
+	    	var day = date.getDate();
+	    	if (day < 10) {
+	    		day = '0' + day;
+	    	}
+	    	if (month < 10) {
+	    		month = '0' + month;
+	    	}
+	    	var result = year + '-' + month + '-' + day 
+	    	return result;
+	    }
+	    function handString(str){
+	    	return "'" + str + "'";
+	    }
+	    function getStockNum(code){
+			 return code.replace(/[^0-9]/ig,"");
+		 }
+   function Json_HTML_WBNEWS1(recordJSON,selfID,type){
+	   var shuostr = '';
+	   var reportType ;
+	   if(type=='news'){
+		   reportType = 'N';
+	   }else if(type=='stock'){
+		   reportType = 'B';
+	   }else if(type=='report'){
+		   reportType = 'SR';
+	   }else if(type=='survey'){
+		   reportType = 'SURVEY';
+	   }else {
+		   reportType = 'W';
+	   }
+	    for (var i = 0; i < recordJSON.length; i++) {
+	        shuostr += '<div class="shuoItem" >'
+	        shuostr += '<div class="shuoItem_top">'
+			        	shuostr += '<a class="shuoItemstockL left" href="/quotes/'+recordJSON[i].stockCode+'" target="_blank">'
+				        shuostr +=  getStockNum(recordJSON[i].stockCode)
+				        shuostr += '</a>'
+				        shuostr += '<div class="shuoItemR left">'
+				        shuostr += '<div class="shuoItemUser ">'
+				        shuostr += '<a href="/quotes/'+recordJSON[i].stockCode+'"  target="_blank" class="shuoItemUserName left">'+recordJSON[i].stockName+'</a>'
+				        shuostr += '<div class="clear"></div>'
+				        shuostr += '</div>'	 
+	        shuostr += '<p class="shuoItemRtime">' + madeTime(recordJSON[i].postDate) + '</p>'
+	        shuostr += '</div>'
+	        shuostr += '<div class="clear"></div>'
+	        shuostr += '</div>'
+	        var imagesArr = recordJSON[i].images || [];
+	        var imagesArr2 = imagesArr.length > 3 ? imagesArr.splice(0, 3) : imagesArr;
+	        if(type=='stock' || type=='report'){
+	        	shuostr += '<a class="shuoItemRtext" href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].shuoID+'" target="_blank"><object>'+recordJSON[i].subject+'<a href="'+recordJSON[i].url+'" class="pdflink" target="_blank">原文链接</a></object></a>'
+	        }else{
+	        //	shuostr += '<p><b>'+recordJSON[i].subject+'</b></p>'
+				var subinfonew = ReplaceAll(recordJSON[i].content,'&nbsp;','');
+				if(subinfonew.length>70){
+					subinfonew = subinfonew.substring(0,70) + '...';
+				}
+	        	shuostr += '<a class="shuoItemRtext" href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].shuoID+'" target="_blank"><p><b>'+recordJSON[i].subject+'</b></p><object>' + subinfonew
+	        	if(recordJSON[i].newsType=='N'){
+	        		shuostr += '<a href="'+recordJSON[i].url+'" class="pdflink" target="_blank">原文链接</a>'
+	        	}
+	        	shuostr += '</object></a>'
+	        }
+	        shuostr += '<div class="shuoImages" data-index="0" data-status="false">'
+	        shuostr += '<div class="shuoImages_list1">'
+	        for (var m = 0; m < imagesArr2.length; m++) {
+	            shuostr += '<img onclick="openImages(' + m + ',this)" src="' + imagesArr2[m] + '" alt="">'
+	        }
+	        shuostr += '</div>'
+	        shuostr += '<div class="shuoImages_show">'
+	        shuostr += '<div class="shuoImages_tools">'
+	        shuostr += '<div class="shuoImages_close left" onclick="closeshuoImg(this)"> 收起图片</div>'
+	        shuostr += '<div class="shuoImages_link right" onclick="newTargetimg(this)">点击查看大图</div>'
+	        shuostr += '<div class="clear"></div>'
+	        shuostr += '</div>'
+	        shuostr += '<div class="shuoImages_Big" data-max="9">'
+	        shuostr += '<img src="' + imagesArr[0] + '"lt="">'
+	        shuostr += '<div class="shuoImages_prev" onclick="changeBigImg(1,this)"></div>'
+	        shuostr += '<div class="shuoImages_next" onclick="changeBigImg(2,this)"></div>'
+	        shuostr += '</div>'
+	        shuostr += '<div class="shuoImages_list2">'
+	        for (var z = 0; z < imagesArr.length; z++) {
+	            shuostr += '<img src="' + imagesArr[z] + '" onclick="showshuoImg(' + z + ',this)" alt="">'
+	        }
+	        shuostr += '</div>'
+	        shuostr += '</div>'
+	        shuostr += '</div>'
+	        shuostr += '<div class="shuoItemRtools">'
+	        if(role=='manage'){
+	        	shuostr += '<a class="shuoItemRtool left shuotoolbtn" href="'+wwwDomainPath+'tm/shuo/manage/shuoToolBox?shuoID='+recordJSON[i].shuoID+'&shuoReplyID=0&type=W" target="_blank">工具箱</a>'
+	        }
+	        shuostr += '<div class="shuoItemRtool left " onclick="setReport(1,'+handString(recordJSON[i].shuoID)+',0,'+handString(reportType)+','+handString(recordJSON[i].userID)+',0)" target="_blank">举报</div>'
+	        shuostr += '<a class="shuoItemRtool right shuoplbtn" href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].shuoID+'" target="_blank"><span class="rewardNums">'
+	        shuostr += getfilterNums('评论',recordJSON[i].replyNum)
+	        shuostr +=	'</span></a>'
+	        shuostr += '<a class="shuoItemRtool right shuozanbtn" href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].shuoID+'" target="_blank"> <span class="zanNums">' + getfilterNums('赞',recordJSON[i].usefulNum) +'</span></a>'
+	        if(reportType=='W'){
+	        	shuostr += '<a class="shuoItemRtool right shuorewardbtn" href="'+shuoDomainPath+'shuo/toViewShuo?shuoID='+recordJSON[i].shuoID+'" target="_blank">打赏 </a>'
+	        }
+	        shuostr += '<div class="clear"></div>'
+	        shuostr += '</div>'
+	        //结束tab
+	        shuostr += '</div>';
+	    }
+	    return shuostr;
+   }
+   
+   

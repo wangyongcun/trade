@@ -1,0 +1,2 @@
+/*! _static 2025-08-07 */
+!function(a){var b=a.ajax;a.ajax=function(c){var d={error:function(a,b,c){},success:function(a,b){}};c.error&&(d.error=c.error),c.success&&(d.success=c.success),c.url=encodeURI(c.url);var e=a.extend(c,{error:function(a,b,c){d.error(a,b,c)},success:function(a,b){if("5001"==a.errorCode)if("function"==typeof loginPanel)loginPanel();else{var c=document.domain,e=c.substring(c.indexOf("tgb")),f="https://sso."+e;window.open(f+"/web/login/index?url="+window.location.href)}else d.success(a,b)}});b(e)}}(jQuery);

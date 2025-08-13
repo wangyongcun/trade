@@ -1,0 +1,46 @@
+require.config({
+        baseUrl: "./res/",
+        map: {
+            '*': {
+                'css': '//js.tgb.cn/res/libs/css.min.js'
+            }
+        },
+        paths: {
+            'js':'js',
+            'header':'header',
+            'libs':'libs',
+             text: '//js.tgb.cn/res/libs/text',
+             css:'//js.tgb.cn/res/libs/css.min',
+             libPage:'./uubEdit',
+             jquery:'//js.tgb.cn/js/jquery-1.9.1.min'
+        },
+        shim:{
+            'header':['css!../css/header/newCommon', 'css!../res/css/header/headCss_N']
+        },
+        waitSeconds: 0
+    });
+
+requirejs(['jquery',minConfig.ajax], function($,aj) {
+   	'use strict';
+/*  var host = window.location.host;
+   	var domainPath = host;
+   	if(host.indexOf("tgb")>-1){
+   		domainPath=host.substring(host.indexOf("tgb")).toString();
+   	}
+   	document.domain = domainPath;
+   	var wwwDomain='//www.'+domainPath;
+	xdomain.debug = false;
+	var newSlaves={};
+	newSlaves['http://www.'+domainPath]='/res/xdomainProxy.html';
+	newSlaves['http://shuo.'+domainPath]='/xdomainProxy.html';
+	newSlaves['http://bi.'+domainPath]='/xdomainProxy.html';
+	newSlaves['http://jr.'+domainPath]='/xdomainProxy.html';
+	newSlaves['http://life.'+domainPath]='/xdomainProxy.html';
+	newSlaves['http://m.'+domainPath]='/xdomainProxy.html';
+    xdomain.slaves(newSlaves);*/
+/*      $.get(newHost+'/res/header-require.html',function(data){
+    	 $('#header').html(data)
+      })*/
+
+
+     });

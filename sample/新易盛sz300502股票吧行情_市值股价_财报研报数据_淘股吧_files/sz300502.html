@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<!-- saved from url=(0036)https://www.tgb.cn/hq/chart/sz300502 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="Shortcut Icon" href="https://js.tgb.cn/images/2025/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="./common.css">
+    <script type="text/javascript" src="./jquery-1.9.1.min.js.download"></script>
+    <script type="text/javascript" src="./jsloder.js.download"></script>
+    <script type="text/javascript" src="./echarts.min.js.download"></script>
+    <script type="text/javascript" src="./showLayer1.js.download"></script>
+    <script type="text/javascript" src="./hqUrl.js.download"></script>
+<!--    <script type="text/javascript" src="https://www.taoguba.test/res/js/common/hqUrl.js"></script>-->
+    <style type="text/css">
+
+
+        #new_wrap_container{width:100%; margin-left: 8px;}
+        .btn-type {width:96%;height:30px;}
+        .btn-type span{ display: block;float:left;margin-right: 5px;color:#666c72;}
+        #fq_show{width: 100%;}
+        .tip_k{width:100%;height:20px;margin-bottom: -20px}
+
+
+        ul{
+            list-style: none;
+            z-index: 99999;
+        }
+        .nav{
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .nav>li{
+            float: left;
+            text-align: center;
+        }
+        .drop-down-content li{
+            display: block;
+            text-decoration: none;
+            width: 50px;
+            padding: 0 5px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            color: #666c72;
+        }
+        .drop-down-content1 li{
+            display: block;
+            text-decoration: none;
+            width: 90px;
+            padding: 0 5px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            color: #666c72;
+        }
+        .drop-down-content li:hover,.drop-down-content1 li:hover{
+            color: #4793f1;
+        }
+        .nav>li:first-child a{
+            border-radius: 10px 0 0 10px;
+        }
+        .nav>li:last-child a{
+            border-radius: 0 10px 10px 0;
+        }
+        .drop-down{
+            position: relative;
+        }
+        .drop-down-content{
+            padding: 0;
+            display: none;
+            position: absolute;
+            top:20px;
+            right: -6px;
+        }
+        .drop-down-content1{
+            padding: 0;
+            display: none;
+            position: absolute;
+            top:20px;
+            right: -24px;
+        }
+
+        h3{
+            font-size: 30px;
+            clear: both;
+        }
+        .nav .drop-down:hover .drop-down-content,.nav .drop-down:hover .drop-down-content1{
+            display: block;
+        }
+        .clear {clear: both}
+        #popup1{
+            display: none ;
+            text-align: left;
+            padding-left: 10px;
+            width:200px;
+            border:solid 1px  #E5E6E7;
+            height: 200px;
+            position: absolute;
+            left: 250px;
+            top: 60px;
+            background-color: rgba(255,255,255,0.9);
+            line-height: 20px;
+            font-size: 12px;
+        }
+        #popup1 .tip_center{width: 100%;text-align: center;font-weight: bold}
+        #popup1 #tip_jk  {display: block;width:100%;}
+        #popup1 #tip_jk span {width:95px;height:20px;display: block;overflow: hidden;float: left}
+        .left span{padding: 0.5% 2%; margin: -0.5% 2%;}
+        .left span, .drop-down span, .drop-down-content li, .drop-down-content1 li{cursor: pointer;}
+    </style>
+</head>
+<body style="background: #fff;">
+<div class="w960" id="new_wrap_container">
+    <div class="btn-type">
+        <div class="left" style="width: 65%;"><span id="sp_min" onclick="switchK(&#39;min&#39;)" style="color: rgb(204, 204, 204); border-bottom: none;">分时</span><span id="sp_kline" onclick="switchK(&#39;kline&#39;)" style="color: rgb(204, 204, 204); border-bottom: none;">日线</span><span id="sp_week" onclick="switchK(&#39;week&#39;)" style="color: rgb(0, 0, 0); border-bottom: 3px solid rgb(71, 147, 241);">周线</span><span id="sp_month" onclick="switchK(&#39;month&#39;)" style="color: rgb(204, 204, 204); border-bottom: none;">月线</span></div>
+        <div class="right" style="width: 35%">
+            <ul class="nav" style="display: block;">
+                <li class="drop-down" style="background: #fff;margin-left: 10%;float: right;">
+                    <span id="tool_show" onclick="chooseTool()">
+                        <img src="./shuoshezhi2.png" style="width: 16px;height: 16px;margin-bottom: -3px;">工具
+                    </span>
+                    <ul class="drop-down-content1">
+                        <li onclick="toolUse(1);">区域缩放</li>
+                        <li onclick="toolUse(2);">缩放还原</li>
+                        <li onclick="toolUse(3);">横向选择</li>
+                        <li onclick="toolUse(4);">清除选择</li>
+                    </ul>
+                </li>
+                <li class="drop-down" style="background: #fff;float: right;"><span id="fq_show" onclick="chooseFq()">前复权</span>
+                    <ul class="drop-down-content">
+                        <li id="li_cq" onclick="switchFq(&#39;cq&#39;);">不复权</li><li id="li_qfq" onclick="switchFq(&#39;qfq&#39;);">前复权</li><li id="li_hfq" onclick="switchFq(&#39;hfq&#39;);">后复权</li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="clear"></div>
+        </div>
+    </div>
+    <div class="tip_k" id="tip_k">
+
+    </div>
+    <div id="container" style="width: 100%; height: 350px; background-color: rgb(255, 255, 255); z-index: 9999; -webkit-tap-highlight-color: transparent; user-select: none; position: relative;" _echarts_instance_="ec_1755072945514"><div style="position: relative; width: 700px; height: 350px; padding: 0px; margin: 0px; border-width: 0px; cursor: default;"><canvas data-zr-dom-id="zr_0" width="1400" height="700" style="position: absolute; left: 0px; top: 0px; width: 700px; height: 350px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); padding: 0px; margin: 0px; border-width: 0px;"></canvas></div><div style="position: absolute; display: none; border-style: solid; white-space: nowrap; z-index: 9999999; transition: left 0.4s cubic-bezier(0.23, 1, 0.32, 1), top 0.4s cubic-bezier(0.23, 1, 0.32, 1); background-color: rgba(255, 255, 255, 0.8); border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 4px; color: rgb(0, 0, 0); font: 14px / 21px &quot;Microsoft YaHei&quot;; padding: 1px; left: 30px; top: 10px; pointer-events: none;"><div style="font-size: 14px;">2025-07-04<br>  开盘 :<span style="color:#ff0000"> 124.70</span><br>  最高 : <span style="color:#ff0000">128.39</span><br>  收盘 : <span style="color:#ff0000">128.35</span><br>  最低 : <span style="color:#008b00">121.38</span><br>  昨收 : <span>123.18</span><br>  涨跌幅 : <span style="color:#ff0000">4.20%</span><br>  成交量 : <span>2.13亿</span><br>  成交额 : <span>270.55亿</span></div></div></div>
+</div>
+<div id="popup1" style="display: none;">
+    <br>
+    <div class="tip_center">区间统计</div>
+    <div>
+        <div>时间：<span id="tip_time"></span><br>
+        周期：<span id="tip_zq"></span> &nbsp; 涨跌： <span id="tip_zd"></span><br>
+        </div>
+        <div>
+            <div class="tip_center">统计信息</div>
+            <div id="tip_jk">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var stockCode = "sz300502";
+    var stockName = "\u65B0\u6613\u76DB";
+    var stockType = "A";
+    //设置9-17点才自动刷新
+    var refreshFlag = true;
+    var now = new Date();
+    if(now.getHours()<9 || now.getHours()>=17){
+        refreshFlag = false;
+    }
+    if(stockType != "A" && stockType != "KZZ" && stockType != "ETF"){
+        $("#sp_min").hide();
+        if(stockType == "M"){
+            $("#li_hfq").hide();
+        }
+    }
+    if(stockType == "KZZ"){
+        $(".nav").hide();
+    }
+</script>
+
+<script type="text/javascript">
+
+    var dom = document.getElementById("container");
+    var myChart = echarts.init(dom);
+    var klineType="kline";// month week min
+    // if(stockType != "A" && stockType != "KZZ"){
+    //     klineType="kline";
+    // }
+    var klineFqType="qfq" // qfq hqf cq
+    var app = {};
+    option = null;
+    var real = [];
+    var todayKline;
+    var lastClose;
+    var scrollFlag = true;
+
+    var upColor = '#e03719';
+    var upBorderColor = '#8A0000';
+    var downColor = '#009933';
+    var downBorderColor = '#008F28';
+    $("#sp_kline").css("color","#000").css("border-bottom","3px solid #4793f1");
+
+    var intervalRealId, intervalRealId1;//实时行情数据刷新
+
+
+    var klines,weekKline,monthKline=[];
+    var qfqdatas=[];
+    var hfqdatas = [];
+    var data = {
+        categoryData:[],
+        values:[],
+        volumes:[]
+    };//数据
+
+    myChart.on('dataZoom',function(params) { //监听滚轴大小位置
+        var newOption;
+        option = myChart.getOption();
+        if(params.batch){
+            params = params.batch[0];
+        }
+        var start = params.start == undefined ? 90 : params.start;
+        var end = params.end == undefined ? 100 : params.end;
+        option.dataZoom[0].start=start;
+        option.dataZoom[0].end=end;
+        var timestamp = new Date();
+        timestamp = timestamp.getFullYear()+"-"+((timestamp.getMonth()+1)<10?"0":"")+(timestamp.getMonth()+1)+"-"+(timestamp.getDate()<10?"0":"")+timestamp.getDate();
+        if(new Date().getHours() > 9){
+            timestamp = timestamp + "0";
+        }
+        var url = "https://jshq.tgb.cn/jshq/Astock/his/"+stockCode+".js?t=" + timestamp;
+        if(stockType == "M"){ //美股
+            url = "https://jshq.tgb.cn/js/US/cq/his/"+stockCode+".js?t=" + timestamp;
+        }else if(stockType == "H"){ //港股
+            url = "https://jshq.tgb.cn/js/HK/cq/his/"+stockCode+".js?t=" + timestamp;
+        }else if(stockType == "KZZ"){ //可转债
+            stockCode = stockCode.toUpperCase();
+            url = "https://jshq.tgb.cn/jshq/Bond/his/"+stockCode+".js?t=" + timestamp;
+        }else if(stockType == "ETF"){ //ETF
+            url = "https://jshq.tgb.cn/jshq/etf/his/"+stockCode+".js?t=" + timestamp;
+        }
+        if(scrollFlag && start == 0){ //拉到顶部加载全部
+            $.ajax({
+                url: url,
+                dataType: "script",
+                cache: "false",
+                type: "GET",
+                success: function(){
+                    klines = window[stockCode];
+                    var lastKline = klines[klines.length-1];
+                    if(todayKline && lastKline.substring(0,10) == todayKline.substring(0,10) ){
+                        klines[klines.length-1] = todayKline;
+                    }else{
+                        if(todayKline){
+                            klines[klines.length] = todayKline;
+                        }
+                    }
+                    if(stockType != "M"){
+                        loadReal(false); //后加载
+                        if(refreshFlag){
+                            window.clearInterval(intervalRealId1);
+                            intervalRealId1 = setInterval(function () {
+                                loadReal(false); //后加载
+                            }, 60000);
+                        }
+                    }
+                    fuquan("kline",true);
+                    if(!option){
+                        return;
+                    }
+                    var oldNum = option.dataZoom[0].end-option.dataZoom[0].start;//原滚轴长度
+                    var newNum = oldNum/(klines.length/501);//现滚轴长度
+                    //var positionOld = option.dataZoom[0].end;//原滚轴位置
+                    var endValue = option.dataZoom[0].endValue; //显示区域最大值坐标
+                    var positionNew = (klines.length-501)/(klines.length-endValue)*(100-(oldNum/(klines.length/501)));//现滚轴起始位置
+                    //var positionNew = 100;
+                    if(klines.length > 501){
+                        option.dataZoom[0].start = positionNew;
+                        option.dataZoom[0].end = positionNew + newNum;
+                        //myChart.setOption(option, true);
+                        newOption = option;
+                    }
+                    scrollFlag = false;
+                },
+                error: function(){
+                    alert("查询信息失败")
+                }
+            });
+        }
+        if(scrollFlag && start == 0){
+            setTimeout(function () {
+                option = newOption;
+                refreshData(data, false);
+            }, 100);
+        }
+    });
+
+    myChart.on('legendselectchanged',function(params) { //监听legend改变
+        option = myChart.getOption();
+    });
+
+    myChart.on('brushSelected', function (params) {
+        $("#popup1").hide();
+    });
+    myChart.on('brushSelected', function (params) {
+        var brushComponent = params.batch[0];
+        var sum = 0; // 统计选中项的数据值的和
+        for (var sIdx = 0; sIdx < brushComponent.selected.length; sIdx++) {
+            if(brushComponent.selected[sIdx].seriesName == "日线"){
+                var dataIndices = brushComponent.selected[sIdx].dataIndex;
+                if(dataIndices.length > 0) {
+                    var first = option.series[0].data[dataIndices[0]];
+                    var last = option.series[0].data[dataIndices[dataIndices.length - 1]];
+
+                    var avgCount = 0;
+                    var high = 0;
+                    var low = 0;
+                    var up=0, down=0, ping = 0;
+                    for (var i = 0; i < dataIndices.length; i++) {
+                        var d = option.series[0].data[dataIndices[i]];
+                        if (d[1] > d[0]) {
+                            up++;
+                        } else if (d[1] < d[0]) {
+                            down++;
+                        } else {
+                            ping++;
+                        }
+                        avgCount += d[1];
+                        if (d[3] > high) {
+                            high = d[3];
+                        }
+                        if (d[2] < low) {
+                            low = d[2];
+                        }
+                    }
+
+                    //open,close,low,high,lastClose
+                    var zd = ((last[1] - first[0])* 100 / first[0]).toFixed(2) ;
+                    var zdStr = "";
+                    if(zd > 0){
+                        zdStr += "<font color=red>"+zd+"%</font>";
+                    }else if(zd < 0){
+                        zdStr += "<font color=green>"+zd+"%</font>";
+                    }else{
+                        zdStr += zd+"%";
+                    }
+                    $("#tip_zd").html(zdStr);
+                    $("#tip_time").html(option.xAxis[0].data[dataIndices[0]] + " ~ " + option.xAxis[0].data[dataIndices[dataIndices.length - 1]]);
+                    $("#tip_zq").html(dataIndices.length + "交易日")
+                    var message = "<span>起始价：" + first[4]
+                        + " </span><span>终止价：" + last[1]+ "</span>";
+                    message += "<span> 均价：" + (avgCount / (dataIndices.length)).toFixed(2)
+
+                    message += "</span><span>最高价：" + high +"</span><span>最低价：" + low +"</span>";
+                    message += "<span>阳线：" + up +" </span><span>阴线：" + down +"</span><span>平线："+ping
+                    "</span>";
+                    $("#tip_jk").html(message);
+                    // 起始价： 终止价：  均价： <br/>
+                    // 最高价： 最低价：  <br/>
+                    //  平线： 阴线：<br/>
+                    $("#popup1").show();
+
+                }
+            }
+        }
+
+    });
+
+    var option = {
+        backgroundColor: '#fff',
+        animation: false,
+        legend: {
+            //  bottom: 10,
+            left: 'center',
+
+            data: ['', 'MA5', 'MA10', 'MA20', 'MA30']
+        },
+        // title: {
+        //     text: stockCode,
+        //     left: 10
+        // },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                link: {xAxisIndex: 'all'},
+                type: 'cross'
+            },
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderWidth: 1,
+            borderColor: '#ccc',
+            padding: 1,
+            textStyle: {
+                color: '#000'
+            },
+            position: function (pos, params, el, elRect, size) {
+                var obj = {top: 10};
+                if(pos[0] < size.viewSize[0] / 2){
+                    obj = {
+                        right: 30,
+                        top: 10
+                    };
+                }else {
+                    obj = {
+                        left: 30,
+                        top: 10
+                    };
+                }
+                return obj;
+            },
+            formatter: function (params) {
+
+                var res = "<div style='font-size: 14px;'>";
+                for(i=0;i<params.length;i++){
+                    var p = params[i];
+                    if(p.seriesType == "candlestick"){
+                        var color = [];
+                        color[0]="";
+                        for(var m=1;m<5;m++){
+                            if (p.value[m] >  p.value[5]) {
+                                color[m] = 'style="color:' + upColor + '"';
+                            } else if(p.value[m] <  p.value[5]){
+                                color[m] = 'style="color:' + downColor + '"';
+                            }else{
+                                color[m]="";
+                            }
+                        }
+
+                        res  += p.name==""?"--":p.name;
+                        var zj = ((p.value[2].toFixed(2)-p.value[5].toFixed(2))/p.value[5].toFixed(2)*100).toFixed(2);
+                        var cjl = (p.value[6].toFixed(2)=="NaN"?"--":p.value[6].toFixed(2)); //成交量
+                        if(cjl >= 10000 && cjl < 100000000){
+                            cjl = (Number(cjl/10000)).toFixed(2) + "万";
+                        }else if(cjl >= 100000000){
+                            cjl = (Number(cjl/100000000)).toFixed(2) + "亿";
+                        }
+                        var cje = (p.value[7].toFixed(2)=="NaN"?"--":p.value[7].toFixed(2)); //成交额
+                        if(cje >= 10000 && cje < 100000000){
+                            cje = (Number(cje/10000)).toFixed(2) + "万";
+                        }else if(cje >= 100000000){
+                            cje = (Number(cje/100000000)).toFixed(2) + "亿";
+                        }
+                        var hsl = p.value[6]/real[72]*100;
+                        res += '<br/>  开盘 :<span '+color[1]+' > ' + (p.value[1].toFixed(2)=="NaN"?"--":p.value[1].toFixed(2)) + '</span><br/>  最高 : <span '+color[4]+' >' + (p.value[4].toFixed(2)=="NaN"?"--":p.value[4].toFixed(2))+'</span>';
+                        res += '<br/>  收盘 : <span '+color[2]+' >' + (p.value[2].toFixed(2)=="NaN"?"--":p.value[2].toFixed(2)) + '</span><br/>  最低 : <span '+color[3]+' >' + (p.value[3].toFixed(2)=="NaN"?"--":p.value[3].toFixed(2))+'</span>';
+                        res += '<br/>  昨收 : <span>' + (p.value[5].toFixed(2)=="NaN"?"--":p.value[5].toFixed(2)) + '</span><br/>  涨跌幅 : <span '+color[2]+' >' + (zj=="NaN"?"--":zj+'%')+'</span>';
+                        res += '<br/>  成交量 : <span>' + cjl + '</span><br/>  成交额 : <span>' + cje +'</span>';
+                        if(!isNaN(hsl)&&hsl!=Infinity){
+                            res += '<br/>  换手率 : <span>' + ((isNaN(hsl)||hsl==Infinity)?"--":hsl.toFixed(2)+'%')+'</span>';
+                        }
+                    }else if(p.seriesType == "line"){
+                        //MA
+                        // if(p.value != "-"){
+                        //     res += '<br/>  '+p.seriesName + ': ' + p.value.toFixed(2);
+                        // }
+
+                    }
+                    res +="</div>";
+                    if(p.name==""){
+                        res = "";
+                    }
+                }
+
+                return res;
+            }
+            // extraCssText: 'width: 170px'
+        },
+        axisPointer: {
+            link: {xAxisIndex: 'all'},
+            label: {
+                backgroundColor: '#777'
+            }
+        },
+        toolbox: {
+            right: '-200px', //这玩意show=false就无法调用，用这个SB方法把它调到屏幕外
+            feature: {
+                dataZoom: {
+                    yAxisIndex: false
+                },
+                brush: {
+                    type: ['lineX', 'clear']
+                }
+            }
+        },
+        brush: {
+            xAxisIndex: 'all',
+            brushLink: 'all',
+            outOfBrush: {
+                colorAlpha: 0.1
+            },
+            throttleType: 'debounce',
+            throttleDelay: 300
+        },
+        visualMap: {
+            show: false,
+            seriesIndex: 5,
+            dimension: 2,
+            pieces: [{
+                value: 1,
+                color: downColor
+            }, {
+                value: -1,
+                color: upColor
+            }]
+        },
+        grid: [
+            {
+                top: '10%',
+                left: '7%',
+                right: '5%',
+                height: '50%'
+            },
+            {
+                left: '7%',
+                right: '5%',
+                top: '65%',
+                height: '23%'
+            },{
+                left: '7%',
+                right: '5%',
+                top: '90%',
+                height: '7%'
+            }
+        ],
+        xAxis: [
+            {
+                type: 'category',
+                data: data.categoryData,
+                scale: true,
+                boundaryGap: true,
+                barCategoryGap: 10,
+                barGap:10,
+                axisLine: {onZero: false},
+                splitLine: {show: false},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax',
+                axisPointer: {
+                    show: true,
+                    label: {
+                        show: false,
+                    },
+                    z: 100
+                },
+                axisLabel: {
+                    formatter:function (value, index) {
+                        if(value == ""){
+                            return "";
+                        }else{ //根据数据量动态显示x轴时间
+                            if(!option){
+                                return;
+                            }
+                            let num = option.dataZoom[0].end-option.dataZoom[0].start; //滚轴长度
+                            let dataSize = klines.length*(num/100); //显示出来的数据量
+                            if(dataSize <= 80){
+                                return new Date(value).format("yyyy-MM-dd");
+                            }else{
+                                return new Date(value).format("yyyy-MM");
+                            }
+                        }
+                    }
+                }
+
+            },
+            {
+                type: 'category',
+                gridIndex: 1,
+                data: data.categoryData,
+                scale: true,
+                boundaryGap: true,
+                barCategoryGap: 10,
+                barGap:10,
+                axisLine: {onZero: false},
+                axisTick: {show: false},
+                splitLine: {show: false},
+                axisLabel: {show: false},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax'
+            }
+        ],
+        yAxis: [
+            {
+                scale: true,
+                splitArea: {
+                    show: false
+                },
+                axisLine: {
+                    lineStyle:{
+                        color:'#6c6c6c',
+                        fontSize:'10px'
+                    }
+                },
+                splitLine: { //分割线设置
+                    show: true,
+                    lineStyle: {
+                        color: '#f0f0f0'
+                        // type: 'dashed'
+                    }
+                },
+                axisLabel: {
+                    formatter: function(value){
+                        if(value < 1000){
+                            return value.toFixed(2);
+                        }else{
+                            return value.toFixed(0);
+                        }
+                    }
+                }
+
+            },
+            {
+                scale: true,
+                gridIndex: 1,
+                splitNumber: 2,
+                axisLabel: {show: false},
+                axisLine: {show: false},
+                axisTick: {show: false},
+                splitLine: {show: false}
+            }
+        ],
+        dataZoom: [
+            {
+                type: 'inside',
+                filterMode: "filter",
+                xAxisIndex: [0, 1],
+                start:30,
+                end: 100
+            },
+            {
+                filterMode: "filter",
+                show: true,
+                xAxisIndex: [0, 1],
+                type: 'slider',
+                top: '90%',
+                start: 30,
+                end: 100
+            }
+        ],
+        series: [
+            {
+                name: '日线',
+                type: 'candlestick',
+                barMaxWidth:'20',
+                data: data.values,
+                itemStyle: {
+                    color: upColor,
+                    color0: downColor,
+                    borderColor: null,
+                    borderColor0: null
+                },
+                tooltip: {
+                    formatter: function (params) {
+                        param = param[0];
+                        return [
+                            'Date111: ' + param.name + '<hr size=1 style="margin: 3px 0">',
+                            'Open: ' + param.data[0] + '<br/>',
+                            'Close: ' + param.data[1] + '<br/>',
+                            'Lowest: ' + param.data[2] + '<br/>',
+                            'Highest: ' + param.data[3] + '<br/>'
+                        ].join('');
+                    }
+                },splitLine: { //分割线设置
+                    show: true,
+                    lineStyle: {
+                        color: 'red'
+                    }
+                },
+            },
+            {
+                name: 'MA5',
+                type: 'line',
+                symbol: "none",
+                data: calculateMA(5, data),
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5,
+                    color:'#c23531'
+                }
+            },
+            {
+                name: 'MA10',
+                type: 'line',
+                symbol: "none",
+                data: calculateMA(10, data),
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5,
+                    color:'#2f4554'
+                }
+            },
+            {
+                name: 'MA20',
+                type: 'line',
+                symbol: "none",
+                data: calculateMA(20, data),
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5,
+                    color:'#61a0a8'
+                }
+            },
+            {
+                name: 'MA30',
+                type: 'line',
+                symbol: "none",
+                data: calculateMA(30, data),
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5,
+                    color:'#d48265'
+                }
+            },
+            {
+                name: 'Volume',
+                type: 'bar',
+                barMaxWidth:'20',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                data: data.volumes
+            }
+        ]
+    };
+
+    //展示暂无数据
+    function nonePage(type){
+        $("#fq_show").hide();
+        $("#hqTool").hide();
+        $("#tool_show").hide();
+        var dom = "<div style=\"width:100%;text-align:center;margin-top: 10px;\">" +
+            "<img src=\"https://css.tgb.cn/images/default/"+type+".jpg\" width='100%' height='340'></div>";
+        $("#container").html(dom);
+        $("#container").css("height", "200px");
+    }
+
+    function getLastMonthDay(d){
+        var current = d;
+        var currentMonth=current.getMonth();
+        var nextMonth=++currentMonth;
+        var nextMonthDayOne =new Date(current.getFullYear(),nextMonth,1);
+        var timeZone = new Date().getTimezoneOffset();
+        var minusDate=1000*60*60*24;
+        return new Date(nextMonthDayOne.getTime()-minusDate-timeZone*1000*60);
+    }
+
+    function  getFirstMonthDay(d){
+        var date = d;
+        date.setDate(1);
+        var timeZone = new Date().getTimezoneOffset();
+        return new Date(new Date(date.getFullYear(),date.getMonth(),date.getDate()).getTime()-timeZone*1000*60);
+    }
+
+    function toolUse(i){
+        if(i == 1){
+            myChart.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'dataZoomSelect',
+                dataZoomSelectActive: true
+            });
+        }else if(i == 2){
+            myChart.dispatchAction({
+                type: 'restore'
+            });
+            myChart.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'dataZoomSelect',
+                dataZoomSelectActive: false
+            });
+        }else if(i == 3){
+            myChart.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'brush',
+                brushOption: {
+                    brushType: 'lineX',
+                    brushMode: 'single'
+                }
+            });
+        }else if(i == 4){
+            myChart.dispatchAction({
+                type: 'restore'
+            });
+            myChart.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'dataZoomSelect',
+                dataZoomSelectActive: false
+            });
+        }
+        $(".drop-down-content1").hide();
+    }
+
+    var newFlag = true;
+    function switchK(kType){
+        if(stockType != "KZZ"){
+            $(".nav").show();
+        }
+        window.clearInterval(intervalRealId);
+        $("#popup1").hide();
+        chose(kType);
+        if(!klines){
+            loadHQ();
+        }
+
+        if(stockName.startsWith("N") && newFlag){ //新股第一天
+            loadReal(false);
+            newFlag = false;
+        }
+        klineType = kType;
+        if(klineType == "min"){
+            loadMin();
+            window.clearInterval(intervalRealId);
+        }else{
+            fuquan(klineFqType,false);
+            if(refreshFlag){
+                intervalRealId = setInterval(function(){
+                    fuquan(klineFqType,false);
+                },60000);
+            }
+        }
+    }
+
+    function switchFq(fqType){
+        var fqName = $("#li_"+fqType).html();
+        $(".drop-down-content li").css("color","#666c72");
+        $("#li_"+fqType).css("color","#06c");
+        $("#fq_show").html(fqName);
+        klineFqType = fqType;
+        fuquan(klineFqType,false);
+        $(".drop-down-content").hide();
+    }
+
+
+    /**
+     * 周线 月线计算
+     * */
+    function  dataChange(kType,klines){
+        if(klines.length > 0){
+            if(kType == "week"){
+                //console.log(klines[0]);
+                var first = new Date(klines[0][0]);//取得第一天的数据
+                var weekFirstDay =  new Date(first.getTime()-86400*first.getDay()*1000)
+                var weekEndDay =  new Date(first.getTime()+86400*(6-first.getDay())*1000)
+                var weekArr = [];
+                weekArr.push(klines[0]);
+                var week = false;
+                var chardata = [];
+                for(var i = 0;i<klines.length;i++){
+                    if(i == 0){
+                        continue;
+                    }
+                    var kline = klines[i];
+                    var date = new Date(kline[0]);
+                    //console.log((date + "___"+weekFirstDay +"_____"+ weekEndDay));
+                    //是否在同一周内
+                    // console.log((date.getTime() >=weekFirstDay.getTime() && date.getTime() <= weekEndDay.getTime()));
+                    if(date.getTime() >=weekFirstDay.getTime() && date.getTime() <= weekEndDay.getTime()){
+                        weekArr.push(klines[i]);
+                        week = false;
+                    }else{
+                         week = true;
+                         first =  new Date(klines[i][0]);//取得第一天的数据
+                         weekFirstDay =  new Date(first.getTime()-86400*first.getDay()*1000)
+                         weekEndDay =  new Date(first.getTime()+86400*(6-first.getDay())*1000)
+                    }
+                    if(i == klines.length -1){
+                        week = true;
+                    }
+
+                    //计算周线数据
+                    if(week && weekArr.length > 0){
+                        var arrFirst = weekArr[0];
+                        var date = weekArr[weekArr.length-1][0];
+                        //console.log("最后一天时间"+date);
+                        var open = arrFirst[1];
+                        var close = weekArr[weekArr.length-1][2];
+                        var high = arrFirst[4];
+                        var low = arrFirst[3];
+                        var cjl_w = 0.00, cje_w = 0.00;
+                        for (let j = 0; j < weekArr.length; j++) {
+                            cjl_w += Number(weekArr[j][6]);
+                            cje_w += Number(weekArr[j][7]);
+                        }
+                        for (var k in weekArr) {
+                            var arr = k.split(",");
+                            if (arr[4] > high) {
+                                high = arr[4];
+                            }
+                            if (arr[3] < low) {
+                                low = arr[3];
+                            }
+                        }
+                        var lastClose = open;
+
+                        if(chardata.length > 0){
+                            lastClose = chardata[chardata.length-1][2];
+                        }
+                        var item = [date,open*1,close*1,low*1,high*1,lastClose*1,cjl_w*1,cje_w*1];
+                        chardata.push(item);
+                        weekArr = [];
+                        weekArr.push(klines[i]);
+                    }
+                }
+                weekKline = splitData(chardata);
+               // refreshData(weekKline,true);
+                return weekKline;
+            }else if(kType == "month"){
+                //console.log("进入月线计算");
+                var arr = klines[0][0].split("-");
+                var first = new Date(arr[0],arr[1]-1,arr[2]);//取得第一天的数据 (兼容iOS的写法)
+                var monthFirstDay = getFirstMonthDay(first);// new Date(first.getTime()-86400*first.getDay()*1000)
+                var monthEndDay = getLastMonthDay(first);
+                //console.log("monthEndDay="+monthEndDay);
+                var monthArr = [];
+                monthArr.push(klines[0]);
+                var month = false;
+                var chardata = [];
+                for(var i = 0;i<klines.length;i++){
+                    if(i == 0){
+                        continue;
+                    }
+                    var kline = klines[i];
+                    var date = new Date(kline[0]);
+                     //console.log(date+"_"+monthFirstDay+"__"+monthEndDay);
+                    //是否在同一周内
+                     //console.log((date.getTime() >=monthFirstDay.getTime() && date.getTime() <= monthEndDay.getTime()));
+                    if(date.getTime() >=monthFirstDay.getTime() && date.getTime() <= monthEndDay.getTime()){
+                        monthArr.push(klines[i]);
+                        month = false;
+                    }else{
+                        month = true;
+                        var arr = klines[i][0].split("-");
+                        var first = new Date(arr[0],arr[1]-1,arr[2]);
+                        monthFirstDay =  getFirstMonthDay(first);//new Date(first.getTime()-86400*first.getDay()*1000)
+                        monthEndDay =   getLastMonthDay(first);
+                    }
+                    if(i == klines.length -1){
+                        month = true;
+                    }
+
+                    //计算周线数据
+                    if(month && monthArr.length > 0){
+                        var arrFirst = monthArr[0];
+                        var date = monthArr[monthArr.length-1][0];
+                        //console.log("最后一天时间"+date);
+                        var open = arrFirst[4];
+                        var close = monthArr[monthArr.length-1][2];
+                        var high = arrFirst[4];
+                        var low = arrFirst[3];
+                        var cjl_w = 0.00, cje_w = 0.00;
+                        for (let j = 0; j < monthArr.length; j++) {
+                            cjl_w += Number(monthArr[j][6]);
+                            cje_w += Number(monthArr[j][7]);
+                        }
+                        for(var k in monthArr){
+                            var arr = k;
+                            if(arr[4] > high){
+                                high = arr[4];
+                            }
+                            if(arr[3] < low){
+                                low = arr[3];
+                            }
+                        }
+                        var lastClose = open;
+                        if(chardata.length > 0){
+                            lastClose = chardata[chardata.length-1][2];
+                        }
+                        var item = [date,open*1,close*1,low*1,high*1,lastClose*1,cjl_w*1,cje_w*1];
+                        chardata.push(item);
+                        monthArr = [];
+                        monthArr.push(klines[i]);
+                    }
+                }
+                monthKline = splitData(chardata);
+                // refreshData(monthKline,true);
+                return monthKline;
+            }else{ //日线 cq
+                // var chardata = [];
+                // for(var i=0;i <klines.length;i++){
+                //     var hqdata = klines[i];
+                //     var kline = hqdata.split(",");
+                //     /**
+                //      * 时间，开，收，低，高，昨收
+                //      **/
+                //     var item = [kline[0],Number(kline[1]),Number(kline[2]),Number(kline[7]),Number(kline[6]),Number(kline[3])];
+                //     chardata.push(item);
+                // }
+                data = splitData(klines);
+                // refreshData(data,true);
+                return data;
+            }
+        }
+
+    }
+
+    function fuquan(fqType,callback){
+        if(!klines){
+            return;
+        }
+        // klineType
+        if(fqType == "hfq"){ //后复权
+            if(hfqdatas && hfqdatas.length > 0){
+                var qxIndex = hfqdatas.length-1;
+                var qxRate = hfqdatas[qxIndex];
+                var rate = qxRate.f;
+                var chardata = [];
+                for(var i=klines.length-1;i >=0 ;i--){
+                    const hqdata = klines[i];
+                    var kline = hqdata.split(",");
+                    if(Number(kline[2])==0 || Number(kline[3])==0){//今开=0或者今收=0视为停牌
+                        continue;
+                    }
+                    var datetime = parseInt(kline[0].replace(/-/g,''));
+                    // console.log("datetime:"+datetime+" qxRate.d="+qxRate.d) ;
+                    if(datetime < qxRate.d){
+                        qxIndex --;
+                        qxRate = hfqdatas[qxIndex]
+                        //console.log("qxRate:"+qxRate+"open:"+kline[2]+"fq:"+MathToFixed(accMul((kline[2]),rate),2))
+                    }
+
+                    rate = qxRate.f;
+                    /**
+                     * 时间，开，收，低，高，昨收
+                     **/
+                    var open =MathToFixed(accMul((kline[2]),rate),2);
+                    var close = MathToFixed(accMul((kline[3]),rate),2);
+                    var high = MathToFixed(accMul((kline[4]),rate),2);
+                    var  low = MathToFixed(accMul((kline[5]),rate),2);
+                    var lastClose = MathToFixed(accMul((kline[1]),rate),2);
+                    let cjl = MathToFixed(accMul((Number(kline[6])),rate),2);
+                    if(stockType == "A"){
+                        cjl = MathToFixed(accMul((Number(kline[6])*100),rate),2);
+                    }
+                    let cje = MathToFixed(accMul((Number(kline[7])),rate),2);
+                    var item = [kline[0],open,close,low,high,lastClose,cjl,cje];
+                    chardata.unshift(item);
+
+                }
+
+                var data = dataChange(klineType,chardata);
+                if (option && typeof option === "object") {
+                    //  myChart.setOption(option, true);
+                    refreshData(data,false);
+                }
+            }else{
+                if(!callback){
+                    hfq();
+                }
+
+            }
+        }else if(fqType == "cq" || stockType == "KZZ"){//除权
+
+            //console.log("除权"+klines.length)
+            if(klines!=undefined && klines.length > 0){
+                var chardata = [];
+                for(var i=0;i < klines.length;i++){
+                    var hqdata = klines[i];
+                    if(hqdata){
+                        var kline = hqdata.split(",");
+                        if(Number(kline[2])==0 || Number(kline[3])==0){//今开=0或者今收=0视为停牌
+                            continue;
+                        }
+                        /**
+                         * 时间，开，收，低，高，昨收
+                         **/
+                        var item = [kline[0],Number(kline[2]),Number(kline[3]),Number(kline[5]),Number(kline[4]),Number(kline[1]),Number(kline[6]),Number(kline[7])];
+                        if(stockType == "A"){
+                            item = [kline[0],Number(kline[2]),Number(kline[3]),Number(kline[5]),Number(kline[4]),Number(kline[1]),Number(kline[6])*100,Number(kline[7])];
+                        }
+                        chardata.push(item);
+                    }else{
+                        alert("空数据："+i);
+                    }
+
+                }
+                var data = dataChange(klineType,chardata);
+                refreshData(data,false);
+            }else{
+                if(!callback){
+                    loadHQ();
+                }
+            }
+        }else{ //默认前复权
+            if(qfqdatas && qfqdatas.length > 0){
+                var qxIndex = qfqdatas.length-1;
+                var qxRate = qfqdatas[qxIndex];
+                var rate = qxRate.f;
+                var chardata = [];
+                for(var i=klines.length-1;i >=0 ;i--){
+                    const hqdata = klines[i];
+                    var kline = hqdata.split(",");
+                    if(Number(kline[2])==0 || Number(kline[3])==0){//今开=0或者今收=0视为停牌
+                        continue;
+                    }
+                    var datetime = parseInt(kline[0].replace(/-/g,''));
+                    // console.log("datetime:"+datetime+" qxRate.d="+qxRate.d) ;
+                    if(datetime < qxRate.d){
+                        qxIndex --;
+                        qxRate = qfqdatas[qxIndex]
+                        //console.log("qxRate:"+qxRate+"open:"+kline[2]+"fq:"+MathToFixed(accDiv((kline[2]),rate),2))
+                    }
+
+                    rate = qxRate.f;
+                    /**
+                     * 时间，开，收，低，高，昨收
+                     **/
+                    var open =MathToFixed(accDiv((kline[2]),rate),2);
+                    var close = MathToFixed(accDiv((kline[3]),rate),2);
+                    var high = MathToFixed(accDiv((kline[4]),rate),2);
+                    var  low = MathToFixed(accDiv((kline[5]),rate),2);
+                    var lastClose = MathToFixed(accDiv((kline[1]),rate),2);
+                    let cjl = MathToFixed(accDiv((Number(kline[6])),rate),2);
+                    if(stockType == "A"){
+                        cjl = MathToFixed(accDiv((Number(kline[6])*100),rate),2);
+                    }
+                    let cje = MathToFixed(accDiv((Number(kline[7])),rate),2);
+                    var item = [kline[0],open,close,low,high,lastClose,cjl,cje];
+                    chardata.unshift(item);
+
+                }
+
+                var data = dataChange(klineType,chardata);
+                if (option && typeof option === "object") {
+                    //  myChart.setOption(option, true);
+                    refreshData(data,true);
+                }
+
+
+            }else{
+                if(!callback || stockType == "M"){
+                    qfq();
+                }
+
+            }
+        }
+
+    }
+
+    function hfq(){
+        $.ajax({
+            async: false,
+            type: 'get',
+            url: '/hq/hfq?stockCode='+stockCode,
+            dataType: "json",
+            success: function (qfqdata) {
+                if (qfqdata.status) {
+                    hfqdatas = qfqdata.dto;
+                    if(hfqdatas.length == 0){
+                        return;
+                    }
+                    fuquan("hfq",true);
+                }
+            }
+        });
+    }
+
+    function qfq(){
+        var url = '/hq/qfq?stockCode='+stockCode;
+        if(stockType == "M"){
+            url = '/hq/qfq?stockCode=us'+stockCode;
+        }
+        $.ajax({
+            async: false,
+            type: 'get',
+            url: url,
+            dataType: "json",
+            success: function (qfqdata) {
+                if (qfqdata.status) {
+                    qfqdatas = qfqdata.dto;
+                    if(qfqdatas.length == 0){
+                        return;
+                    }
+                    fuquan("qfq",true);
+                }else{
+                    nonePage("kline"); //取不到赋权数据，走暂无数据
+                    window.clearInterval(intervalRealId);
+                    window.clearInterval(intervalRealId1);
+                    refreshFlag = false;
+                }
+            }
+        });
+    }
+
+    function refreshData(data,indexFlag){
+        // if (option && typeof option === "object") {
+            //刷新数据
+            //option = myChart.getOption();
+            if(!option){
+                return;
+            }
+            option.xAxis[0].data = data.categoryData;
+            option.xAxis[1].data = data.categoryData;
+            option.series[0].data = data.values;
+            option.series[1].data = calculateMA(5, data);
+            option.series[2].data = calculateMA(10, data);
+            option.series[3].data = calculateMA(20, data);
+            option.series[4].data = calculateMA(30, data);
+            option.series[5].data = data.volumes;
+            if (indexFlag || stockType == "KZZ") {
+                //console.log("调整缩放"+data.categoryData.length);
+                var size = data.categoryData.length;
+                var startIndex = 0;
+                if (size > 60) {
+                    startIndex = size - 1 - 60;
+                }
+                //console.log(startIndex+"______"+ data.categoryData[startIndex]);
+                if(option.dataZoom[0].start == 30 && option.dataZoom[0].end == 100){
+                    option.dataZoom[0].start=startIndex*100/size;
+                    option.dataZoom[0].end=100;
+                }
+                option.dataZoom[1].start=startIndex*100/size;
+                option.dataZoom[1].end=100;
+                if(size <= 30){
+                    option.dataZoom[0].minValueSpan=100;
+                }else{
+                    option.dataZoom[0].minValueSpan=size/10>20?20:size/10; //限制滚轴最小宽度
+                }
+                //console.log( option.dataZoom[0].startValue+"___"+ option.dataZoom[0].endValue);
+            }
+
+            myChart.setOption(option,true);
+    }
+
+    function splitData(rawData) {
+        var categoryData = [];
+        var values = [];
+        var volumes = [];
+        for (var i = 0; i <rawData.length; i++) {
+            categoryData.push(rawData[i].splice(0, 1)[0]);
+            values.push(rawData[i])
+            volumes.push([i, rawData[i][5], rawData[i][0] > rawData[i][1] ? 1 : -1]);
+        }
+        return {
+            categoryData: categoryData,
+            values: values,
+            volumes: volumes
+        };
+    }
+
+    function calculateMA(dayCount,data) {
+        var result = [];
+        for (var i = 0, len = data.values.length; i < len; i++) {
+            if (i < dayCount) {
+                result.push('-');
+                continue;
+            }
+            var sum = 0;
+            for (var j = 0; j < dayCount; j++) {
+                sum += data.values[i - j][1];
+            }
+            result.push(sum / dayCount);
+        }
+        return result;
+    }
+
+    function loadHQ(){
+        if(intervalRealId){
+            clearInterval(intervalRealId);
+        }
+        //loadReal(false);
+        var timestamp = new Date();
+        timestamp = timestamp.getFullYear()+"-"+((timestamp.getMonth()+1)<10?"0":"")+(timestamp.getMonth()+1)+"-"+(timestamp.getDate()<10?"0":"")+timestamp.getDate();
+        if(new Date().getHours() > 9){
+            timestamp = timestamp + "0";
+        }
+        var url = "https://jshq.tgb.cn/jshq/Astock/his/"+stockCode+"_new.js?t=" + timestamp;
+        if(stockType == "M"){ //美股
+            url = "https://jshq.tgb.cn/js/US/cq/his/"+stockCode+"_new.js?t=" + timestamp;
+        }else if(stockType == "H"){ //港股
+            url = "https://jshq.tgb.cn/js/HK/cq/his/"+stockCode+"_new.js?t=" + timestamp;
+        }else if(stockType == "KZZ"){ //可转债
+            stockCode = stockCode.toUpperCase();
+            url = "https://jshq.tgb.cn/jshq/Bond/his/"+stockCode+"_new.js?t=" + timestamp;
+        }else if(stockType == "ETF"){ //ETF
+            url = "https://jshq.tgb.cn/jshq/etf/his/"+stockCode+"_new.js?t=" + timestamp;
+        }
+        $.ajax({
+            url: url,
+            dataType: "script",
+            cache: "false",
+            type: "GET",
+            success: function () {
+                klines = window[stockCode + "_new"];
+                if(!klines){
+                    klines = [];
+                    if(stockType != "M"){
+                        loadReal(false); //后加载
+                        if(refreshFlag){
+                            window.clearInterval(intervalRealId1);
+                            intervalRealId1 = setInterval(function () {
+                                loadReal(false); //后加载
+                            }, 60000);
+                        }
+                    }
+                    fuquan("kline",true);
+                    return;
+                }
+                var lastKline = klines[klines.length - 1];
+                //console.log("lastKline="+lastKline)
+                if (todayKline && lastKline.substring(0, 10) == todayKline.substring(0, 10)) {
+                    klines[klines.length - 1] = todayKline;
+                } else {
+                    if (todayKline) {
+                        //console.log("todayKline"+ klines[klines[klines.length]]);
+                        klines[klines.length] = todayKline;
+                    }
+
+                }
+                if (stockType != "M") {
+                    loadReal(false); //后加载
+                    if (refreshFlag) {
+                        window.clearInterval(intervalRealId1);
+                        intervalRealId1 = setInterval(function () {
+                            loadReal(false); //后加载
+                        }, 60000);
+                    }
+                }
+                fuquan("kline", true);
+            },
+            error: function () {
+                alert("查询信息失败")
+            }
+        });
+    }
+
+    function MathToFixed(num, decimal) {
+       // return Math.round(num, decimal).toFixed(decimal);
+        return num;
+    }
+    function accDiv(arg1,arg2){
+        var t1=0,t2=0,r1,r2;
+        try{t1=arg1.toString().split(".")[1].length}catch(e){}
+        try{t2=arg2.toString().split(".")[1].length}catch(e){}
+        with(Math){
+            r1=Number(arg1.toString().replace(".",""))
+            r2=Number(arg2.toString().replace(".",""))
+            return (r1/r2)*pow(10,t2-t1);
+        }
+    }
+    function accMul(arg1,arg2){
+        var m=0,s1=arg1.toString(),s2=arg2.toString();
+        try{
+            if(s1.indexOf(".") == -1){
+                m += 0;
+            }else{
+                m += s1.split(".")[1].length;
+            }
+        }catch(e){
+            throw e
+        }
+        try{
+            if(s2.indexOf(".") == -1){
+                m += 0;
+            }else{
+                m += s2.split(".")[1].length;
+            }
+        }catch(e){
+            throw e
+        }
+        return Number(s1.replace(".",""))*Number(s2.replace(".","")) / Math.pow(10,m)
+      //  return Number(arg1)*Number(arg2);
+    }
+
+</script>
+
+<script type="text/javascript">
+
+    var bgColor = "#fff";//背景
+    var upColor = "#ff0000";//涨颜色
+    var downColor = "#008b00";//跌颜色
+    var labelColor = "#666"; //文字颜色
+    var borderColor = "#bebebe"; // 图标边框色，会影响坐标轴上悬浮框的背景色
+    // ma  颜色
+    var ma5Color = "#39afe6";
+    var ma10Color = "#da6ee8";
+    /**
+     * 15:20 时:分 格式时间增加num分钟
+     * @param {Object} time 起始时间
+     * @param {Object} num
+     */
+    function addTimeStr(time, num) {
+        var hour = time.split(':')[0];
+        var mins = Number(time.split(':')[1]);
+        var mins_un = parseInt((mins + num) / 60);
+        var hour_un = parseInt((Number(hour) + mins_un) / 24);
+        if (mins_un > 0) {
+            if (hour_un > 0) {
+                var tmpVal = ((Number(hour) + mins_un) % 24) + "";
+                hour = tmpVal.length > 1 ? tmpVal : '0' + tmpVal;//判断是否是一位
+            } else {
+                var tmpVal = Number(hour) + mins_un + "";
+                hour = tmpVal.length > 1 ? tmpVal : '0' + tmpVal;
+            }
+            var tmpMinsVal = ((mins + num) % 60) + "";
+            mins = tmpMinsVal.length > 1 ? tmpMinsVal : 0 + tmpMinsVal;//分钟数为 取余60的数
+        } else {
+            var tmpMinsVal = mins + num + "";
+            mins = tmpMinsVal.length > 1 ? tmpMinsVal : '0' + tmpMinsVal;//不大于整除60
+        }
+        return hour + ":" + mins;
+    }
+
+    //获取增加指定分钟数的 数组  如 09:30增加2分钟  结果为 ['09:31','09:32']
+    function getNextTime(startTime, endTIme, offset, resultArr) {
+        var result = addTimeStr(startTime, offset);
+        resultArr.push(result);
+        if (result == endTIme) {
+            return resultArr;
+        } else {
+            return getNextTime(result, endTIme, offset, resultArr);
+        }
+    }
+
+
+    /**
+     * 不同类型的股票的交易时间会不同
+     * @param {Object} type   hs=沪深  us=美股  hk=港股
+     */
+    var time_arr = function (type) {
+        if (type.indexOf('us') != -1) {//生成美股时间段
+            var timeArr = new Array();
+            timeArr.push('09:30')
+            return getNextTime('09:30', '16:00', 1, timeArr);
+        }
+        if (type.indexOf('hs') != -1) {//生成沪深时间段
+            var timeArr = new Array();
+            timeArr.push('09:30');
+            timeArr.concat(getNextTime('09:30', '11:30', 1, timeArr));
+            timeArr.push('13:00');
+            timeArr.concat(getNextTime('13:00', '15:00', 1, timeArr));
+            return timeArr;
+        }
+        if (type.indexOf('hk') != -1) {//生成港股时间段
+            var timeArr = new Array();
+            timeArr.push('09:30');
+            timeArr.concat(getNextTime('09:30', '11:59', 1, timeArr));
+            timeArr.push('13:00');
+            timeArr.concat(getNextTime('13:00', '16:00', 1, timeArr));
+            return timeArr;
+        }
+
+    }
+    var time_arr1 = function (type, times) {
+        if(times.length==0){
+            var timeArr = new Array();
+            timeArr.push('09:30');
+            timeArr.concat(getNextTime('09:30', '11:30', 1, timeArr));
+            timeArr.push('13:00');
+            timeArr.concat(getNextTime('13:00', '15:00', 1, timeArr));
+            return timeArr;
+        }
+        var last = times[times.length-1];
+        if (type.indexOf('us') != -1) {//生成美股时间段
+            if(parseInt(last.replace(':',''))==1600){
+                return [];
+            }
+            var timeArr = new Array();
+            return getNextTime(last, '16:00', 1, timeArr);
+        }
+        if (type.indexOf('hs') != -1) {//生成沪深时间段
+            if(parseInt(last.replace(':',''))==1500){
+                return [];
+            }
+            var timeArr = new Array();
+            if(parseInt(last.replace(':',''))>=1300){
+                timeArr.concat(getNextTime(last, '15:00', 1, timeArr));
+            }else{
+                if(parseInt(last.replace(':',''))!=1130){
+                    timeArr.concat(getNextTime(last, '11:30', 1, timeArr));
+                }
+                timeArr.push('13:00');
+                timeArr.concat(getNextTime('13:00', '15:00', 1, timeArr));
+            }
+            return timeArr;
+        }
+        if (type.indexOf('hk') != -1) {//生成港股时间段
+            if(parseInt(last.replace(':',''))==1600){
+                return [];
+            }
+            var timeArr = new Array();
+            if(parseInt(last.replace(':',''))>=1300){
+                timeArr.concat(getNextTime(last, '16:00', 1, timeArr));
+            }else{
+                timeArr.concat(getNextTime(last, '11:59', 1, timeArr));
+                timeArr.push('13:00');
+                timeArr.concat(getNextTime('13:00', '16:00', 1, timeArr));
+            }
+            return timeArr;
+        }
+    }
+
+    var get_m_datatgb = function (m_data, type) {
+        var priceArr = new Array();
+        var vol = new Array();
+        var times = new Array();
+        $.each(m_data.data, function (i, v) {
+            times.push(v[0]);
+            priceArr.push(v[1]);
+            vol.push(v[2]); //目前数据没有均价，取值提前一位
+        })
+        return {
+            priceArr: priceArr,
+            vol: vol,
+            times: times
+        }
+    }
+
+    var get_m_data = function (m_data, type) {
+        var priceArr = new Array();
+        var vol = new Array();
+        // var times = time_arr(type);
+        var times = new Array();
+        var amount = new Array();
+        $.each(m_data.data, function (i, v) {
+            times.push(v[0]);
+            priceArr.push(v[1]);
+            vol.push(v[2]); //目前数据没有均价，取值提前一位
+            amount.push(v[3]);
+        })
+        times = times.concat(time_arr1(type, times));
+        return {
+            priceArr: priceArr,
+            vol: vol,
+            times: times,
+            amount: amount
+        }
+    }
+
+
+    //分时图 option
+
+    /**
+     * 生成分时option
+     * @param {Object} m_data 分时数据
+     * @param {Object} type 股票类型  us-美股  hs-沪深  hk-港股
+     */
+
+    function initMOption(m_data, type) {
+        var m_datas = get_m_data(m_data, type);
+        for(var i=0; i<m_datas.priceArr.length; i++){
+            if(m_datas.priceArr[i]=="-"){
+                m_datas.priceArr[i]=m_data.yestclose;
+            }
+        }
+       // var m_datas = get_m_datatgb(m_data, type);
+        var baseNumber = Number(m_data.yestclose).toFixed(2)
+        var _minVal =  (Number(baseNumber-baseNumber*handle_num())).toFixed(2);
+        var _maxVal = ((Number(baseNumber)+baseNumber*handle_num())).toFixed(2);
+        if(_minVal == -Infinity){
+            _minVal = baseNumber;
+        }
+        if(_maxVal == Infinity){
+            _maxVal = baseNumber;
+        }
+        if(_minVal == _maxVal && _maxVal == baseNumber){
+            _minVal = Number(_minVal)-0.01;
+            _maxVal = Number(_maxVal)+0.01;
+        }
+        var _interval = Math.abs(Number((baseNumber - _minVal)/5));
+        function handle_num(){
+            var _aa = Math.abs((Math.max.apply(null, m_datas.priceArr)-baseNumber)/baseNumber).toFixed(4);
+            var _bb = Math.abs((baseNumber-Math.min.apply(null, m_datas.priceArr))/baseNumber).toFixed(4);
+            if(_aa == "NaN" && _bb == "NaN"){
+                _aa = 0;
+                _bb = 0;
+            }
+            return _aa>_bb ? _aa:_bb;
+        }
+
+        function format_y(v) {
+            v = v.toFixed(2)
+            if (v > m_data.yestclose) {
+                return '{red|' + v + '}';
+            }else if (v == baseNumber) {
+                return v;
+            }else{
+                return '{green|' + v + '}';
+            }
+        }
+        return {
+            tooltip: { //弹框指示器
+                trigger: 'axis',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderColor: "#ccc",
+                borderWidth: 1,
+                textStyle: {
+                    color: '#333'
+                },
+                axisPointer: {
+                    link: {xAxisIndex: 'all'},
+                    type: 'cross',
+                    label: {
+                        show: true,
+                        backgroundColor: '#333'
+                    }
+                },
+                formatter: function (params, ticket, callback) {
+                    var i = params[0].dataIndex;
+                    var color;
+                    if (Number(m_datas.priceArr[i]) > m_data.yestclose) {
+                        color = 'style="color:' + upColor + '"';
+                    } else if(Number(m_datas.priceArr[i]) < m_data.yestclose){
+                        color = 'style="color:' + downColor + '"';
+                    } else {
+                        color = '';
+                    }
+                    var nowPrice = m_datas.priceArr[i];
+                    var cjCnt = m_datas.vol[i]; //成交量
+                    if(cjCnt >= 10000 && cjCnt < 100000000){
+                        cjCnt = (cjCnt/10000).toFixed(2) + "万";
+                    }else if(cjCnt >= 100000000){
+                        cjCnt = (cjCnt/100000000).toFixed(2) + "亿";
+                    }
+                    var cjNum = m_datas.amount[i]; //成交额
+                    if(cjNum >= 10000 && cjNum < 100000000){
+                        cjNum = (cjNum/10000).toFixed(2) + "万";
+                    }else if(cjNum >= 100000000){
+                        cjNum = (cjNum/100000000).toFixed(2) + "亿";
+                    }
+                    var html = '<div class="commColor" style="width:100px;">\
+                            <div>当前价 <span  ' + color + ' >' + nowPrice + '</span></div>\
+			                <div>涨幅 <span  ' + color + ' >' + ratioCalculate(nowPrice, m_data.yestclose) + '%</span></div>\
+				            <div>成交量 <span>' + cjCnt + '</span></div> \
+                            <div>成交额 <span>' + cjNum + '</span></div></div>';
+                    return html;
+                }
+            },
+            axisPointer: {
+                link: {xAxisIndex: 'all'},
+                label: {
+                    backgroundColor: '#777'
+                }
+            },
+            legend: { //图例控件,点击图例控制哪些系列不显示
+                icon: 'rect',
+                type: 'scroll',
+                itemWidth: 14,
+                itemHeight: 2,
+                selectedMode:false,
+                left: 60,
+                top: '1%',
+                textStyle: {
+                    fontSize: 12,
+                    color: labelColor
+                }
+            },
+            color: [ma5Color, ma10Color],
+            grid: [{
+                show: true,
+                borderColor: borderColor,
+                id: 'gd1',
+                height: '63%', //主K线的高度,
+                top: '9%'
+            },{
+                show: true,
+                borderColor: borderColor,
+                id: 'gd2',
+                height: '63%', //主K线的高度,
+                top: '9%'
+            }, {
+                show: true,
+                borderColor: borderColor,
+                id: 'gd3',
+                top: '75%',
+                height: '19%' //交易量图的高度
+            }],
+            xAxis: [ //==== x轴
+                { //主图
+                    gridIndex: 0,
+                    boundaryGap: false,
+                    axisTick: {
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            show: false,
+                        }
+                    },
+                    data: m_datas.times,
+                    axisLabel: { //label文字设置
+                        show: false
+                    },
+                    splitLine: { //分割线设置
+                        show: false,
+                        lineStyle: {
+                            color:'#f8f8f8'
+                            // type: 'dashed'
+                        }
+                    },
+                },
+                {
+                    show: false,
+                    gridIndex: 1,
+                    boundaryGap: false,
+                    data: m_datas.times,
+                    axisLabel: { //label文字设置
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            show: false,
+                        }
+                    }
+                }, { //交易量图
+                    splitNumber: 2,
+                    type: 'category',
+                    gridIndex: 2,
+                    boundaryGap: false,
+                    data: m_datas.times,
+                    axisLabel: { //label文字设置
+                        color: labelColor,
+                        fontSize: 10
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    splitLine: { //分割线设置
+                        show: false,
+                        lineStyle: {
+                            color:'#f8f8f8'
+                            // type: 'dashed'
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    }
+                }
+            ],
+            yAxis: [ //y轴
+                {
+                    type: 'value',
+                    min: _minVal,
+                    max: _maxVal,
+                    interval: _interval,
+                    gridIndex: 0,
+                    scale: true,
+                    axisTick: { // 分割线 短
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            formatter: function (params) {
+                                return (params.value).toFixed(2);
+                            }
+                        }
+                    },
+                    axisLabel: {
+                        color: function (val) {
+                            val = Number(val).toFixed(2);
+                            if (val == baseNumber) {
+                                return '#333';
+                            }
+                            return Number(val) > baseNumber ? upColor : downColor;
+                        },
+                        formatter: function (val) {
+                            return Number(val).toFixed(2);
+                        }
+                    },
+                    z: 0,
+                    splitLine: { //分割线设置
+                        show: true,
+                        lineStyle: {
+                            color: '#f0f0f0'
+                            // type: 'dashed'
+                        }
+                    },
+                }, {
+                    scale: true,
+                    gridIndex: 1,
+                    min: _minVal,
+                    max: _maxVal,
+                    interval: _interval,
+                    position: 'right',
+                    z: 4,
+                    axisTick: {
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    },
+                    axisLabel: { //label文字设置
+                        color: function (val) {
+                            val = Number(val).toFixed(2)
+                            if (val == baseNumber) {
+                                return '#333'
+                            }
+                            return Number(val) > baseNumber ? upColor : downColor;
+                        },
+                        inside: false, //label文字朝内对齐
+                        formatter: function (val) {
+                            var resul = ratioCalculate(val, baseNumber);
+                            return Number(resul).toFixed(2) + '%'
+                        }
+                    },
+                    splitLine: { //分割线设置
+                        show: false,
+                        lineStyle: {
+                            color: '#181a23'
+                        }
+                    },
+                    axisPointer: {
+                        show: true,
+                        label: {
+                            formatter: function (params) { //计算右边Y轴对应的当前价的涨幅比例
+                                return ratioCalculate(params.value, baseNumber) + '%';
+                            }
+                        }
+                    }
+                }, { //交易图
+                    // name: '万',
+                    nameGap: '0',
+                    nameTextStyle: {
+                        color: labelColor
+                    },
+                    gridIndex: 2,
+                    z: 4,
+                    splitNumber: 3,
+                    axisLine: {
+                        onZero: false,
+                        lineStyle: {
+                            color: borderColor,
+                        }
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    axisPointer: {
+                        show: false,
+                        label: {
+                            formatter: function (params) { //计算右边Y轴对应的当前价的涨幅比例
+                                var _p = ((params.value) / 10000).toFixed(1) + '万';
+                                return _p
+                            }
+                        }
+                    },
+                    splitLine: { //分割线设置
+                        show: false,
+                    },
+                    axisLabel: { //label文字设置
+                        color: labelColor,
+                        inside: false, //label文字朝内对齐
+                        fontSize: 10,
+                        onZero: false,
+                        formatter: function (params) { //计算右边Y轴对应的当前价的涨幅比例
+                            var _p = (params / 10000).toFixed(1);
+                            if (params == 0) {
+                                _p = '(万)'
+                            }
+                            return _p
+                        }
+                    },
+                }
+            ],
+            backgroundColor: bgColor,
+            blendMode: 'source-over',
+            series: [{
+                    name: '当前价',
+                    type: 'line',
+                    data: m_datas.priceArr,
+                    smooth: true,
+                    symbol: "circle", //中时有小圆点
+                    lineStyle: {
+                        normal: {
+                            opacity: 0.8,
+                            color: "#0083ff",
+                            width: 1
+                        }
+                    },
+                    areaStyle: {
+                        normal: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                offset: 0,
+                                color: "#f2f8ff"
+                            }, {
+                                offset: 0.8,
+                                color: "#f2f8ff"
+                            }], false),
+                            shadowColor: 'rgba(0, 0, 0, 0.1)',
+                            shadowBlur: 10
+                        }
+                    },
+                    markLine: {
+                        name:'昨日收盘价',
+                        symbol: ['none', 'none'],
+                        label:{
+                            show:false,
+                            formatter:  Number(m_data.yestclose).toFixed(2),
+                            position: 'start',
+                        },
+                        lineStyle: {
+                            color: borderColor,
+                            type: 'solid'
+                        },
+                        data: [{
+                            yAxis: m_data.yestclose,
+                        }]
+                    }
+                },
+                {
+                    type: 'line',
+                    data: m_datas.priceArr,
+                    smooth: true,
+                    symbol: "none",
+                    gridIndex: 1,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: { //标线的样式
+                        normal: {
+                            width: 0
+                        }
+                    }
+                },
+                {
+                    //name: '成交量',
+                    name: '',
+                    type: 'bar',
+                    gridIndex: 2,
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    data: m_datas.vol,
+                    barWidth: '60%',
+                    itemStyle: {
+                        normal: {
+                            color: function (params) {
+                                var colorList;
+                                if (m_datas.priceArr[params.dataIndex] > m_datas.priceArr[params.dataIndex - 1]) {
+                                    colorList = upColor;
+                                } else {
+                                    colorList = downColor;
+                                }
+                                return colorList;
+                            },
+                        }
+                    }
+                }
+            ]
+        };
+    }
+
+    Date.prototype.format = function(fmt) {
+        var o = {
+            "M+" : this.getMonth()+1,                 //月份
+            "d+" : this.getDate(),                    //日
+            "h+" : this.getHours(),                   //小时
+            "m+" : this.getMinutes(),                 //分
+            "s+" : this.getSeconds(),                 //秒
+            "q+" : Math.floor((this.getMonth()+3)/3), //季度
+            "S"  : this.getMilliseconds()             //毫秒
+        };
+        if(/(y+)/.test(fmt)) {
+            fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+        }
+        for(var k in o) {
+            if(new RegExp("("+ k +")").test(fmt)){
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+            }
+        }
+        return fmt;
+    }
+    /**
+     * 计算价格涨跌幅百分比
+     * @param {Object} price 当前价
+     * @param {Object} yclose 昨收价
+     */
+    function ratioCalculate(price, yclose) {
+        return ((price - yclose) / yclose * 100).toFixed(2);
+    }
+
+
+    // 分时数据
+    var mdata= {
+        "data":[]
+    }
+
+    function getmData(callback) { //分时图
+        $.ajax({
+            url: "http://data.gtimg.cn/flashdata/hushen/minute/"+stockCode+".js?maxage=110&_="+Math.random(),
+            dataType:"script",
+            cache:"false",
+            type:"GET",
+            success: function () {
+                // 目前分时图数据缺少均价
+                var msg = min_data;
+                var result = msg.replace(/\n/g,",").split(',')
+                var arr = result.slice(2,result.length-1), //开头结尾各一个空数组要去掉
+                    _arr = [];
+                for(var i=0;i<arr.length;i++){
+                    var _a = arr[i].split(" ") , _b = arr[i].split(" "), _c =[];
+                    if(i>0){
+                        _c = arr[i-1].split(" ");
+                    }
+                    // 腾讯股票接口传的数值0930（日期） 5.55（成交价） 37673（累计成交量，初始成交量为9:30的）
+                    // 因此每分钟的 成交量 = 当前累计成交量 - 前一分钟的累计成交量
+                    _b[2] = _c.length>0 ? _a[2] - _c[2] : _a[2];
+                    _arr.push(_b)
+                }
+                mdata.data = _arr
+                callback(mdata)
+            },
+            error: function () {
+                alert("wrong");
+            }
+        });
+    }
+
+    function chose(cType){
+        var cColor = "#000";
+        var noCColor = "#ccc";
+
+        if(cType == "min"){
+            $("#sp_min").css("color",cColor).css("border-bottom","3px solid #4793f1");
+            $("#sp_kline").css("color",noCColor).css("border-bottom","none");
+            $("#sp_week").css("color",noCColor).css("border-bottom","none");
+            $("#sp_month").css("color",noCColor).css("border-bottom","none");
+
+        }else{
+            $("#sp_min").css("color",noCColor).css("border-bottom","none");
+            $("#sp_kline").css("color",noCColor).css("border-bottom","none");
+            $("#sp_week").css("color",noCColor).css("border-bottom","none");
+            $("#sp_month").css("color",noCColor).css("border-bottom","none");
+            $("#sp_"+cType).css("color",cColor).css("border-bottom","3px solid #4793f1");
+
+        }
+    }
+
+    function chooseTool(){
+        $(".drop-down-content1").show();
+    }
+
+    function chooseFq(){
+        $(".drop-down-content").show();
+    }
+
+    function loadMinHq(){
+        $.ajax({
+            url: "/hq/min/"+stockCode.toLowerCase(),
+            dataType:"json",
+            cache:"false",
+            type:"GET",
+            success: function (data) {
+                // 目前分时图数据缺少均价
+                var msg = data.dto;
+                var arr = msg.split('\r\n');
+                var arr = arr.slice(0,arr.length-1);//开头结尾各一个空数组要去掉
+                var _arr = [];
+                var new_arr = [];
+                if(arr != undefined && arr != null && arr.length > 0) {
+                    var timearr = ["0930", "0931", "0932", "0933", "0934", "0935", "0936", "0937", "0938", "0939", "0940", "0941", "0942", "0943", "0944", "0945", "0946", "0947", "0948", "0949", "0950", "0951", "0952", "0953", "0954", "0955", "0956", "0957", "0958", "0959", "1000", "1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009", "1010", "1011", "1012", "1013", "1014", "1015", "1016", "1017", "1018", "1019", "1020", "1021", "1022", "1023", "1024", "1025", "1026", "1027", "1028", "1029", "1030", "1031", "1032", "1033", "1034", "1035", "1036", "1037", "1038", "1039", "1040", "1041", "1042", "1043", "1044", "1045", "1046", "1047", "1048", "1049", "1050", "1051", "1052", "1053", "1054", "1055", "1056", "1057", "1058", "1059", "1100", "1101", "1102", "1103", "1104", "1105", "1106", "1107", "1108", "1109", "1110", "1111", "1112", "1113", "1114", "1115", "1116", "1117", "1118", "1119", "1120", "1121", "1122", "1123", "1124", "1125", "1126", "1127", "1128", "1129", "1130", "1301", "1302", "1303", "1304", "1305", "1306", "1307", "1308", "1309", "1310", "1311", "1312", "1313", "1314", "1315", "1316", "1317", "1318", "1319", "1320", "1321", "1322", "1323", "1324", "1325", "1326", "1327", "1328", "1329", "1330", "1331", "1332", "1333", "1334", "1335", "1336", "1337", "1338", "1339", "1340", "1341", "1342", "1343", "1344", "1345", "1346", "1347", "1348", "1349", "1350", "1351", "1352", "1353", "1354", "1355", "1356", "1357", "1358", "1359", "1400", "1401", "1402", "1403", "1404", "1405", "1406", "1407", "1408", "1409", "1410", "1411", "1412", "1413", "1414", "1415", "1416", "1417", "1418", "1419", "1420", "1421", "1422", "1423", "1424", "1425", "1426", "1427", "1428", "1429", "1430", "1431", "1432", "1433", "1434", "1435", "1436", "1437", "1438", "1439", "1440", "1441", "1442", "1443", "1444", "1445", "1446", "1447", "1448", "1449", "1450", "1451", "1452", "1453", "1454", "1455", "1456", "1457", "1458", "1459", "1500"];
+                    //最后时间
+                    var lastmin = arr[arr.length - 1].split(",")[0].replace(":", "")
+                    //第一个时间。
+                    var startmin = arr[0].split(",")[0].replace(":", "")
+
+                    //整体逻辑。判断是否有启示0930的值，没有直接走原来的逻辑。如果有：截取最后一个时间，获取时间数组minKey。循环获取arr数据，没有arr中没有值直接使用上一个时间的值存入新数组。
+                    //最后使用new_arr =arr 。展示数据， 这样所有时间都会有数据了。
+
+                    if (startmin == "0930") {
+                        // console.log("最后时间" + lastmin);
+                        var index = timearr.indexOf(lastmin)+1;
+                        if (index !== -1) {
+                            var minKey = timearr.slice(0, index);
+                            // console.log("截取后的数组：", minKey);
+                        }
+                        var lastData;
+                        for (var i = 0; i < minKey.length; i++) {
+                            var currentTime = timearr[i];
+                            // console.log("currentTime：" + currentTime);
+                            var strtime = currentTime.substr(0, 2) + ":" + currentTime.substr(2, 4);
+                            var matchingData = arr.find(item => item.startsWith(strtime));
+                            if (matchingData != undefined) {
+                                // 存储有效值
+                                lastData = matchingData
+                                // console.log("lastData" + lastData)
+                            } else {
+                                //使用上一个有效值
+                                matchingData = strtime + "," + lastData.split(",")[1] + ",0,0"
+                                // console.log("补充数据：" + matchingData)
+                            }
+                            if (matchingData) {
+                                new_arr.push(matchingData)
+                            }
+                        }
+                        arr = new_arr;
+                    }
+                }
+                for(var i=0;i<arr.length;i++){
+                    var _a = arr[i].split(",");
+                    _arr.push(_a)
+                }
+                mdata.data = _arr
+                mdata.yestclose = lastClose;
+                if(klineType == "min"){
+                    myChart.setOption(initMOption(mdata, 'hs'),true);
+                }
+
+            },
+            error: function () {
+                // alert("wrong");
+            }
+        });
+    }
+
+    function loadReal(miniFlag) {
+        $.ajax({
+            url: hqRealDomain + stockCode.toLowerCase(),
+            dataType: "json",
+            cache: "false",
+            type: "GET",
+            success: function (data) {
+                if (data.status) {
+                    var hq = data.dto;
+                    if(!hq){
+                        if(miniFlag){
+                            nonePage("min_line"); //暂无数据
+                            window.clearInterval(intervalRealId);
+                            window.clearInterval(intervalRealId1);
+                            refreshFlag = false;
+                        }else{
+                            nonePage("kline"); //暂无数据
+                            window.clearInterval(intervalRealId);
+                            window.clearInterval(intervalRealId1);
+                            refreshFlag = false;
+                        }
+                        return;
+                    }
+                    lastClose=hq.closePrice;//昨收价格
+                    var openPrice =hq.openPrice; //今开
+                    var highPrice =hq.highPrice;//最高
+                    var lowPrice =hq.lowPrice;//最低
+                    var price =hq.price;//当前价格
+                    var volumn = Number(hq.volumn/100).toFixed(2); //成交量
+                    var volumnPrice =hq.volumnPrice; //成交额
+                    var time = hq.lastDate;//最后更新日期
+                    if (miniFlag) {
+                        loadMinHq();
+                        if (refreshFlag) {
+                            intervalRealId = setInterval(function () {
+                                loadMinHq();
+                            }, 60000);
+                        }
+                    } else {
+                        if (openPrice == 0) {
+                            switchK(klineType);//更新K线数据
+                        } else {
+                            todayKline=[time, Number(lastClose), Number(openPrice), Number(price), Number(highPrice), Number(lowPrice), volumn, Number(volumnPrice)].toString();
+                            //console.log("todayKline=" + todayKline);
+                            //console.log(klines);
+                            if(!klines){
+                                klines = new Array();
+                            }
+                            if (klines.length > 0) {
+                                var lastKline = klines[klines.length - 1];
+                                //console.log(lastKline.substring(0, 10) == todayKline.substring(0, 10))
+                                if (lastKline.substring(0, 10) == todayKline.substring(0, 10)) {
+                                    klines[klines.length - 1] = todayKline;
+                                } else {
+                                    if (todayKline) {
+                                        //console.log("todayKline" + klines[klines[klines.length]]);
+                                        let nl = 0;
+                                        for (var i=0; i<klines.length; i++){
+                                            if(klines[i].split(",")[0] == ""){
+                                                nl++;
+                                            }
+                                        }
+                                        if(nl > 0){
+                                            klines[klines.length-nl-1] = todayKline;
+                                        }else{
+                                            klines[klines.length] = todayKline;
+                                        }
+                                    }
+                                }
+                            } else {
+                                klines[0] = todayKline;
+                            }
+                            let l = 30-klines.length;
+                            if(klines.length < 30){
+                                for(var i=0; i<l; i++){
+                                    klines.push(",null,null,null,null,null,null,null");
+                                }
+                            }
+                            //console.log("todayKline" + todayKline)
+                            switchK(klineType);//更新K线数据
+                        }
+
+
+                    }
+                }
+            },
+            error: function () {
+                //  alert("查询信息失败")
+            }
+        })
+    }
+
+    function loadMin() {
+        $(".nav").hide();
+        chose("min");
+        klineType = "min";
+        if (intervalRealId) {
+            clearInterval(intervalRealId);
+        }
+        loadReal(true);
+        if (refreshFlag) {
+            intervalRealId = setInterval(function () {
+                loadReal(true);
+            }, 60000);
+        }
+        // myChart.setOption(initMOption(res, 'hs'),true);
+
+        // getmData(function(res){
+        //     getInfo(function(res2){
+        //         res.yestclose = res2[2]
+        //         myChart.setOption(initMOption(res, 'hs'),true);
+        //     })
+        // })
+    }
+
+    if(stockType != "M"){
+        window.onload = loadHQ();
+        switchK('kline');
+    }
+
+</script>
+
+</body></html>

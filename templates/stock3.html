@@ -2,9 +2,9 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>K线图 - 增强版</title>
-    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdn.bootcss.com/echarts/4.3.0/echarts.min.js"></script>
+    <title>股票分析图表</title>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/echarts.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -55,6 +55,7 @@
             border-radius: 4px 4px 0 0;
             font-size: 14px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         .kline-type-btn:hover {
             background-color: #e0e0e0;
@@ -63,127 +64,394 @@
             background-color: #1a56a8;
             color: white;
         }
-        .indicator-panel {
-            display: flex;
-            gap: 20px;
-            padding: 10px 20px;
-            background-color: #f8f9fa;
-            font-size: 12px;
-            color: #666;
-        }
-        .indicator-group {
-            display: flex;
-            gap: 15px;
-        }
-        .indicator-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .indicator-color {
-            width: 12px;
-            height: 2px;
-            border-radius: 1px;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>{{ stock_name }} - K线图增强版</h1>
+        <h1>{{ stock_name }} - 综合技术分析图表</h1>
     </div>
     
     <div class="container">
         <div class="kline-types">
-            <a href="/stock3/{{ request.view_args.code }}/day" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'day' %}active{% endif %}">日K</a>
-            <a href="/stock3/{{ request.view_args.code }}/week" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'week' %}active{% endif %}">周K</a>
-            <a href="/stock3/{{ request.view_args.code }}/month" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'month' %}active{% endif %}">月K</a>
-            <a href="/stock3/{{ request.view_args.code }}/year" class="kline-type-btn {% if request.view_args.ktype|default('day') == 'year' %}active{% endif %}">年K</a>
+            <span class="kline-type-btn active" onclick="switchK('day')">日K</span>
+            <span class="kline-type-btn" onclick="switchK('week')">周K</span>
+            <span class="kline-type-btn" onclick="switchK('month')">月K</span>
+            <span class="kline-type-btn" onclick="switchK('year')">年K</span>
         </div>
-        
-        <div class="indicator-panel">
-            <div class="indicator-group">
-                <span>移动平均线:</span>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #c23531;"></div>
-                    <span>MA5</span>
-                </div>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #2f4554;"></div>
-                    <span>MA10</span>
-                </div>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #61a0a8;"></div>
-                    <span>MA20</span>
-                </div>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #d48265;"></div>
-                    <span>MA30</span>
-                </div>
-            </div>
-            <div class="indicator-group">
-                <span>技术指标:</span>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #91c7ae;"></div>
-                    <span>RSI</span>
-                </div>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #749f83;"></div>
-                    <span>MACD</span>
-                </div>
-                <div class="indicator-item">
-                    <div class="indicator-color" style="background-color: #ca8622;"></div>
-                    <span>KDJ</span>
-                </div>
-            </div>
-        </div>
-        
         <div id="main" class="chart-container"></div>
         <div class="description">
-            <p>K线图增强版包含了丰富的技术指标：移动平均线(MA5/10/20/30)、RSI相对强弱指标、MACD指标、布林带和KDJ指标。成交量以柱状图形式显示在底部，切换时间周期时保持时间轴范围不变。</p>
+            <p>该图表综合展示了K线图、移动平均线、成交量、RSI、MACD、KDJ等多项技术指标，帮助投资者全面分析股票走势。</p>
         </div>
     </div>
 
     <script>
-        var upColor = '#ec0000';
-        var upBorderColor = '#8A0000';
-        var downColor = '#00da3c';
-        var downBorderColor = '#008F28';
-
-        // 保存当前数据缩放状态
-        var savedDataZoom = JSON.parse(localStorage.getItem('stockChart_dataZoom')) || { start: 70, end: 100 };
-
-        // 使用Flask传递的数据
-        {{ chart|safe }}
+        // 从后端获取所有K线数据
+        var allKlineData = {{ all_kline_data|tojson }};
+        var stockName = "{{ stock_name }}";
+        var currentKType = 'day';
         
-        // 修改option的dataZoom设置
-        if (typeof option !== 'undefined' && option.dataZoom) {
-            option.dataZoom.forEach(function(zoom) {
-                zoom.start = savedDataZoom.start;
-                zoom.end = savedDataZoom.end;
-            });
-        }
-        
-        // 基于准备好的dom，初始化echarts实例
+        // 初始化echarts实例
         var myChart = echarts.init(document.getElementById('main'));
         
-        // 监听dataZoom事件，保存缩放状态
-        myChart.on('datazoom', function(params) {
-            if (params.batch && params.batch[0]) {
-                savedDataZoom = {
+        // 保存dataZoom状态
+        var dataZoomState = null;
+        
+        // 监听dataZoom事件以保存状态
+        myChart.on('datazoom', function (params) {
+            if (params.batch && params.batch.length > 0) {
+                dataZoomState = {
                     start: params.batch[0].start,
                     end: params.batch[0].end
                 };
-            } else {
-                savedDataZoom = {
-                    start: params.start || savedDataZoom.start,
-                    end: params.end || savedDataZoom.end
-                };
+                localStorage.setItem('dataZoomState', JSON.stringify(dataZoomState));
             }
-            localStorage.setItem('stockChart_dataZoom', JSON.stringify(savedDataZoom));
         });
         
-        // 使用刚指定的配置项和数据显示图表。
-        myChart.setOption(option);
+        // 从localStorage恢复dataZoom状态
+        function restoreDataZoomState() {
+            var savedState = localStorage.getItem('dataZoomState');
+            if (savedState) {
+                try {
+                    dataZoomState = JSON.parse(savedState);
+                } catch (e) {
+                    dataZoomState = { start: 0, end: 100 };
+                }
+            } else {
+                dataZoomState = { start: 0, end: 100 };
+            }
+        }
+        
+        // 生成ECharts配置
+        function generateOption(ktype) {
+            var data = allKlineData[ktype];
+            var indicators = data.indicators;
+            var ktypeNames = {
+                'day': '日K',
+                'week': '周K', 
+                'month': '月K',
+                'year': '年K'
+            };
+            
+            // 确保dataZoom状态已恢复
+            if (!dataZoomState) {
+                restoreDataZoomState();
+            }
+            
+            return {
+                title: {
+                    text: stockName + ' - ' + ktypeNames[ktype] + ' 综合技术分析',
+                    left: 0
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: [ktypeNames[ktype], 'MA5', 'MA10', 'MA20', 'MA30', '成交量', 'RSI', 'MACD', 'Signal', 'KDJ-K', 'KDJ-D']
+                },
+                grid: [
+                    {
+                        left: '8%',
+                        right: '8%',
+                        height: '40%'
+                    },
+                    {
+                        left: '8%',
+                        right: '8%',
+                        top: '45%',
+                        height: '15%'
+                    },
+                    {
+                        left: '8%',
+                        right: '8%',
+                        top: '65%',
+                        height: '30%'
+                    }
+                ],
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: data.dates,
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: {onZero: false},
+                        splitLine: {show: false},
+                        splitNumber: 20,
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    },
+                    {
+                        type: 'category',
+                        gridIndex: 1,
+                        data: data.dates,
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: {onZero: false},
+                        axisTick: {show: false},
+                        splitLine: {show: false},
+                        axisLabel: {show: false},
+                        splitNumber: 20,
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    },
+                    {
+                        type: 'category',
+                        gridIndex: 2,
+                        data: data.dates,
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: {onZero: false},
+                        axisTick: {show: false},
+                        splitLine: {show: false},
+                        splitNumber: 20,
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    }
+                ],
+                yAxis: [
+                    {
+                        scale: true,
+                        splitArea: {
+                            show: true
+                        }
+                    },
+                    {
+                        scale: true,
+                        gridIndex: 1,
+                        splitNumber: 2,
+                        axisLabel: {show: false},
+                        axisLine: {show: false},
+                        axisTick: {show: false},
+                        splitLine: {show: false}
+                    },
+                    {
+                        scale: true,
+                        gridIndex: 2,
+                        splitNumber: 4,
+                        axisLine: {show: false},
+                        axisTick: {show: false},
+                        splitLine: {show: false}
+                    }
+                ],
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        xAxisIndex: [0, 1, 2],
+                        start: dataZoomState.start,
+                        end: dataZoomState.end
+                    },
+                    {
+                        show: true,
+                        xAxisIndex: [0, 1, 2],
+                        type: 'slider',
+                        top: '85%',
+                        start: dataZoomState.start,
+                        end: dataZoomState.end
+                    }
+                ],
+                series: [
+                    {
+                        name: ktypeNames[ktype],
+                        type: 'candlestick',
+                        data: data.values,
+                        itemStyle: {
+                            normal: {
+                                color: '#FD1050',
+                                color0: '#0CF49B',
+                                borderColor: '#FD1050',
+                                borderColor0: '#0CF49B'
+                            }
+                        },
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? Math.round(param.value) : '';
+                                    }
+                                }
+                            },
+                            data: [
+                                {
+                                    name: 'highest value',
+                                    type: 'max',
+                                    valueDim: 'highest'
+                                },
+                                {
+                                    name: 'lowest value',
+                                    type: 'min',
+                                    valueDim: 'lowest'
+                                },
+                                {
+                                    name: 'average value on close',
+                                    type: 'average',
+                                    valueDim: 'close'
+                                }
+                            ],
+                            tooltip: {
+                                formatter: function (param) {
+                                    return param.name + '<br>' + (param.data.coord || '');
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: 'MA5',
+                        type: 'line',
+                        data: indicators.ma5,
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA10',
+                        type: 'line',
+                        data: indicators.ma10,
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA20',
+                        type: 'line',
+                        data: indicators.ma20,
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: 'MA30',
+                        type: 'line',
+                        data: indicators.ma30,
+                        smooth: true,
+                        lineStyle: {
+                            normal: {opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: '布林上轨',
+                        type: 'line',
+                        data: indicators.bb_upper,
+                        lineStyle: {
+                            normal: {color: '#fac858', opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: '布林中轨',
+                        type: 'line',
+                        data: indicators.bb_middle,
+                        lineStyle: {
+                            normal: {color: '#ee6666', opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: '布林下轨',
+                        type: 'line',
+                        data: indicators.bb_lower,
+                        lineStyle: {
+                            normal: {color: '#fac858', opacity: 0.5}
+                        }
+                    },
+                    {
+                        name: '成交量',
+                        type: 'bar',
+                        xAxisIndex: 1,
+                        yAxisIndex: 1,
+                        data: indicators.vol
+                    },
+                    {
+                        name: 'RSI',
+                        type: 'line',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.rsi,
+                        lineStyle: {
+                            normal: {color: '#fac858', opacity: 0.6}
+                        }
+                    },
+                    {
+                        name: 'MACD',
+                        type: 'line',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.macd,
+                        lineStyle: {
+                            normal: {color: '#fc8452', opacity: 0.6}
+                        }
+                    },
+                    {
+                        name: 'Signal',
+                        type: 'line',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.macd_signal,
+                        lineStyle: {
+                            normal: {color: '#9a60b4', opacity: 0.6}
+                        }
+                    },
+                    {
+                        name: 'MACD Histogram',
+                        type: 'bar',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.macd_histogram.map(function(value) {
+                            return {
+                                value: value,
+                                itemStyle: {
+                                    normal: {
+                                        color: value >= 0 ? '#ef232a' : '#14b143'
+                                    }
+                                }
+                            };
+                        })
+                    },
+                    {
+                        name: 'KDJ-K',
+                        type: 'line',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.kdj_k,
+                        lineStyle: {
+                            normal: {color: '#fc8452', opacity: 0.6}
+                        }
+                    },
+                    {
+                        name: 'KDJ-D',
+                        type: 'line',
+                        xAxisIndex: 2,
+                        yAxisIndex: 2,
+                        data: indicators.kdj_d,
+                        lineStyle: {
+                            normal: {color: '#9a60b4', opacity: 0.6}
+                        }
+                    }
+                ]
+            };
+        }
+        
+        // K线切换函数
+        function switchK(ktype) {
+            currentKType = ktype;
+            
+            // 更新按钮样式
+            var buttons = document.querySelectorAll('.kline-type-btn');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新图表
+            var option = generateOption(ktype);
+            myChart.setOption(option, true);
+        }
+        
+        // 初始化
+        restoreDataZoomState();
+        myChart.setOption(generateOption('day'));
         
         // 响应式调整图表大小
         window.addEventListener('resize', function() {

@@ -1,0 +1,205 @@
+var ckDomainPath;
+if(wwwDomain != null){
+	if(window.location.host.indexOf('m.taoguba')>-1){
+		ckDomainPath = wwwDomainPath.replace("www","ck");
+		wwwDomainPath = wwwDomainPath.replace("www","m");
+	}else{
+		ckDomainPath = wwwDomainPath.replace("www","ck");
+	}
+
+//	ckDomainPath = wwwDomainPath.replace("https://","");
+}
+var isIE=!!window.ActiveXObject;
+var isIE6=isIE&&!window.XMLHttpRequest;	
+//	function tj(_map) {
+//	var ma = document.createElement('script');
+//	ma.type = 'text/javascript'; 
+//	ma.async = true;
+//	ma.src = "http://localhost:8080/res/js/tgb.js";
+//	var s = document.getElementsByTagName('script')[0];
+//	s.parentNode.insertBefore(ma, s);
+//	}
+//event.stopPropagation ? event.stopPropagation() : (event.cancelBubble = true);
+
+//var evt = evt || window.event; //获取event对象
+//    if (evt.preventDefault) {
+//        evt.preventDefault(); //非IE浏览器
+// 　　} else {
+//        evt.returnValue = false; //在早期的IE版本中
+//　　}
+//event.stopPropagation ? event.stopPropagation() : (event.cancelBubble = true); //阻止事件冒泡
+
+
+
+
+
+var maidianum = 0;
+$("[data-maidian]").click(function(){
+//	var type = $("[data-maidian]").data("maidian");
+	var type = $(this).attr("data-maidian");
+	var flag = $(this).attr('data-type') || '';
+//	var userID = $("#mduserID").val();
+	maidianum ++;
+	var params = {};
+	//Document 对象数据
+//	params.userID = userID || '';
+//	params.domain = document.domain || '';  //域名
+	params.url = document.URL || '';        //当前url地址
+//	params.title = document.title || ''; 
+	params.referrer = document.referrer || '';  //上一跳路径
+	params.source = 'pc';
+	params.type = type;
+	params.num = maidianum;
+	//拼接参数串
+	var args = ''; 
+	for(var i in params) {
+	if(args != '') {
+	args += '&';
+	}
+	args += i + '=' + params[i];   //将所有获取到的信息进行拼接
+	}
+	//通过 Image 对象请求后端脚本  这里因为ajax不能跨域发送请求，所以这里以图片的形式发送数据
+	var img = new Image(1,1); 
+//	img.src = ' http://ck.taoguba.cc/click/logCollect'+args;
+	img.src = ckDomainPath+'/click/logCollect?flag='+flag+'&'+args;
+	$(img).remove();
+});
+	
+ function tgbmd(type,obj){
+	 //点击后计算用户24小时热度
+	 var userID = $(obj).attr("data-extra")
+	 if (type == 'searchuser'){
+		 $.ajax({
+			 type:"get",
+			 url:'/search/addUserHot',
+			 data : {"userID": userID},
+			 success:function(){
+			 }
+		 })
+	 }
+//		
+//		var userID = $("#mduserID").val();
+		maidianum ++;
+		var params = {};
+		//Document 对象数据
+//		params.userID = userID || '';
+//		params.domain = document.domain || '';  //域名
+		params.url = document.URL || '';        //当前url地址
+//		params.title = document.title || ''; 
+		params.referrer = document.referrer || '';  //上一跳路径
+		params.source = 'pc';
+		params.type = type;
+		params.num = maidianum;
+	    var extra = $(obj).attr('data-extra') || ''
+	    params.extra=extra;
+//		var s = $(obj).attr('data-type');
+		var flag = $(obj).attr('data-type') || '';
+		
+		//xgwz相关文章
+		if(type == 'xgwz'){
+			var objectID = $(obj).attr('data-objectid');
+			//objectID ObjectType 子文章id、类型  目前只针对相关文章
+			if(objectID == undefined){
+				params.objectID = "";
+			}else{
+				var stype2= $(obj).attr('data-stype') || '';
+				if(stype2 != ''){
+					if(stype2 == "T"){
+						params.objectType = "T";
+					}
+					if(stype2 == "S"){
+						params.objectType = "S";
+					}
+				}
+				
+				params.objectID = objectID;
+			}
+			//otherID otherType 父文章id、类型 目前只针对相关文章
+			var otherID = $(obj).attr('data-parentid');
+			if(otherID == undefined){
+				params.otherID = "";
+			}else{
+				params.otherID = otherID;
+				if(params.url != ''){
+					if(params.url.indexOf('Article')>-1){
+						params.otherType = "T";
+					}else if(params.url.indexOf('toViewShuo')>-1){
+						params.otherType = "S";
+					}
+				}
+			}
+		}
+		//拼接参数串
+		var args = ''; 
+		for(var i in params) {
+		if(args != '') {
+		args += '&';
+		}
+		args += i + '=' + params[i];   //将所有获取到的信息进行拼接
+		}
+		//通过 Image 对象请求后端脚本
+//		var s = $(obj).attr('data-type');
+//		var flag = $(obj).attr('data-type') || '';
+		var img = new Image(1,1); 
+		img.src = ckDomainPath+'/click/logCollect?flag='+flag+'&'+args;
+		$(img).remove();
+		var url = $(obj).attr('data-href') || '';
+		if(url != ''){
+			var newWindow = window.open();
+			newWindow.location.href = url.indexOf('taoguba')>-1?url:wwwDomainPath+url;
+		}
+ }
+ function tgbmdother(type,obj,flag){
+//		
+//		var userID = $("#mduserID").val();
+		maidianum ++;
+		var params = {};
+		//Document 对象数据
+//		params.userID = userID || '';
+//		params.domain = document.domain || '';  //域名
+		params.url = document.URL || '';        //当前url地址
+//		params.title = document.title || ''; 
+		params.referrer = document.referrer || '';  //上一跳路径
+		params.source = 'pc';
+		params.type = type;
+		params.num = maidianum;
+		if("dv"==flag){
+			var davseq = $(obj).attr('data-davseq');
+			if(""==davseq){
+				davseq=0;
+			}
+			params.objectID = davseq;
+		}
+		if("ngb"==flag){
+			var planID = $(obj).attr('data-planID');
+			if(""==planID){
+				planID=0;
+			}
+			params.objectID = planID;
+		}
+		//拼接参数串
+		var args = ''; 
+		for(var i in params) {
+		if(args != '') {
+		args += '&';
+		}
+		args += i + '=' + params[i];   //将所有获取到的信息进行拼接
+		}
+		//通过 Image 对象请求后端脚本
+		var img = new Image(1,1); 
+		img.src = ckDomainPath+'click/logCollect?flag='+flag+'&'+args;
+		$(img).remove();
+		if($(obj).attr('type')=='dv' || $(obj).attr('type')=='ngb'){return;}
+		var url = $(obj).attr('data-href') || '' ;
+		if(url != ''){
+			if(url.indexOf('www.taoguba')>-1){
+				var newWindow = window.open();
+				newWindow.location.href = url;
+			}else{
+				var newWindow = window.open();
+				newWindow.location.href = wwwDomainPath.toString().substring(0,wwwDomainPath.toString().length-1)+url;
+			}
+			
+		}
+}			
+				

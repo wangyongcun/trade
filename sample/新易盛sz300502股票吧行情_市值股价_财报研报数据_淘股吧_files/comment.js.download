@@ -1,0 +1,809 @@
+var js_comment_seqNum = 0;//定义的全局变量用于实时匹配的上下移动
+var js_comment_isBind_first = false;//定义全局变量防止IE下事件重复绑定
+var js_comment_isBind_second = false;//定义全局变量防止IE下事件重复绑定
+function showComment(clickObj,topicID){
+		var commentStr = '<div id="comment_'+clickObj+'" class="comment"><textarea class="commentTextarea" id = "edit_'+clickObj+'" row="3" cols="73" style="color:#666;" onfocus="if(this.innerHTML==\'写点什么吧...\'){this.innerHTML=\'\'};this.style.color=\'#000\';">写点什么吧...</textarea><a href="javascript:upComment(\''+clickObj+'\',\''+topicID+'\');" class="upButton">提交</a></div>';
+		if(document.getElementById("edit_"+clickObj)==null){
+				if(isDelete(clickObj,commentStr)){
+					document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+					document.getElementById(clickObj).innerHTML="收起";
+					$("#comment_"+clickObj).fadeIn("slow");
+				}
+		}else{
+			var obj = document.getElementById("comment_"+clickObj);	//div
+			var commentObj = document.getElementById("edit_"+clickObj);//textarea
+			var commentValue = commentObj.value;
+			if(commentValue!=''){
+				if(commentObj.style.color=='rgb(0, 0, 0)'||commentObj.style.color=='#000'){
+					confirm("是否放弃正在编辑的内容?",function(r){
+						if(r){
+							obj.parentNode.removeChild(obj);
+							$("#comment_"+clickObj).fadeOut("normal");
+							document.getElementById(clickObj).innerHTML="评论";
+						}
+					});	
+				}else{
+					obj.parentNode.removeChild(obj);
+					$("#comment_"+clickObj).fadeOut("normal");
+					document.getElementById(clickObj).innerHTML="评论";
+					return;
+				}
+			}else{
+				obj.parentNode.removeChild(obj);
+				$("#comment_"+clickObj).fadeOut("normal");
+				document.getElementById(clickObj).innerHTML="评论";
+				return;
+			}
+		}
+	}
+//function showLongxunComment(clickObj,subject,stockcode,module){
+//	var commentStr = '<div id="comment_'+clickObj+'" class="comment"><textarea class="commentTextarea" id = "edit_'+clickObj+'" row="3" cols="73" style="color:#666;" onfocus="if(this.innerHTML==\'写点什么吧...\'){this.innerHTML=\'\'};this.style.color=\'#000\';">写点什么吧...</textarea><a href="javascript:upLongxunComment(\''+clickObj+'\',\''+subject+'\',\''+stockcode+'\',\''+module+'\');" class="upButton">提交</a></div>';
+//	if(document.getElementById("edit_"+clickObj)==null){
+//			if(isDelete(clickObj,commentStr)){
+//				document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+//				document.getElementById(clickObj).innerHTML="收起";
+//				$("#comment_"+clickObj).fadeIn("slow");
+//			}
+//	}else{
+//		var obj = document.getElementById("comment_"+clickObj);	//div
+//		var commentObj = document.getElementById("edit_"+clickObj);//textarea
+//		var commentValue = commentObj.value;
+//		if(commentValue!=''){
+//			if(commentObj.style.color=='rgb(0, 0, 0)'||commentObj.style.color=='#000'){
+//				confirm("是否放弃正在编辑的内容?",function(r){
+//						if(r){
+//							obj.parentNode.removeChild(obj);
+//							$("#comment_"+clickObj).fadeOut("normal");
+//							document.getElementById(clickObj).innerHTML="评论";
+//						}
+//					});	
+//			}else{
+//				obj.parentNode.removeChild(obj);
+//				$("#comment_"+clickObj).fadeOut("normal");
+//				document.getElementById(clickObj).innerHTML="评论";
+//				return;
+//			}
+//		}else{
+//			obj.parentNode.removeChild(obj);
+//			$("#comment_"+clickObj).fadeOut("normal");
+//			document.getElementById(clickObj).innerHTML="评论";
+//			return;
+//		}
+//	}
+//}
+function showEdit_callback(clickObj,commentStr){
+	document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+	document.getElementById(clickObj).innerHTML="收起";
+	$("#comment_"+clickObj).fadeIn("slow");
+}
+function showStockComment(clickObj,topicID,subject,options){
+	if($('#sessionUserID').val()=="0"){
+		loginPanel();
+		$('#mybg').css('z-index','999');
+		$('.shadowSelect').css('z-index','998');
+		return;
+	}
+	var commentStr;
+	if(options){
+		commentStr = '<div id="comment_'+clickObj+'" class="comment"><textarea class="commentTextarea" id = "txte_'+clickObj+'"' +
+		' row="3" cols="73" style="color:#bbb;" onfocus="if(this.innerHTML==\'写点什么吧...\'){this.innerHTML=\'\'};this.style.color=\'#bbb\';">' +
+		'写点什么吧...</textarea><a href="javascript:;" onclick="addWeiboComment({\'type\':\'R\',\'data\':{' +
+							    '\'feedID\':\''+options.data.feedID+'\',' +
+							    '\'userName\':\''+options.data.userName+'\',' +
+							    '\'msgUserID\':\''+options.data.msgUserID+'\',' +
+							    '\'refMsgUserID\':\''+options.data.refMsgUserID+'\',' +
+							    '\'refMsgUserName\':\''+options.data.refMsgUserName+'\',' +
+							    '\'refMsgID\':\''+options.data.refMsgID+'\'' +
+							    '}})" class="upButton">提交</a></div>';
+	}else{
+	 	commentStr = '<div id="comment_'+clickObj+'" class="comment"><textarea class="commentTextarea" id = "edit_'+clickObj+'" row="3" cols="73" style="color:#666;" onfocus="if(this.innerHTML==\'写点什么吧...\'){this.innerHTML=\'\'};this.style.color=\'#000\';">写点什么吧...</textarea><a href="javascript:;" onclick="upStockComment(\''+clickObj+'\',\''+topicID+'\',\''+subject+'\');" class="upButton">提交</a></div>';	
+	}
+	if(document.getElementById("edit_"+clickObj)==null && (document.getElementById("txte_"+clickObj)==null)){
+			if(isDelete(clickObj,commentStr)){
+				document.getElementById("innerId_"+clickObj).innerHTML = document.getElementById("innerId_"+clickObj).innerHTML + commentStr;
+				document.getElementById(clickObj).innerHTML="收起";
+				$("#comment_"+clickObj).fadeIn("slow");
+			}
+	}else{
+		var obj = document.getElementById("comment_"+clickObj);	//div
+		if(document.getElementById("edit_"+clickObj) == null){
+			var commentObj = document.getElementById("txte_"+clickObj);//textarea
+		}else{
+			var commentObj = document.getElementById("edit_"+clickObj);//textarea
+		}
+		var commentValue = commentObj.value;
+		if(commentValue!=''){
+			if(commentObj.style.color=='rgb(0, 0, 0)'||commentObj.style.color=='#000'){
+				confirm("是否放弃正在编辑的内容?",function(r){
+						if(r){
+							obj.parentNode.removeChild(obj);
+							$("#comment_"+clickObj).fadeOut("normal");
+							document.getElementById(clickObj).innerHTML="评论";
+						}
+					});		
+			}else{
+				obj.parentNode.removeChild(obj);
+				$("#comment_"+clickObj).fadeOut("normal");
+				document.getElementById(clickObj).innerHTML="评论";
+				return;
+			}
+		}else{
+			obj.parentNode.removeChild(obj);
+			$("#comment_"+clickObj).fadeOut("normal");
+			document.getElementById(clickObj).innerHTML="评论";
+			return;
+		}
+	}
+}
+	function isDelete(clickObj,commentStr){
+		var textareaArray = document.getElementsByTagName("textarea");
+		if(textareaArray.length!=0){//有打开其他编辑框
+			for(i=0;i<textareaArray.length;i++){
+				if(clickObj!=textareaArray[i].id.substring(5)){//当前的编辑框还没有收起就点击别的评论
+					if(textareaArray[i].value==""){
+						var commentId = textareaArray[i].id.substring(5);
+						document.getElementById(commentId).innerHTML="评论";
+						textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+						return true;//可以直接关闭，不需要询问
+					}else{
+						if(textareaArray[i].style.color=='rgb(0, 0, 0)'||textareaArray[i].style.color=='#000'){
+							confirm("是否放弃正在编辑的内容?",function(r){
+								if(r){
+									var commentId = textareaArray[i].id.substring(5);
+									document.getElementById(commentId).innerHTML="评论";
+									textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+									showEdit_callback(clickObj,commentStr);
+									return;
+								}else{
+									return false;
+								}
+							});
+							return;
+						}else{
+							var commentId = textareaArray[i].id.substring(5);
+							document.getElementById(commentId).innerHTML="评论";
+							textareaArray[i].parentNode.parentNode.removeChild(textareaArray[i].parentNode);
+							return true;
+						}
+					}
+				}else{//只是操作当前的编辑框
+					return true;
+				}
+			}
+		}else{	//第一次打开编辑框
+			return true;
+		}
+	}
+	function upComment(seq,seqSource){
+		var type=document.getElementById("typeFlag").value;
+		var editObj = document.getElementById("edit_"+seq);
+		if(editObj.value=='写点什么吧...'&& editObj.style.color=='rgb(102, 102, 102)'){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value==''){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value.length>500){
+			showAlert("您评论的字数已经超过我们规定的最大字数：500!请重新评论，谢谢!");
+			return;
+		}
+		var url = '';
+		if(type=="N"){
+			url = "newsComment";
+		}
+		if(type=="B"){
+			url = "bulletinComment";
+		}
+		var param = "topicID="+seqSource+"&commentValue="+encodeURIComponent(editObj.value);
+		if("undefined" == typeof baseDomain){
+			XMLHttp.sendReq("post", url, param,function(data){
+				var result = data.dto;
+			if(result.length!=1){
+				showAlert(result);
+				return;
+			}else{
+				if(result=="1"){
+					showAlert("发送异常,请联系股天乐");
+					return;
+				}
+				if(result=="2"){
+					window.location.href="/gotoLogin";
+					return;
+				}
+				if(result=="3"){
+					showAlert("对不起,您的评论可能存在违反社区规则的言行，暂时不能评论，我们将进行相应的核实，若无问题将在24小时内予以解封，谢谢。");
+					return;
+				}
+				if(result=="4"){
+					showAlert("您的内容为空或是您评论的字数已经超过我们规定的最大字数：500！请返回原先页面，谢谢!");
+					return;
+				}
+				if(result=="5"){
+					if(type=="N"){
+						showAlert("您要评论的资讯已被删除或者不存在！谢谢您对这条资讯的关心!");
+						return;
+					}
+					if(type=="B"){
+						showAlert("您要评论的公告已被删除或者不存在！谢谢您对这条公告的关心!");
+						return;
+					}
+				}
+				if(result=="6"){
+					var value=editObj.value;
+					if(document.getElementById("userName")!=null){
+						var userName = document.getElementById("userName").value;
+					}
+					if(document.getElementById("pinglun_"+seq)==null){
+						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content">'+regContent(value)+'</li></ul>';
+						$('#pinglun_'+seq).slideDown('slow');
+					}else{
+						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content">'+regContent(value)+'</li>';
+					}
+					if($(".box li").length>1){
+						$(".content").css('border-bottom-style','dashed');
+						$(".box li:last-child").css('border-bottom-style','solid');
+					}
+					document.getElementById("edit_"+seq).value="";
+				}
+			}
+			});
+		}else{
+			XMLHttp.sendReq("post",baseDomain+url,param,function(data){
+				var result = data.dto;
+			if(result.length!=1){
+				showAlert(result);
+				return;
+			}else{
+				if(result=="1"){
+					showAlert("发送异常,请联系股天乐");
+					return;
+				}
+				if(result=="2"){
+					window.location.href="/gotoLogin";
+					return;
+				}
+				if(result=="3"){
+					showAlert("对不起,您的评论可能存在违反社区规则的言行，暂时不能评论，我们将进行相应的核实，若无问题将在24小时内予以解封，谢谢。");
+					return;
+				}
+				if(result=="4"){
+					showAlert("您的内容为空或是您评论的字数已经超过我们规定的最大字数：500！请返回原先页面，谢谢!");
+					return;
+				}
+				if(result=="5"){
+					if(type=="N"){
+						showAlert("您要评论的资讯已被删除或者不存在！谢谢您对这条资讯的关心!");
+						return;
+					}
+					if(type=="B"){
+						showAlert("您要评论的公告已被删除或者不存在！谢谢您对这条公告的关心!");
+						return;
+					}
+				}
+				if(result=="6"){
+					var value=editObj.value;
+					if(document.getElementById("userName")!=null){
+						var userName = document.getElementById("userName").value;
+					}
+					if(document.getElementById("pinglun_"+seq)==null){
+						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content">'+regContent(value)+'</li></ul>';
+						$('#pinglun_'+seq).slideDown('slow');
+					}else{
+						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content">'+regContent(value)+'</li>';
+					}
+					if($(".box li").length>1){
+						$(".content").css('border-bottom-style','dashed');
+						$(".box li:last-child").css('border-bottom-style','solid');
+					}
+					document.getElementById("edit_"+seq).value="";
+				}
+			}
+			});
+		}
+	}
+	function dataUpResponse(data){
+			
+		}
+//	function upLongxunComment(seq,subject,stockcode,module){
+//		var editObj = document.getElementById("edit_"+seq);
+//		var text = document.getElementById("text_"+seq).innerHTML;		
+//		if(editObj.value=='写点什么吧...'&& editObj.style.color=='rgb(102, 102, 102)'){
+//			showAlert("请写下你的评论再提交");
+//			return;
+//		}
+//		if(editObj.value==''){
+//			showAlert("请写下你的评论再提交");
+//			return;
+//		}
+//		if(editObj.value.length>500){
+//			showAlert("您评论的字数已经超过我们规定的最大字数：500!请重新评论，谢谢!");
+//			return;
+//		}
+//		var url = 'addLongxunTopic';
+//		var body ='[quote][size=3][b]龙讯价值宝信息提醒：[/b]'+ text+'[/size]'+'[/quote]\n'+'[b]评论:[/b]'+editObj.value;
+//		body=(body.replace(/&((#(32|127|160|173))|shy|nbsp);/ig,' '));
+//		var param = "subject="+encodeURIComponent(subject+' 评论')+"&body="+encodeURIComponent(body);
+//		XMLHttp.sendReq("post", url, param,function(data){
+//			var result = data.responseText;
+//			if(result.length!=1){
+//				showAlert(result);
+//				return;
+//			}else{
+//				if(result=="1"){
+//					showAlert("发送异常,请联系股天乐");
+//					return;
+//				}
+//				if(result=="2"){
+//					window.location.href="/gotoLogin";
+//					return;
+//				}
+//				if(result=="3"){
+//					showAlert("对不起,您的评论可能存在违反社区规则的言行，暂时不能评论，我们将进行相应的核实，若无问题将在24小时内予以解封，谢谢。");
+//					return;
+//				}
+//				if(result=="4"){
+//					showAlert("您的内容为空或是您评论的字数已经超过我们规定的最大字数：500！请返回原先页面，谢谢!");
+//					return;
+//				}
+//				if(result=="5"){
+//					if(type=="N"){
+//						showAlert("您要评论的新闻已被删除或者不存在！谢谢您对这条新闻的关心!");
+//						return;
+//					}
+//					if(type=="B"){
+//						showAlert("您要评论的公告已被删除或者不存在！谢谢您对这条公告的关心!");
+//						return;
+//					}
+//				}
+//				if(result=="6"){
+//					var value=editObj.value;
+//					if(document.getElementById("userName")!=null){
+//						var userName = document.getElementById("userName").value;
+//					}
+//					if(document.getElementById("pinglun_"+seq)==null){
+//						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content">'+regContent(value)+'</li></ul>';
+//						$('#pinglun_'+seq).slideDown('slow');
+//					}else{
+//						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content">'+regContent(value)+'</li>';
+//					}
+//					if($(".box li").length>1){
+//						$(".content").css('border-bottom-style','dashed');
+//						$(".box li:last-child").css('border-bottom-style','solid');
+//					}
+//					document.getElementById("edit_"+seq).value="";
+//				}
+//			}
+//		});
+//	}
+	function regContent(str){
+		return str;//.replace( /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/,'<font color="red">不支持脚本</font>');
+	}
+	function upStockComment(seq,seqSource,subject,options){
+		var editObj = document.getElementById("edit_"+seq);
+		if(editObj.value=='写点什么吧...'&& editObj.style.color=='rgb(102, 102, 102)'){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value==''){
+			showAlert("请写下你的评论再提交");
+			return;
+		}
+		if(editObj.value.length>=500){
+			showAlert("您评论的字数已经超过我们规定的最大字数：500!请重新评论，谢谢!");
+			return;
+		}
+		var url = 'addActionReply';
+		var param = "topicID="+seqSource+'&subject='+subject+"&firstFlag=Y&body="+encodeURIComponent(editObj.value);
+		if("undefined" == typeof baseDomain){
+			XMLHttp.sendReq("post", url, param,function(data){
+				var p = data.dto;
+				var successFlag = p.size;
+				if(successFlag=='success'){
+					var value=editObj.value;
+					if(document.getElementById("userName")!=null){
+						var userName = document.getElementById("userName").value;
+					}
+					if(document.getElementById("pinglun_"+seq)==null){
+						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content">'+value+'</li></ul>';
+						$('#pinglun_'+seq).slideDown('slow');
+					}else{
+						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content">'+value+'</li>';
+					}
+					if($(".box li").length>1){
+						$(".content").css('border-bottom-style','dashed');
+						$(".box li:last-child").css('border-bottom-style','solid');
+					}
+					document.getElementById("edit_"+seq).value="";
+				}else{
+					showAlert(successFlag);
+				}
+			});
+		}else{
+			XMLHttp.sendReq("post",baseDomain+url,param,function(data){
+				var p = data.dto;
+				var successFlag = p.size;
+				if(successFlag=='success'){
+					var value=editObj.value;
+					if(document.getElementById("userName")!=null){
+						var userName = document.getElementById("userName").value;
+					}
+					if(document.getElementById("pinglun_"+seq)==null){
+						document.getElementById("showComent_"+seq).innerHTML='<font class="userName">'+userName+'</font>'+'<ul class="box" id=\'pinglun_'+seq+'\'><li class="to_top"></li><li class="content">'+value+'</li></ul>';
+						$('#pinglun_'+seq).slideDown('slow');
+					}else{
+						document.getElementById("pinglun_"+seq).innerHTML=document.getElementById("pinglun_"+seq).innerHTML+'<li class="content">'+value+'</li>';
+					}
+					if($(".box li").length>1){
+						$(".content").css('border-bottom-style','dashed');
+						$(".box li:last-child").css('border-bottom-style','solid');
+					}
+					document.getElementById("edit_"+seq).value="";
+				}else{
+					showAlert(successFlag);
+				}
+			})
+		}
+	
+	}
+	
+	function startSearch(){
+		var str = document.getElementById("stockCode").value;
+		if(str=='个股代码'){
+			document.getElementById("stockCode").value='';
+		}
+		if (window.attachEvent)
+		{
+			if(!js_comment_isBind_second){
+				document.getElementById("stockCode").attachEvent("onkeyup",searchResult);
+				js_comment_isBind_second=true;
+			}
+		}
+		else
+		{
+			document.getElementById("stockCode").addEventListener("keyup", searchResult, false);
+		}
+		
+	}
+	function searchResult(e){
+		var e  = window.event || e;
+		var keyCode = e.keyCode || e.which;
+		if(keyCode!=40&&keyCode!=38&&keyCode!=13){
+			var str = document.getElementById("stockCode").value;
+			if(str==''){
+				document.getElementById("stockResult").style.display="none";
+				return;
+			}
+			var exec = false;
+			if(/^\d+$/.test(str)){
+				if(str.length>3){	//个股代码四位以上才进行查询
+					exec = true;
+				}else{
+					document.getElementById("stockResult").style.display="none";
+					return;
+				}
+			}else{
+				exec = true;
+			}
+			if(exec){
+				var url = "/search/searchResult?s="+str;
+				XMLHttp.sendReq("get", url, "", function(data){
+					var result = data.dto;
+					var htmlStr ='<div id="result_0" style="background:#DCDBED;" class="stockInfo">个股代码&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;个股名称</div>';
+					if(result!='[null]'){
+						var objArray = result;
+						for(i=0;i<objArray.length;i++){
+							var Obj = objArray[i];
+							if(i<10){
+							for(key in Obj){
+								htmlStr=htmlStr+'<a id="result_'+(i+1)+'" href="javascript:chose(\''+key+'\',\''+Obj[key]+'\')" class="stockInfo"><span id="code_'+(i+1)+'">'+changeColor(key,str)+'</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="name_'+(i+1)+'">'+changeColor(Obj[key],str)+'</span></a>';
+							}
+						}
+						}
+						htmlStr = htmlStr + '<input type="hidden" id="resultNum" value='+objArray.length+'>';
+						document.getElementById("stockResult").style.display="block";
+						document.getElementById("stockResult").innerHTML=htmlStr;
+						if (window.attachEvent)
+						{
+							if(!js_comment_isBind_first){
+								document.getElementById("addStockSpan").attachEvent("onkeyup",select);
+								js_comment_isBind_first = true;
+							}
+						}
+						else
+						{
+							document.getElementById("addStockSpan").addEventListener("keyup", select, false);
+						}
+					}else{
+						document.getElementById("stockResult").style.display="none";
+					}
+				});
+				js_comment_seqNum=0;
+			}
+			if(window.event){
+				e.cancelBubble=true;
+			}
+		}
+	}
+	/**
+	 * 将搜索关键字变红
+	 * @param source
+	 * @param replaceStr
+	 * @return
+	 */
+	function changeColor(source,replaceStr){
+		return source.toString().replace(replaceStr,'<font color="red">'+replaceStr+'</font>');
+	}
+	
+	/**
+	 * 上下选择
+	 * @return
+	 */
+	function select(e){
+		var e = window.event || e; 
+        var key = e.keyCode || e.which; 
+        if(key==40){//向下
+        	var resultNum = document.getElementById("resultNum").value;
+        	if(js_comment_seqNum<resultNum){
+        		js_comment_seqNum = js_comment_seqNum+1;
+            	document.getElementById("result_"+js_comment_seqNum).style.background="#F1F5FC";
+            	if(js_comment_seqNum>1){
+            		document.getElementById("result_"+(js_comment_seqNum-1)).style.background="#FFF";
+            	}
+        	}
+        	document.getElementById("trangeInput").value=clearFont(document.getElementById("code_"+js_comment_seqNum).innerHTML);
+        }else if(key==38){//向上
+        	if(js_comment_seqNum>1){
+        		document.getElementById("result_"+js_comment_seqNum).style.background="#FFF";
+        		js_comment_seqNum = js_comment_seqNum -1;
+        		document.getElementById("result_"+js_comment_seqNum).onFocus=true;
+        		document.getElementById("result_"+js_comment_seqNum).style.background="#F1F5FC";
+        		document.getElementById("trangeInput").value=clearFont(document.getElementById("code_"+js_comment_seqNum).innerHTML);
+        	}else{
+        		document.getElementById("trangeInput").value='';
+        		document.getElementById("stockResult").style.display="none";
+        	}
+        	
+        }else if(key==13){//enter健
+        	var content = document.getElementById("trangeInput").value;
+        	if(content!=''){
+        		js_comment_seqNum=0;
+        		document.getElementById("stockCode").value=content;
+        		document.getElementById("stockResult").style.display="none";
+        		addStock();
+        	}
+        } 
+       if(window.event){
+    	   e.cancelBubble=true;
+       }
+	}
+	/**
+	 * 清楚之中的span标签
+	 * @param str
+	 * @return
+	 */
+	function clearFont(str){
+		if(/(.*)<font color="*red"*>(.*)<\/font>(\d*)/gi.test(str)){
+			return RegExp.$1+RegExp.$2+RegExp.$3;
+		}else{
+			return str;
+		}
+	}
+	function chose(key,name){
+		document.getElementById("stockCode").value = key;
+		document.getElementById("stockResult").style.display="none";
+		return;
+	}
+	function xj_change(listCode){
+		var objectList = new Array(); //三元数组 利用数组进行排序  
+		var arr = listCode.split(",");
+		var codeNum =0;
+		var curPrice=0; // 当前价格
+		var chaPrice=0;//涨跌幅度
+		for(var i = 0;i<arr.length; i++){
+			var code = arr[i];
+			var hq_obj = window["v_s_"+code].split("~");
+			var zd_Rate = (hq_obj[5]);
+			var zd_Rate_str = zd_Rate + "%";
+			if(document.getElementById("xj_"+code) != null && document.getElementById("zd_"+code) != null){
+				//保存所有的key
+				  codeNum = code.substring(3,hq_obj.length).toUpperCase();
+				if(hq_obj.length>1){
+					if(code.substring(0,2)=='sz'||code.substring(0,2)=='sh' ||code.substring(0,2)=='bj' ){
+						codeNum=code;
+						curPrice=hq_obj[3];
+						chaPrice=zd_Rate_str;
+						if(Number(hq_obj[4]) > 0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[3]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[4]) < 0){
+							if(Number(hq_obj[3]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[3]+"</span>";
+								document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[3];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='hk'){ 
+						codeNum=code;
+						curPrice=hq_obj[3];
+						chaPrice=zd_Rate_str;
+						if(Number(hq_obj[4]) > 0 ){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[3]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+zd_Rate_str+"</span>";
+						}else if(Number(hq_obj[4]) < 0 ){
+							if(Number(hq_obj[5]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[3]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+zd_Rate_str+"</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[3];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}else if(code.substring(0,2)=='gb'){ 
+						curPrice=hq_obj[1];
+						chaPrice=hq_obj[2];
+						if(Number(hq_obj[2])>0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+hq_obj[2]+"%</span>";
+						}else if(Number(hq_obj[2])<0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+hq_obj[2]+"%</span>";;
+						}else{
+							document.getElementById("xj_"+code).innerHTML="--";
+							document.getElementById("zd_"+code).innerHTML="--";
+						}
+					}else if(code.substring(0,2)=='r_'){
+						codeNum= "hz"+code.substring(2,code.length);
+						curPrice=hq_obj[1];
+						chaPrice=hq_obj[3];
+						if(Number(hq_obj[2]) > 0){
+							document.getElementById("xj_"+code).innerHTML="<span style='color:red'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:red'>"+hq_obj[3]+"%</span>";
+						}else if(Number(hq_obj[2]) < 0){
+							if(Number(hq_obj[1]) == 0){
+								document.getElementById("xj_"+code).innerHTML="--";
+								document.getElementById("zd_"+code).innerHTML="--";
+							}else{
+								document.getElementById("xj_"+code).innerHTML="<span style='color:green'>"+hq_obj[1]+"</span>";
+							document.getElementById("zd_"+code).innerHTML="<span style='color:green'>"+hq_obj[3]+"%</span>";
+							}
+						}else{
+							document.getElementById("xj_"+code).innerHTML=hq_obj[1];
+							document.getElementById("zd_"+code).innerHTML="0.00%";
+						}
+					}
+				}else{
+					if(code.substring(0,5)=='gb_wh'){
+						codeNum = code.substring(3,code.length);
+						curPrice=0;
+						chaPrice=0; 
+					}   
+					document.getElementById("xj_"+code).innerHTML="--";
+					document.getElementById("zd_"+code).innerHTML="--";
+				}
+				if(chaPrice!=0){
+					chaPrice = chaPrice.replace("%","");
+				}
+				objectList.push(new Persion(curPrice,chaPrice,i,'groupstock_'+codeNum));
+			}
+		} 
+		 store.set("_objectList", objectList);
+	}
+	function fullStockCode(str){
+		if(str.length>3){
+			var fullcode = "";
+			if(str.substring(0,2)=='sh'){
+				fullcode = str;
+			}else if(str.substring(0,2)=='sz'){
+				fullcode = str;
+			}else if(str.substring(0,2)=='hz'){
+				fullcode = 'r_'+str.substring(2,str.length);
+			}else if(str.substring(0,2)=='hk'){
+				fullcode = str;
+			}else{
+				fullcode = 'gb_'+str.toLowerCase();;
+			}
+		}else{
+			fullcode = 'gb_'+str.toLowerCase();
+		}
+		return fullcode;
+	}
+	/**
+	 * 排序 
+	 * @param a 
+	 * @param type 哪个类型
+	 */
+	function getCurseq(a,type){
+		 $('.coolPriceImg').attr({  "src":"https://css.tgb.cn/images/yq_shen.png", "width":"5px;", "height":"6px;"});
+		var _class=$(a).attr('class');
+		if(_class=='moderate'){
+			 $(a).find("img").attr({  "src":"https://css.tgb.cn/images/gre_jian.png", "width":"8px;", "height":"10px;"  });
+			$(a).attr("class", "fine"); 
+		}else if(_class=='fine'){
+			 $(a).find("img").attr({  "src":"https://css.tgb.cn/images/ble_shen.png", "width":"8px;", "height":"10px;" });
+			$(a).attr("class", "inferior"); 
+			
+		}else if(_class=='inferior'){
+			 $(a).find("img").attr({"src":"https://css.tgb.cn/images/yq_shen.png", "width":"5px;",  "height":"6px;" });
+			$(a).attr("class", "moderate"); 
+		}    
+		literCode(_class,type);
+	} 
+	function Persion(curP,chaP,defP,name){
+        this.name=name;
+        this.curP=curP;
+		this.chaP=chaP;
+		this.defP=defP;
+	}
+	/**
+	 * 升起
+	 */
+	function literCode(_class,_type) {
+		var objectList =  store.get("_objectList");
+//	 if(objectList==null){
+//		 retrun false;
+//	 }
+		var haveNum = new Array();
+		var noNum = new Array();
+
+		for(var i = 0;i < objectList.length; i++){
+			var object = objectList[i];
+			if(object.curP == '--'){
+				noNum.push(object);
+			}else{
+				haveNum.push(object);
+			}
+		}
+	if(_type=='2'){//涨幅跌 
+		if (_class == "moderate") {//默认
+			haveNum.sort(function(a, b) {
+				return b.chaP - a.chaP;
+			});
+		} else if (_class == "fine") {//上
+			haveNum.sort(function(a, b) {
+				return a.chaP - b.chaP;
+			});
+		} else if (_class == "inferior") {//下
+			haveNum.sort(function(a, b) {
+				return a.defP - b.defP;
+			});
+		} 
+	}else{//当前价格
+		if (_class == "moderate") {//默认
+			haveNum.sort(function(a, b) {
+				return b.curP - a.curP;
+			});
+		} else if (_class == "fine") {//上
+			haveNum.sort(function(a, b) {
+				return a.curP - b.curP;
+			});
+		} else if (_class == "inferior") {//下
+			haveNum.sort(function(a, b) {
+				return a.defP - b.defP;
+			});
+		} 
+	}
+	objectList = haveNum.concat(noNum);
+	var codeHtml ="";
+	for ( var i = 0; i < objectList.length; i++) {
+		var _defP=  objectList[i].defP;
+		var _name=  objectList[i].name;
+		var _curP=  objectList[i].curP;
+		var _chaP=  objectList[i].chaP; 
+		var codeName = 	$("#"+_name).html(); 
+		codeHtml +="<tr id="+_name+" class='stockTableTr'>"+codeName+"</tr>";
+	} 
+	var tr1 = "<tr id='stock1' style=' font-size: 14px;color: #0055A2;font-weight: bold;'>"+$("#stock1").html()+"</tr>";
+	$("#stockTable").html("<tbody>"+tr1+codeHtml+"</tbody>");
+}
+
+	

@@ -1,0 +1,30 @@
+// 黑名单过滤
+var curTime = new Date().getTime();
+var userID = $("#userID").val();
+if ("null" != userID){
+    var past = localStorage.getItem("blockPast"+userID)
+    if (curTime >= past){
+        localStorage.removeItem("blockPast"+userID)
+    }
+    if (null==past){
+        // 设置黑名单过期时间一小时
+        localStorage.setItem("blockPast"+userID,curTime+(3600 * 1000 * 1))
+        $.ajax({
+            type: "get",
+            url: "/user/blockHomeList",
+            success: function (res) {
+                localStorage.setItem("listBadFriend"+userID,res.dto.listBadFriend);
+                localStorage.setItem("listBeBadFriend"+userID,res.dto.listBeBadFriend);
+            }
+        });
+    }
+    var block = localStorage.getItem("listBadFriend"+userID)
+    if (null != block && ""!=block){
+        var list = block.split(",");
+        for (var i = 0; i < list.length; i++) {
+            $("."+list[i]).hide();
+        }
+    }
+
+}
+
