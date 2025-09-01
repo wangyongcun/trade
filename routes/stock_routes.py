@@ -5,6 +5,7 @@ from pyecharts import options as opts
 from pyecharts.charts import Kline, Line
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
+from db_utils import read_stock_data as db_read_stock_data, get_stock_name
 
 def register_stock_routes(app):
     # 读取股票数据
